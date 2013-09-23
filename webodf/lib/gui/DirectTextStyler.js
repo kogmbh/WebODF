@@ -36,6 +36,7 @@
 /*global core, ops, gui, runtime*/
 
 runtime.loadClass("core.EventNotifier");
+runtime.loadClass("core.Utils");
 runtime.loadClass("ops.OpApplyDirectStyling");
 runtime.loadClass("gui.StyleHelper");
 
@@ -48,9 +49,11 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
     "use strict";
 
     var self = this,
+        utils = new core.Utils(),
         odtDocument = session.getOdtDocument(),
         styleHelper = new gui.StyleHelper(odtDocument.getFormatting()),
         eventNotifier = new core.EventNotifier([gui.DirectTextStyler.textStylingChanged]),
+        cursorStyleTextProperties,
         // cached values
         isBoldValue = false,
         isItalicValue = false,
@@ -197,17 +200,50 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
      */
     function formatTextSelection(propertyName, propertyValue) {
         var selection = odtDocument.getCursorSelection(inputMemberId),
-            op = new ops.OpApplyDirectStyling(),
+            op,
             properties = {};
         properties[propertyName] = propertyValue;
 
-        op.init({
-            memberid: inputMemberId,
-            position: selection.position,
-            length: selection.length,
-            setProperties: {'style:text-properties' : properties }
-        });
-        session.enqueue(op);
+        if (selection.length !== 0) {
+            op = new ops.OpApplyDirectStyling();
+            op.init({
+                memberid: inputMemberId,
+                position: selection.position,
+                length: selection.length,
+                setProperties: {'style:text-properties' : properties }
+            });
+            session.enqueue(op);
+        } else {
+            cursorStyleTextProperties = utils.mergeObjects(cursorStyleTextProperties || {}, properties);
+        }
+    }
+
+    /**
+     * Listen for text insertion operations and apply the local cursor styling if applicable
+     * @param {!ops.Operation} op
+     */
+    function applyCursorStyle(op) {
+        var spec = op.spec(),
+            styleOp;
+        if (cursorStyleTextProperties && spec.memberid === inputMemberId) {
+            if (spec.optype === "InsertText") {
+                styleOp = new ops.OpApplyDirectStyling();
+                styleOp.init({
+                    memberid: inputMemberId,
+                    position: spec.position,
+                    length: spec.text.length,
+                    setProperties: {'style:text-properties' : cursorStyleTextProperties }
+                });
+                session.enqueue(styleOp);
+            }
+            if (spec.optype !== "SplitParagraph") {
+                // Most operations by the local user should clear the current cursor style
+                // SplitParagraph is an exception because at the time the split occurs, there has been no element
+                // added to apply the style to. Even after a split, the cursor should still style the next inserted
+                // character
+                cursorStyleTextProperties = null;
+            }
+        }
     }
 
     /**
@@ -359,6 +395,7 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
         odtDocument.unsubscribe(ops.OdtDocument.signalCursorMoved, onCursorMoved);
         odtDocument.unsubscribe(ops.OdtDocument.signalParagraphStyleModified, onParagraphStyleModified);
         odtDocument.unsubscribe(ops.OdtDocument.signalParagraphChanged, onParagraphChanged);
+        odtDocument.unsubscribe(ops.OdtDocument.signalOperationExecuted, applyCursorStyle);
         callback();
     };
 
@@ -368,6 +405,7 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
         odtDocument.subscribe(ops.OdtDocument.signalCursorMoved, onCursorMoved);
         odtDocument.subscribe(ops.OdtDocument.signalParagraphStyleModified, onParagraphStyleModified);
         odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, onParagraphChanged);
+        odtDocument.subscribe(ops.OdtDocument.signalOperationExecuted, applyCursorStyle);
         updatedCachedValues();
     }
 
