@@ -111,9 +111,17 @@ define("webodf/editor/widgets/simpleStyles", [
                 smallDelta: 1,
                 constraints: {min:6, max:96},
                 intermediateChanges: true,
-                onChange: function(value) {
+                onChange: function (value) {
                     directTextStyler.setFontSize(value);
+                },
+                onClick: function () {
                     self.onToolDone();
+                },
+                onInput: function () {
+                    // Do not process any input in the text box;
+                    // even paste events will not be processed
+                    // so that no corrupt values can exist
+                    return false;
                 }
             });
 
