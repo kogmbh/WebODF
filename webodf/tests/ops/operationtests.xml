@@ -666,6 +666,15 @@
   </ops>
   <after><office:text><text:p>hello<text:s> </text:s></text:p><text:p><c:cursor c:memberId="Bob"/><text:s> </text:s>world</text:p></office:text></after>
  </test>
+ <test name="SplitParagraph_InStyledSpan_PreservesStyling">
+  <before><office:text><text:p>hell<text:span text:style-name="bold">ow</text:span>orld</text:p></office:text></before>
+  <ops>
+   <op optype="AddCursor" memberid="Bob"/>
+   <op optype="MoveCursor" memberid="Bob" position="5"/>
+   <op optype="SplitParagraph" memberid="Bob" position="5"/>
+  </ops>
+  <after><office:text><text:p>hell<text:span text:style-name="bold">o</text:span></text:p><text:p><text:span text:style-name="bold"><c:cursor c:memberId="Bob"/>w</text:span>orld</text:p></office:text></after>
+ </test>
  <test name="DeleteSpaceInSpanCursorBefore">
   <before><office:text><text:p>A</text:p><text:p><text:span><text:s> </text:s></text:span></text:p><text:p><text:span>B</text:span></text:p></office:text></before>
   <ops>

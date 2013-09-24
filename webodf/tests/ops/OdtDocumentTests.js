@@ -30,8 +30,9 @@
  * @source: http://www.webodf.org/
  * @source: http://gitorious.org/webodf/webodf/
  */
-/*global runtime, core, gui, odf, ops, Node, NodeFilter*/
+/*global runtime, core, gui, odf, ops, Node, NodeFilter, xmldom*/
 runtime.loadClass("core.Cursor");
+runtime.loadClass("xmldom.LSSerializer");
 runtime.loadClass("odf.Namespaces");
 runtime.loadClass("gui.SelectionMover");
 runtime.loadClass("ops.OdtDocument");
@@ -80,11 +81,11 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         var range = t.root.ownerDocument.createRange(),
             filter = new ops.OdtDocument(new OdfCanvasAdapter(t.root)).getPositionFilter(),
             counter = t.mover.getStepCounter(),
-            firstParagraph = t.root.childNodes[1], // index-0 will be the cursor
+            officeText = t.root.getElementsByTagNameNS(odf.Namespaces.officens, "text")[0],
             stepsToStartOffset;
         t.filter = filter;
         t.counter = counter;
-        range.setStart(firstParagraph, 0);
+        range.setStart(officeText, 0);
         range.collapse(true);
         t.cursor.setSelectedRange(range);
         while (!counter.isPositionWalkable(filter)) {
@@ -96,6 +97,51 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         // Failure to do this will leave SelectionMover incorrectly assuming countLineSteps wants to get
         // to left = 8px due to the fact setCursorPosition moved over multiple lines in a single command
         t.mover.movePointForward(0, false);
+    }
+
+    /**
+     * Test cursor iteration over a document fragment. Each supported cursor position should be indicated in
+     * the fragment using the pipe character ('|'). This exercises both forwards and backwards iteration.
+     * @param {!string} documentString Document fragment with cursor positions indicated using a vertical pipe '|'
+     */
+    function testCursorPositions(documentString) {
+        var segments = documentString.split("|"),
+            serializer = new xmldom.LSSerializer(),
+            cursorSerialized = '<ns0:cursor xmlns:ns0="urn:webodf:names:cursor" ns0:memberId="Joe"></ns0:cursor>',
+            position;
+        runtime.log("Scenario: " + documentString);
+        t.segmentCount = segments.length;
+        r.shouldBe(t, "t.segmentCount > 1", "true");
+        createOdtDocument(segments.join(""));
+        setCursorPosition(0);
+
+        // Test iteration forward
+        for (position = 1; position < segments.length; position += 1) {
+            t.expected = "<office:text>" +
+                segments.slice(0, position).join("") + "|" + segments.slice(position, segments.length).join("") +
+                "</office:text>";
+            t.result = serializer.writeToString(t.root.firstChild, odf.Namespaces.namespaceMap);
+            t.result = t.result.replace(cursorSerialized, "|");
+            r.shouldBe(t, "t.result", "t.expected");
+            t.stepsToNextPosition = t.counter.countForwardSteps(1, t.filter);
+            t.mover.movePointForward(t.stepsToNextPosition, false);
+        }
+        // Ensure there are no other walkable positions in the document
+        r.shouldBe(t, "t.stepsToNextPosition", "0");
+
+        // Test iteration backward
+        for (position = segments.length - 1; position > 0; position -= 1) {
+            t.expected = "<office:text>" +
+                segments.slice(0, position).join("") + "|" + segments.slice(position, segments.length).join("") +
+                "</office:text>";
+            t.result = serializer.writeToString(t.root.firstChild, odf.Namespaces.namespaceMap);
+            t.result = t.result.replace(cursorSerialized, "|");
+            r.shouldBe(t, "t.result", "t.expected");
+            t.stepsToNextPosition = t.counter.countBackwardSteps(1, t.filter);
+            t.mover.movePointBackward(t.stepsToNextPosition, false);
+        }
+        // Ensure there are no other walkable positions in the document
+        r.shouldBe(t, "t.stepsToNextPosition", "0");
     }
     function testCountLinesStepsDown_FromParagraphStart() {
         createOdtDocument("<text:p>ABCD</text:p><text:p>FGHIJ</text:p>");
@@ -238,7 +284,54 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         t.steps = t.counter.countStepsToPosition(span, span.childNodes.length, t.filter);
         r.shouldBe(t, "t.steps", "1");
     }
-
+    function testAvailablePositions_EmptyParagraph() {
+        // Examples from README_cursorpositions.txt
+        testCursorPositions("<text:p>|</text:p>");
+        // TODO behaviour is different from README_cursorpositions
+        // cursorPositionsTest("<text:p><text:span>|</text:span></text:p>");
+        // TODO behaviour is different from README_cursorpositions
+        // cursorPositionsTest("<text:p><text:span>|</text:span><text:span></text:span></text:p>");
+        // TODO behaviour is different from README_cursorpositions
+        // cursorPositionsTest("<text:p><text:span>|<text:span></text:span></text:span></text:p>");
+        testCursorPositions("<text:p>|  </text:p>");
+        // TODO behaviour is different from README_cursorpositions
+        // cursorPositionsTest("<text:p>  <text:span>|  </text:span>  </text:p>");
+        // TODO behaviour is different from README_cursorpositions
+        // cursorPositionsTest("<text:p>  <text:span>|  </text:span> <text:span>  <text:span>  </text:span>  </text:span>  </text:p>");
+    }
+    function testAvailablePositions_SimpleTextNodes() {
+        // Examples from README_cursorpositions.txt
+        testCursorPositions("<text:p>|A|B|C|</text:p>");
+    }
+    function testAvailablePositions_MixedSpans() {
+        // Examples from README_cursorpositions.txt
+        testCursorPositions("<text:p><text:span>|A|B|</text:span>C|</text:p>");
+        testCursorPositions("<text:p>|A|<text:span>B|</text:span>C|</text:p>");
+        testCursorPositions("<text:p>|A|<text:span>B|C|</text:span></text:p>");
+        testCursorPositions("<text:p><text:span>|A|<text:span>B|</text:span></text:span>C|</text:p>");
+        testCursorPositions("<text:p>|A|<text:span><text:span>B|</text:span>C|</text:span></text:p>");
+    }
+    function testAvailablePositions_Whitespace() {
+        // Examples from README_cursorpositions.txt
+        testCursorPositions("<text:p>|A| |B|C|</text:p>");
+        testCursorPositions("<text:p>   |A|  </text:p>");
+        testCursorPositions("<text:p>|A| |B|</text:p>");
+        testCursorPositions("<text:p>  |A| | B|  </text:p>");
+        testCursorPositions("<text:p>  <text:span>  |a|  </text:span>  </text:p>");
+        testCursorPositions("<text:p>  <text:span>|a| | </text:span> <text:span>  b|</text:span>  </text:p>");
+        // TODO behaviour is different from README_cursorpositions
+        // cursorPositionsTest("<text:p>  <text:span>  |a<text:span>|</text:span>  </text:span>  </text:p>");
+        testCursorPositions("<text:p>  <text:span>  |a|<text:span></text:span>  </text:span>  </text:p>");
+        testCursorPositions("<text:p><text:span></text:span>  |a|</text:p>");
+    }
+    function testAvailablePositions_SpaceElements() {
+        // Examples from README_cursorpositions.txt
+        testCursorPositions("<text:p>|A|<text:s> </text:s>|B|C|</text:p>");
+        // Unexpanded spaces - Not really supported, but interesting to test
+        testCursorPositions("<text:p>|A|<text:s></text:s>|B|C|</text:p>");
+        // TODO behaviour is different from README_cursorpositions
+        // cursorPositionsTest("<text:p> <text:span>|A| |</text:span> <text:s></text:s>| <text:span><text:s> </text:s>|B|</text:span> </text:p>");
+    }
     this.setUp = function () {
         var doc, stylesElement;
         testarea = core.UnitTest.provideTestAreaDiv();
@@ -286,7 +379,13 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             testCountStepsToLineBoundary_Backward_OverWrapping2,
 
             testcountStepsToPosition_CursorNearBeginningOfSpan,
-            testcountStepsToPosition_CursorNearEndOfSpan
+            testcountStepsToPosition_CursorNearEndOfSpan,
+
+            testAvailablePositions_EmptyParagraph,
+            testAvailablePositions_SimpleTextNodes,
+            testAvailablePositions_MixedSpans,
+            testAvailablePositions_Whitespace,
+            testAvailablePositions_SpaceElements
         ];
     };
     this.asyncTests = function () {
