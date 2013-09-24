@@ -32,6 +32,7 @@
  */
 /*global Node, NodeFilter, runtime, core, gui, odf, XMLSerializer*/
 runtime.loadClass("core.Cursor");
+runtime.loadClass("core.DomUtils");
 runtime.loadClass("core.PositionIterator");
 runtime.loadClass("core.PositionFilter");
 runtime.loadClass("core.LoopWatchDog");
@@ -46,6 +47,7 @@ runtime.loadClass("odf.OdfUtils");
 gui.SelectionMover = function SelectionMover(cursor, rootNode) {
     "use strict";
     var odfUtils,
+        domUtils,
         positionIterator,
         cachedXOffset,
         timeoutHandle,
@@ -503,54 +505,6 @@ gui.SelectionMover = function SelectionMover(cursor, rootNode) {
         return count;
     }
     /**
-     * Calculate node offset in unfiltered DOM world
-     * @param {!Node} node
-     * @param {!Node} container
-     * @return {!number}
-     */
-    function getPositionInContainingNode(node, container) {
-        var offset = 0,
-            n;
-        while (node.parentNode !== container) {
-            runtime.assert(node.parentNode !== null, "parent is null");
-            node = /**@type{!Node}*/(node.parentNode);
-        }
-        n = container.firstChild;
-        while (n !== node) {
-            offset += 1;
-            n = n.nextSibling;
-        }
-        return offset;
-    }
-    /**
-     * Return a number > 0 when point 1 precedes point 2. Return 0 if the points
-     * are equal. Return < 0 when point 2 precedes point 1.
-     * @param {!Node} c1 container of point 1
-     * @param {!number} o1  offset in unfiltered DOM world of point 1
-     * @param {!Node} c2 container of point 2
-     * @param {!number} o2  offset in unfiltered DOM world of point 2
-     * @return {!number}
-     */
-    function comparePoints(c1, o1, c2, o2) {
-        if (c1 === c2) {
-            return o2 - o1;
-        }
-        var comparison = c1.compareDocumentPosition(c2);
-        if (comparison === 2) { // DOCUMENT_POSITION_PRECEDING
-            comparison = -1;
-        } else if (comparison === 4) { // DOCUMENT_POSITION_FOLLOWING
-            comparison = 1;
-        } else if (comparison === 10) { // DOCUMENT_POSITION_CONTAINS
-            // c0 contains c2
-            o1 = getPositionInContainingNode(c1, c2);
-            comparison = (o1 < o2) ? 1 : -1;
-        } else { // DOCUMENT_POSITION_CONTAINED_BY
-            o2 = getPositionInContainingNode(c2, c1);
-            comparison = (o2 < o1) ? -1 : 1;
-        }
-        return comparison;
-    }
-    /**
      * Returns the position difference between the cursor and the supplied point (element + offset). Note, this is NOT
      * the same as the number of valid positions between the cursor and supplied point.
      * Computationally, this is equivalent to: (# steps from root to point) - (# steps from root to cursor)
@@ -588,7 +542,7 @@ gui.SelectionMover = function SelectionMover(cursor, rootNode) {
         targetOffset = iterator.unfilteredDomOffset();
         iterator.setUnfilteredPosition(c, o);
 
-        comparison = comparePoints(targetNode, targetOffset, iterator.container(), iterator.unfilteredDomOffset());
+        comparison = domUtils.comparePoints(targetNode, targetOffset, iterator.container(), iterator.unfilteredDomOffset());
         if (comparison < 0) {
             while (iterator.nextPosition()) {
                 watch.check();
@@ -609,7 +563,7 @@ gui.SelectionMover = function SelectionMover(cursor, rootNode) {
                     // Every point from the root node to the *first* valid position is effectively position = 0
                     // Therefore, when counting steps backwards we need to count to the earliest position preceding (or equal)
                     // to the supplied point
-                    if (comparePoints(targetNode, targetOffset, iterator.container(), iterator.unfilteredDomOffset()) <= 0) {
+                    if (domUtils.comparePoints(targetNode, targetOffset, iterator.container(), iterator.unfilteredDomOffset()) <= 0) {
                         // Note, comparePoints(...) <= 0 is required because this loop is only allowed to be broken on a
                         // valid position. There is no requirement however that the passed in posElement + posOffset
                         // correspond to a position that is accepted by the supplied filter.
@@ -638,6 +592,7 @@ gui.SelectionMover = function SelectionMover(cursor, rootNode) {
     };
     function init() {
         odfUtils = new odf.OdfUtils();
+        domUtils = new core.DomUtils();
         positionIterator = gui.SelectionMover.createPositionIterator(rootNode);
         var range = rootNode.ownerDocument.createRange();
         range.setStart(positionIterator.container(), positionIterator.unfilteredDomOffset());

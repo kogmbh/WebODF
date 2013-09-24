@@ -252,7 +252,7 @@ core.PositionIterator = function PositionIterator(root, whatToShow, filter,
      * @return {!boolean}
      */
     this.setUnfilteredPosition = function (container, offset) {
-        var filterResult;
+        var filterResult, node;
         runtime.assert((container !== null) && (container !== undefined),
             "PositionIterator.setUnfilteredPosition called without container");
         walker.currentNode = container;
@@ -275,6 +275,15 @@ core.PositionIterator = function PositionIterator(root, whatToShow, filter,
         }
 
         filterResult = nodeFilter(container);
+        node = container.parentNode;
+        while (node && node !== root && filterResult === NodeFilter.FILTER_ACCEPT) {
+            filterResult = nodeFilter(node);
+            if (filterResult !== NodeFilter.FILTER_ACCEPT) {
+                walker.currentNode = node;
+            }
+            node = node.parentNode;
+        }
+
         // Need to ensure the container can have children, otherwise the treewalker will happily
         // iterate over the child nodes of the container if started on one of the children
         if (offset < container.childNodes.length && filterResult !== NodeFilter.FILTER_REJECT) {

@@ -264,13 +264,112 @@ gui.SessionController = (function () {
         }
 
         /**
-         * @param {!Event} e
+         * @param {!Node} node
+         * @return {!boolean}
+         */
+        function isTextSpan(node) {
+            return node.namespaceURI === odf.Namespaces.textns && node.localName === 'span';
+        }
+
+        /**
+         * Expands the supplied selection to the nearest word boundaries
+         * @param {{anchorNode: !Node, anchorOffset: !number, focusNode: !Node, focusOffset: !number}} selection
+         */
+        function expandToWordBoundaries(selection) {
+            var alphaNumeric = /[A-Za-z0-9]/,
+                iterator = gui.SelectionMover.createPositionIterator(odtDocument.getRootNode()),
+                isForwardSelection = domUtils.comparePoints(selection.anchorNode, selection.anchorOffset,
+                                                            selection.focusNode, selection.focusOffset) > 0,
+                startPoint, endPoint,
+                currentNode, c;
+
+            if (isForwardSelection) {
+                startPoint = {node: selection.anchorNode, offset: selection.anchorOffset};
+                endPoint = {node: selection.focusNode, offset: selection.focusOffset};
+            } else {
+                startPoint = {node: selection.focusNode, offset: selection.focusOffset};
+                endPoint = {node: selection.anchorNode, offset: selection.anchorOffset};
+            }
+
+            iterator.setUnfilteredPosition(startPoint.node, startPoint.offset);
+            while (iterator.previousPosition()) {
+                currentNode = iterator.getCurrentNode();
+                if (currentNode.nodeType === Node.TEXT_NODE) {
+                    c = currentNode.data[iterator.unfilteredDomOffset()];
+                    if (!alphaNumeric.test(c)) {
+                        break;
+                    }
+                } else if (!isTextSpan(currentNode)) {
+                    break;
+                }
+                startPoint.node = iterator.container();
+                startPoint.offset = iterator.unfilteredDomOffset();
+            }
+
+            iterator.setUnfilteredPosition(endPoint.node, endPoint.offset);
+            do {
+                currentNode = iterator.getCurrentNode();
+                if (currentNode.nodeType === Node.TEXT_NODE) {
+                    c = currentNode.data[iterator.unfilteredDomOffset()];
+                    if (!alphaNumeric.test(c)) {
+                        break;
+                    }
+                } else if (!isTextSpan(currentNode)) {
+                    break;
+                }
+            } while (iterator.nextPosition());
+            endPoint.node = iterator.container();
+            endPoint.offset = iterator.unfilteredDomOffset();
+
+            if (isForwardSelection) {
+                selection.anchorNode = startPoint.node;
+                selection.anchorOffset = startPoint.offset;
+                selection.focusNode = endPoint.node;
+                selection.focusOffset = endPoint.offset;
+            } else {
+                selection.focusNode = startPoint.node;
+                selection.focusOffset = startPoint.offset;
+                selection.anchorNode = endPoint.node;
+                selection.anchorOffset = endPoint.offset;
+            }
+        }
+
+        /**
+         * Expands the supplied selection to the nearest paragraph boundaries
+         * @param {{anchorNode: !Node, anchorOffset: !number, focusNode: !Node, focusOffset: !number}} selection
+         */
+        function expandToParagraphBoundaries(selection) {
+            var anchorParagraph = odtDocument.getParagraphElement(selection.anchorNode),
+                focusParagraph = odtDocument.getParagraphElement(selection.focusNode);
+
+            if (anchorParagraph) {
+                selection.anchorNode = anchorParagraph;
+                selection.anchorOffset = 0;
+            }
+
+            if (focusParagraph) {
+                selection.focusNode = focusParagraph;
+                selection.focusOffset = focusParagraph.childNodes.length;
+            }
+        }
+
+        function mutableSelection(selection) {
+            return {
+                anchorNode: selection.anchorNode,
+                anchorOffset: selection.anchorOffset,
+                focusNode: selection.focusNode,
+                focusOffset: selection.focusOffset
+            };
+        }
+
+        /**
+         * @param {!UIEvent} e
          * @return {?{anchorNode:!Node, anchorOffset:!number, focusNode:!Node, focusOffset:!number}}
          */
         function getSelection (e) {
             var canvasElement = odtDocument.getOdfCanvas().getElement(),
-                selection = window.getSelection(),
-                anchorNode, anchorOffset, focusNode, focusOffset,
+                selection = mutableSelection(window.getSelection()),
+                clickCount = e.detail, // See http://www.w3.org/TR/DOM-Level-3-Events/#event-type-mouseup
                 anchorNodeInsideCanvas, focusNodeInsideCanvas, caretPos, node;
 
             if (selection.anchorNode === null && selection.focusNode === null) { // chrome & safari
@@ -279,45 +378,42 @@ gui.SessionController = (function () {
                     return null;
                 }
 
-                anchorNode = /**@type{!Node}*/(caretPos.container);
-                anchorOffset = caretPos.offset;
-                focusNode = anchorNode;
-                focusOffset = anchorOffset;
-            } else {
-                anchorNode = /**@type{!Node}*/(selection.anchorNode);
-                anchorOffset = selection.anchorOffset;
-                focusNode = /**@type{!Node}*/(selection.focusNode);
-                focusOffset = selection.focusOffset;
+                selection.anchorNode = /**@type{!Node}*/(caretPos.container);
+                selection.anchorOffset = caretPos.offset;
+                selection.focusNode = selection.anchorNode;
+                selection.focusOffset = selection.anchorOffset;
             }
 
-            runtime.assert(anchorNode !== null && focusNode !== null,
+            runtime.assert(selection.anchorNode !== null && selection.focusNode !== null,
                 "anchorNode is null or focusNode is null");
 
-            anchorNodeInsideCanvas = domUtils.containsNode(canvasElement, anchorNode);
-            focusNodeInsideCanvas = domUtils.containsNode(canvasElement, focusNode);
+            anchorNodeInsideCanvas = domUtils.containsNode(canvasElement, selection.anchorNode);
+            focusNodeInsideCanvas = domUtils.containsNode(canvasElement, selection.focusNode);
             if (!anchorNodeInsideCanvas && !focusNodeInsideCanvas) {
                 return null;
             }
             if (!anchorNodeInsideCanvas) {
-                node = findClosestPosition(anchorNode);
-                anchorNode = node.node;
-                anchorOffset = node.offset;
+                node = findClosestPosition(selection.anchorNode);
+                selection.anchorNode = node.node;
+                selection.anchorOffset = node.offset;
             }
             if (!focusNodeInsideCanvas) {
-                node = findClosestPosition(focusNode);
-                focusNode = node.node;
-                focusOffset = node.offset;
+                node = findClosestPosition(selection.focusNode);
+                selection.focusNode = node.node;
+                selection.focusOffset = node.offset;
             }
+
+            if (clickCount === 2) {
+                expandToWordBoundaries(selection);
+            } else if (clickCount === 3) {
+                expandToParagraphBoundaries(selection);
+            }
+
             // canvas element won't have focus if user click somewhere outside the canvas then drag and
             // release click inside the canvas.
             canvasElement.focus();
 
-            return {
-                anchorNode: anchorNode,
-                anchorOffset: anchorOffset,
-                focusNode: focusNode,
-                focusOffset: focusOffset
-            };
+            return selection;
         }
 
         /**
@@ -393,7 +489,7 @@ gui.SessionController = (function () {
         }
 
         /**
-         * @param {!Event} e
+         * @param {!UIEvent} e
          * @return {undefined}
          */
         function selectRange(e) {
@@ -434,88 +530,6 @@ gui.SessionController = (function () {
             // - OSX: Firefox - No expansion
             // - Windows: Safari/Chrome/Firefox - No expansion
             selectRange(e);
-        }
-        /**
-         * @param {!Node} node
-         * @return {!boolean}
-         */
-        function isTextSpan(node) {
-            return node.namespaceURI === odf.Namespaces.textns && node.localName === 'span';
-        }
-        /**
-         * @return {undefined}
-         */
-        function selectWord() {
-            var canvasElement = odtDocument.getOdfCanvas().getElement(),
-                alphaNumeric = /[A-Za-z0-9]/,
-                stepsToStart = 0,
-                stepsToEnd = 0,
-                iterator, cursorNode, oldPosition, currentNode, c, op;
-
-            if (!domUtils.containsNode(canvasElement, window.getSelection().focusNode)) {
-                return;
-            }
-
-            iterator = gui.SelectionMover.createPositionIterator(odtDocument.getRootNode());
-            cursorNode = odtDocument.getCursor(inputMemberId).getNode();
-
-            iterator.setUnfilteredPosition(cursorNode, 0);
-            while (iterator.previousPosition()) {
-                currentNode = iterator.getCurrentNode();
-                if (currentNode.nodeType === Node.TEXT_NODE) {
-                    c = currentNode.data[iterator.unfilteredDomOffset()];
-                    if (!alphaNumeric.test(c)) {
-                        break;
-                    }
-                    stepsToStart -= 1;
-                } else if (!isTextSpan(currentNode)) {
-                    break;
-                }
-            }
-
-            iterator.setUnfilteredPosition(cursorNode, 0);
-            do {
-                currentNode = iterator.getCurrentNode();
-                if (currentNode.nodeType === Node.TEXT_NODE) {
-                    c = currentNode.data[iterator.unfilteredDomOffset()];
-                    if (!alphaNumeric.test(c)) {
-                        break;
-                    }
-                    stepsToEnd += 1;
-                } else if (!isTextSpan(currentNode)) {
-                    break;
-                }
-            } while (iterator.nextPosition());
-
-            if (stepsToStart !== 0 || stepsToEnd !== 0) {
-                oldPosition = odtDocument.getCursorPosition(inputMemberId);
-                op = createOpMoveCursor(oldPosition + stepsToStart, Math.abs(stepsToStart) + Math.abs(stepsToEnd));
-                session.enqueue(op);
-            }
-        }
-
-        /**
-         * @return {undefined}
-         */
-        function selectParagraph() {
-            var canvasElement = odtDocument.getOdfCanvas().getElement(),
-                iterator, paragraphNode, oldPosition, stepsToStart, stepsToEnd, op;
-
-            if (!domUtils.containsNode(canvasElement, window.getSelection().focusNode)) {
-                return;
-            }
-
-            paragraphNode = odtDocument.getParagraphElement(odtDocument.getCursor(inputMemberId).getNode());
-            stepsToStart = odtDocument.getDistanceFromCursor(inputMemberId, paragraphNode, 0);
-            iterator = gui.SelectionMover.createPositionIterator(odtDocument.getRootNode());
-            iterator.moveToEndOfNode(paragraphNode);
-            stepsToEnd = odtDocument.getDistanceFromCursor(inputMemberId, paragraphNode, iterator.unfilteredDomOffset());
-
-            if (stepsToStart !== 0 || stepsToEnd !== 0) {
-                oldPosition = odtDocument.getCursorPosition(inputMemberId);
-                op = createOpMoveCursor(oldPosition + stepsToStart, Math.abs(stepsToStart) + Math.abs(stepsToEnd));
-                session.enqueue(op);
-            }
         }
 
         /**
@@ -1145,19 +1159,12 @@ gui.SessionController = (function () {
 
         function handleMouseUp(event) {
             var target = event.target,
-                clickCount = event.detail, // See http://www.w3.org/TR/DOM-Level-3-Events/#event-type-mouseup
                 annotationNode = null;
             if (target.className === "annotationRemoveButton") {
                 annotationNode = domUtils.getElementsByTagNameNS(target.parentNode, odf.Namespaces.officens, 'annotation')[0];
                 removeAnnotation(annotationNode);
             } else if (clickStartedWithinContainer) {
-                if (clickCount === 1) { // Single click
-                    selectRange(event);
-                } else if (clickCount === 2) { // Double click
-                    selectWord();
-                } else if (clickCount === 3) { // Triple click
-                    selectParagraph();
-                }
+                selectRange(event);
             }
             // Expect that each mouse-up event is preceded by a mouse down that will update clickStartedWithinContainer
         }

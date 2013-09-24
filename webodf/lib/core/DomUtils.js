@@ -279,6 +279,56 @@ core.DomUtils = function DomUtils() {
     this.containsNode = containsNode;
 
     /**
+     * Calculate node offset in unfiltered DOM world
+     * @param {!Node} node
+     * @param {!Node} container
+     * @return {!number}
+     */
+    function getPositionInContainingNode(node, container) {
+        var offset = 0,
+            n;
+        while (node.parentNode !== container) {
+            runtime.assert(node.parentNode !== null, "parent is null");
+            node = /**@type{!Node}*/(node.parentNode);
+        }
+        n = container.firstChild;
+        while (n !== node) {
+            offset += 1;
+            n = n.nextSibling;
+        }
+        return offset;
+    }
+    /**
+     * Return a number > 0 when point 1 precedes point 2. Return 0 if the points
+     * are equal. Return < 0 when point 2 precedes point 1.
+     * @param {!Node} c1 container of point 1
+     * @param {!number} o1  offset in unfiltered DOM world of point 1
+     * @param {!Node} c2 container of point 2
+     * @param {!number} o2  offset in unfiltered DOM world of point 2
+     * @return {!number}
+     */
+    function comparePoints(c1, o1, c2, o2) {
+        if (c1 === c2) {
+            return o2 - o1;
+        }
+        var comparison = c1.compareDocumentPosition(c2);
+        if (comparison === 2) { // DOCUMENT_POSITION_PRECEDING
+            comparison = -1;
+        } else if (comparison === 4) { // DOCUMENT_POSITION_FOLLOWING
+            comparison = 1;
+        } else if (comparison === 10) { // DOCUMENT_POSITION_CONTAINS
+            // c0 contains c2
+            o1 = getPositionInContainingNode(c1, c2);
+            comparison = (o1 < o2) ? 1 : -1;
+        } else { // DOCUMENT_POSITION_CONTAINED_BY
+            o2 = getPositionInContainingNode(c2, c1);
+            comparison = (o2 < o1) ? -1 : 1;
+        }
+        return comparison;
+    }
+    this.comparePoints = comparePoints;
+
+    /**
      * Whether a node contains another node
      * @param {!Node} parent The node that should contain the other node
      * @param {?Node} descendant The node to test presence of
