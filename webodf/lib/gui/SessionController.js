@@ -49,6 +49,7 @@ runtime.loadClass("gui.Clipboard");
 runtime.loadClass("gui.KeyboardHandler");
 runtime.loadClass("gui.DirectTextStyler");
 runtime.loadClass("gui.DirectParagraphStyler");
+runtime.loadClass("gui.TextManipulator");
 
 /**
  * @constructor
@@ -83,6 +84,7 @@ gui.SessionController = (function () {
             clickStartedWithinContainer = false,
             styleNameGenerator = new odf.StyleNameGenerator("auto" + utils.hashString(inputMemberId) + "_", odtDocument.getFormatting()),
             undoManager = null,
+            textManipulator = new gui.TextManipulator(session, inputMemberId),
             directTextStyler = args && args.directStylingEnabled ? new gui.DirectTextStyler(session, inputMemberId) : null,
             directParagraphStyler = args && args.directStylingEnabled ? new gui.DirectParagraphStyler(session, inputMemberId, styleNameGenerator) : null;
 
@@ -829,154 +831,6 @@ gui.SessionController = (function () {
         }
 
         /**
-         * Ensures the provided selection is a "forward" selection (i.e., length is positive)
-         * @param {!{position: number, length: number}} selection
-         * @returns {!{position: number, length: number}}
-         */
-        function toForwardSelection(selection) {
-            if (selection.length < 0) {
-                selection.position += selection.length;
-                selection.length = -selection.length;
-            }
-            return selection;
-        }
-
-        /**
-         * Creates an operation to remove the provided selection
-         * @param {!{position: number, length: number}} selection
-         * @returns {!ops.OpRemoveText}
-         */
-        function createOpRemoveSelection(selection) {
-            var op = new ops.OpRemoveText();
-            op.init({
-                memberid: inputMemberId,
-                position: selection.position,
-                length: selection.length
-            });
-            return op;
-        }
-
-        /**
-         * @return {!boolean}
-         */
-        function removeTextByBackspaceKey() {
-            var selection = toForwardSelection(odtDocument.getCursorSelection(inputMemberId)),
-                op = null;
-
-            if (selection.length === 0) {
-                // position-1 must exist for backspace to be valid
-                if (selection.position > 0 && odtDocument.getPositionInTextNode(selection.position - 1)) {
-                    op = new ops.OpRemoveText();
-                    op.init({
-                        memberid: inputMemberId,
-                        position: selection.position - 1,
-                        length: 1
-                    });
-                    session.enqueue(op);
-                }
-            } else {
-                op = createOpRemoveSelection(selection);
-                session.enqueue(op);
-            }
-            return true;
-        }
-        /**
-         * @return {!boolean}
-         */
-        function removeTextByDeleteKey() {
-            var selection = toForwardSelection(odtDocument.getCursorSelection(inputMemberId)),
-                op = null;
-
-            if (selection.length === 0) {
-                // position+1 must exist for delete to be valid
-                if (odtDocument.getPositionInTextNode(selection.position + 1)) {
-                    op = new ops.OpRemoveText();
-                    op.init({
-                        memberid: inputMemberId,
-                        position: selection.position,
-                        length: 1
-                    });
-                    session.enqueue(op);
-                }
-            } else {
-                op = createOpRemoveSelection(selection);
-                session.enqueue(op);
-            }
-            return op !== null;
-        }
-        /**
-         * @return {!boolean}
-         */
-        function removeTextByClearKey() {
-            var selection = toForwardSelection(odtDocument.getCursorSelection(inputMemberId));
-            if (selection.length !== 0) {
-                session.enqueue(createOpRemoveSelection(selection));
-            }
-            return true;
-        }
-        /**
-         * Removes currently selected text (if any) before inserts the text.
-         * @param {!string} text
-         * @return {undefined}
-         */
-        function insertText(text) {
-            var selection = toForwardSelection(odtDocument.getCursorSelection(inputMemberId)),
-                op = null;
-
-            if (selection.length > 0) {
-                op = createOpRemoveSelection(selection);
-                session.enqueue(op);
-            }
-
-            op = new ops.OpInsertText();
-            op.init({
-                memberid: inputMemberId,
-                position: selection.position,
-                text: text
-            });
-            session.enqueue(op);
-        }
-
-        /**
-         * @return {!boolean}
-         */
-        function enqueueParagraphSplittingOps() {
-            var selection = toForwardSelection(odtDocument.getCursorSelection(inputMemberId)),
-                op;
-
-            if (selection.length > 0) {
-                op = createOpRemoveSelection(selection);
-                session.enqueue(op);
-            }
-
-            op = new ops.OpSplitParagraph();
-            op.init({
-                memberid: inputMemberId,
-                position: selection.position
-            });
-            session.enqueue(op);
-
-            // disabled for now, because nowjs seems to revert the order of the ops, which does not work here TODO: grouping of ops
-            /*
-             if (isAtEndOfParagraph) {
-             paragraphNode = odtDocument.getParagraphElement(odtDocument.getCursor(inputMemberId).getNode());
-             styleName = odtDocument.getFormatting().getParagraphStyleAttribute(styleName, odf.Namespaces.stylens, 'next-style-name');
-
-             if (nextStyleName && nextStyleName !== styleName) {
-             op = new ops.OpSetParagraphStyle();
-             op.init({
-             memberid: inputMemberId,
-             position: position + 1, // +1 should be at the start of the new paragraph
-             styleName: styleName
-             });
-             session.enqueue(op);
-             }
-             }
-             */
-
-            return true;
-        }
-        /**
          * TODO: This method and associated event subscriptions really belong in SessionView
          * As this implementation relies on the current browser selection, only a single
          * cursor can be highlighted at a time. Eventually, when virtual selection & cursors are
@@ -996,29 +850,13 @@ gui.SessionController = (function () {
         }
 
         /**
-         * @param {!Event} event
-         * @return {?string}
-         */
-        function stringFromKeyPress(event) {
-            if (event.which === null) {
-                return String.fromCharCode(event.keyCode); // IE
-            }
-            if (event.which !== 0 && event.charCode !== 0) {
-                return String.fromCharCode(event.which);   // the rest
-            }
-            return null; // special key
-        }
-
-        /**
          * Handle the cut operation request
          * @param {!Event} e
          * @return {undefined}
          */
         function handleCut(e) {
             var cursor = odtDocument.getCursor(inputMemberId),
-                selectedRange = cursor.getSelectedRange(),
-                selection,
-                op;
+                selectedRange = cursor.getSelectedRange();
 
             if (selectedRange.collapsed) {
                 // Modifying the clipboard data will clear any existing data,
@@ -1029,14 +867,7 @@ gui.SessionController = (function () {
             // The document is readonly, so the data will never get placed on the clipboard in
             // most browsers unless we do it ourselves.
             if (clipboard.setDataFromRange(e, cursor.getSelectedRange())) {
-                op = new ops.OpRemoveText();
-                selection = toForwardSelection(session.getOdtDocument().getCursorSelection(inputMemberId));
-                op.init({
-                    memberid: inputMemberId,
-                    position: selection.position,
-                    length: selection.length
-                });
-                session.enqueue(op);
+                textManipulator.removeCurrentSelection();
             } else {
                 // TODO What should we do if cut isn't supported?
                 runtime.log("Cut operation failed");
@@ -1089,7 +920,7 @@ gui.SessionController = (function () {
             }
 
             if (plainText) {
-                insertText(plainText);
+                textManipulator.insertText(plainText);
                 cancelEvent(e);
             }
         }
@@ -1294,6 +1125,13 @@ gui.SessionController = (function () {
         };
 
         /**
+         * @returns {!gui.TextManipulator}
+         */
+        this.getTextManipulator = function() {
+            return textManipulator;
+        };
+
+        /**
          * @param {!function(!Object=)} callback, passing an error object in case of error
          * @return {undefined}
          */
@@ -1316,15 +1154,15 @@ gui.SessionController = (function () {
                 keyCode = gui.KeyboardHandler.KeyCode;
 
             keyDownHandler.bind(keyCode.Tab, modifier.None, function () {
-                insertText("\t");
+                textManipulator.insertText("\t");
                 return true;
             });
             keyDownHandler.bind(keyCode.Left, modifier.None, moveCursorToLeft);
             keyDownHandler.bind(keyCode.Right, modifier.None, moveCursorToRight);
             keyDownHandler.bind(keyCode.Up, modifier.None, moveCursorUp);
             keyDownHandler.bind(keyCode.Down, modifier.None, moveCursorDown);
-            keyDownHandler.bind(keyCode.Backspace, modifier.None, removeTextByBackspaceKey);
-            keyDownHandler.bind(keyCode.Delete, modifier.None, removeTextByDeleteKey);
+            keyDownHandler.bind(keyCode.Backspace, modifier.None, textManipulator.removeTextByBackspaceKey);
+            keyDownHandler.bind(keyCode.Delete, modifier.None, textManipulator.removeTextByDeleteKey);
             keyDownHandler.bind(keyCode.Left, modifier.Shift, extendSelectionToLeft);
             keyDownHandler.bind(keyCode.Right, modifier.Shift, extendSelectionToRight);
             keyDownHandler.bind(keyCode.Up, modifier.Shift, extendSelectionUp);
@@ -1342,7 +1180,7 @@ gui.SessionController = (function () {
             keyDownHandler.bind(keyCode.End, modifier.CtrlShift, extendSelectionToDocumentEnd);
 
             if (isMacOS) {
-                keyDownHandler.bind(keyCode.Clear, modifier.None, removeTextByClearKey);
+                keyDownHandler.bind(keyCode.Clear, modifier.None, textManipulator.removeCurrentSelection);
                 keyDownHandler.bind(keyCode.Left, modifier.Meta, moveCursorToLineStart);
                 keyDownHandler.bind(keyCode.Right, modifier.Meta, moveCursorToLineEnd);
                 keyDownHandler.bind(keyCode.Home, modifier.Meta, moveCursorToDocumentStart);
@@ -1385,15 +1223,8 @@ gui.SessionController = (function () {
             }
 
             // the default action is to insert text into the document
-            keyPressHandler.setDefault(function (e) {
-                var text = stringFromKeyPress(e);
-                if (text && !(e.altKey || e.ctrlKey || e.metaKey)) {
-                    insertText(text);
-                    return true;
-                }
-                return false;
-            });
-            keyPressHandler.bind(keyCode.Enter, modifier.None, enqueueParagraphSplittingOps);
+            keyPressHandler.setDefault(textManipulator.processKeyEvent);
+            keyPressHandler.bind(keyCode.Enter, modifier.None, textManipulator.enqueueParagraphSplittingOps);
         }
 
         init();
