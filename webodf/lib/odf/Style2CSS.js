@@ -548,7 +548,8 @@ odf.Style2CSS = function Style2CSS() {
             || props.getAttributeNS(fons, 'font-family');
         if (fontName) {
             value = fontFaceDeclsMap[fontName];
-            rule += 'font-family: ' + (value || fontName) + ', sans-serif;';
+            // TODO: use other information from style:font-face, like style:font-family-generic
+            rule += 'font-family: ' + (value || fontName) + ';';
         }
 
         parentStyle = props.parentNode;
