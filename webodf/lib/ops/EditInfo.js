@@ -123,7 +123,11 @@ ops.EditInfo = function EditInfo(container, odtDocument) {
      * @return {undefined}
      */
     this.destroy = function(callback) {
-        container.removeChild(editInfoNode);
+        // TODO: have EditInfo cleaned up if the paragraph is deleted, not happening right now
+        // workaround: check if the container is still in the DOM
+        if (container.parentNode) {
+            container.removeChild(editInfoNode);
+        }
         callback();
     };
 

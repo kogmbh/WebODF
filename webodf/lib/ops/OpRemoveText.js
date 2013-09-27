@@ -224,6 +224,7 @@ ops.OpRemoveText = function OpRemoveText() {
         odtDocument.downgradeWhitespacesAtPosition(position);
         odtDocument.fixCursorPositions();
         odtDocument.getOdfCanvas().refreshSize();
+        // TODO: signal also the deleted paragraphs, so e.g. SessionView can clean up the EditInfo
         odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
             paragraphElement: destinationParagraph || paragraphElement,
             memberId: memberid,
