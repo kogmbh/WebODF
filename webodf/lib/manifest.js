@@ -60,6 +60,7 @@
         "gui/PresenterUI.js",
         "gui/DirectTextStyler.js",
         "gui/DirectParagraphStyler.js",
+        "gui/TextManipulator.js",
         "gui/SessionController.js",
         "gui/CaretManager.js",
         "gui/EditInfoHandle.js",
