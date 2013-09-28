@@ -424,6 +424,49 @@ odf.OdfCanvas = (function () {
 
     /**
      * @param {!odf.OdfContainer} odfContainer
+     * @param {!Element} frame
+     * @param {!string} headerFooterId
+     * @return {?string}
+     */
+    function getHeaderFooter(odfContainer, frame, headerFooterId) {
+        var headerFooter = null,
+            i,
+            declElements = odfContainer.rootElement.body.getElementsByTagNameNS(presentationns, headerFooterId+'-decl'),
+            headerFooterName = frame.getAttributeNS(presentationns, 'use-'+headerFooterId+'-name');
+
+        if (headerFooterName && declElements.length > 0) {
+            for (i = 0; i < declElements.length; i += 1) {
+                if (declElements[i].getAttributeNS(presentationns, 'name') === headerFooterName) {
+                    headerFooter = declElements[i].textContent;
+                    break;
+                }
+            }
+        }
+        return headerFooter;
+    }
+
+    /**
+     * @param {!Node} rootElement
+     * @param {!string} ns
+     * @param {!string} localName
+     * @param {?string} value
+     * @return {undefined}
+     */
+    function setContainerValue(rootElement, ns, localName, value) {
+        var i, containerList,
+            document = rootElement.ownerDocument;
+
+        containerList = rootElement.getElementsByTagNameNS(ns, localName);
+        for (i = 0; i < containerList.length; i += 1) {
+            clear(containerList[i]);
+            if (value) {
+                containerList[i].appendChild(document.createTextNode(value));
+            }
+        }
+    }
+
+    /**
+     * @param {!odf.OdfContainer} odfContainer
      * @param {!string} id
      * @param {!Node} frame
      * @param {!StyleSheet} stylesheet
@@ -445,7 +488,6 @@ odf.OdfCanvas = (function () {
             clonedPage,
             clonedNode,
             pageNumber = 0,
-            pageNumberContainer,
             node,
             document = odfContainer.rootElement.ownerDocument;
 
@@ -475,13 +517,12 @@ odf.OdfCanvas = (function () {
             // Get the page number by counting the number of previous master pages in this shadowContent
             pageNumber = shadowContent.getElementsByTagNameNS(drawns, 'page').length;
             // Get the page-number tag in the cloned master page and set the text content to the calculated number
-            pageNumberContainer = clonedPage.getElementsByTagNameNS(textns, 'page-number')[0];
-            if (pageNumberContainer) {
-                while (pageNumberContainer.firstChild) {
-                    pageNumberContainer.removeChild(pageNumberContainer.firstChild);
-                }
-                pageNumberContainer.appendChild(document.createTextNode(pageNumber));
-            }
+            setContainerValue(clonedPage, textns, 'page-number', pageNumber);
+
+            // Care for header
+            setContainerValue(clonedPage, presentationns, 'header', getHeaderFooter(odfContainer, /**@type{!Element}*/(frame), 'header'));
+            // Care for footer
+            setContainerValue(clonedPage, presentationns, 'footer', getHeaderFooter(odfContainer, /**@type{!Element}*/(frame), 'footer'));
 
             // Now call setFramePosition on this new page to set the proper dimensions
             setFramePosition(odfContainer, id, clonedPage, stylesheet);
