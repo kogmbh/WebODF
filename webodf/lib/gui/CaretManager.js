@@ -177,6 +177,8 @@ gui.CaretManager = function CaretManager(sessionController) {
             canvasElement.setAttribute("tabindex", 0);
             // wire up focus on canvas to caret
             canvasElement.focus();
+        } else {
+            cursor.handleUpdate = caret.updateVerticalCaretAlignment;
         }
 
         return caret;

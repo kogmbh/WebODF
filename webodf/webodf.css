@@ -222,6 +222,8 @@ cursor|cursor {
     z-index: 1;
 }
 cursor|cursor > span {
+    /* IMPORTANT: when changing these values ensure DEFAULT_CARET_TOP and DEFAULT_CARET_HEIGHT
+        in Caret.js remain in sync */
     display: inline;
     position: absolute;
     top: 5%; /* push down the caret; 0px can do the job, 5% looks better, 10% is a bit over */

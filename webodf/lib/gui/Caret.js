@@ -30,7 +30,7 @@
  * @source: http://www.webodf.org/
  * @source: http://gitorious.org/webodf/webodf/
  */
-/*global core, gui, ops, runtime*/
+/*global core, gui, ops, runtime, Node*/
 
 runtime.loadClass("gui.Avatar");
 runtime.loadClass("ops.OdtCursor");
@@ -48,7 +48,10 @@ runtime.loadClass("ops.OdtCursor");
  */
 gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
     "use strict";
-    var span,
+    var /**@const*/MIN_CARET_HEIGHT_PX = 8, /** 8px = 6pt font size */
+        /**@const*/DEFAULT_CARET_TOP = "5%",
+        /**@const*/DEFAULT_CARET_HEIGHT = "1em",
+        span,
         avatar,
         cursorNode,
         shouldBlink = false,
@@ -98,6 +101,123 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
         };
     }
 
+    /**
+     * Return the maximum available offset for the supplied node.
+     * @param {!Node} node
+     * @returns {!number}
+     */
+    function length(node) {
+        return node.nodeType === Node.TEXT_NODE ? node.textContent.length : node.childNodes.length;
+    }
+
+    /**
+     * Calculate the number of pixels of vertical overlap. If there is no overlap,
+     * this number will be negative
+     * @param {!Node} cursorNode
+     * @param {!ClientRect} rangeRect
+     * @returns {!number}
+     */
+    function verticalOverlap(cursorNode, rangeRect) {
+        var cursorRect = cursorNode.getBoundingClientRect(),
+            intersectTop = 0,
+            intersectBottom = 0;
+
+        if (cursorRect && rangeRect) {
+            intersectTop = Math.max(cursorRect.top, rangeRect.top);
+            intersectBottom = Math.min(cursorRect.bottom, rangeRect.bottom);
+
+        }
+        return intersectBottom - intersectTop;
+    }
+
+    /**
+     * Get the client rectangle for the nearest selection point to the caret.
+     * This works on the assumption that the next or previous sibling is likely to
+     * be a text node that will provide an accurate rectangle for the caret's desired
+     * height and vertical position.
+     * @returns {?ClientRect}
+     */
+    function getSelectionRect() {
+        var range = cursor.getSelectedRange().cloneRange(),
+            node = cursor.getNode(),
+            nextRectangle,
+            rectangles,
+            selectionRectangle,
+            nodeLength;
+
+        // TODO this might be able to use OdfUtils.scanLeft & scanRight behaviours to find the next odf element
+        // By default, assume the selection height should reflect the height of the previousSibling's last client rect
+        // This means if the cursor is next to a text node, the client rect will be the dimensions of the text block
+        if (node.previousSibling) {
+            nodeLength = length(node.previousSibling);
+            range.setStart(node.previousSibling, nodeLength > 0 ? nodeLength - 1 : 0);
+            range.setEnd(node.previousSibling, nodeLength);
+            rectangles = range.getClientRects();
+            selectionRectangle = rectangles && rectangles[rectangles.length - 1];
+        }
+        // Under some circumstances (either no previous sibling, or whitespace wrapping) the client rect of the next
+        // sibling will actually be a more accurate visual representation.
+        if (node.nextSibling) {
+            range.setStart(node.nextSibling, 0);
+            range.setEnd(node.nextSibling, length(node.nextSibling) > 0 ? 1 : 0);
+            rectangles = range.getClientRects();
+            nextRectangle = rectangles && rectangles[0];
+            if (nextRectangle) {
+                // The nextSibling's rectangle should take precedence if
+                // 1. There is no previousSibling
+                // or 2. The nextSibling's rectangle has more vertical overlap with the cursor node's bounding rectangle
+                // Check #2 is specifically required to handling whitespace wrapping logic. Without this check,
+                // when a whitespace block is wrapped, the cursor tends to jump to the vertical alignment of the previous
+                // line, rather than the line the cursor element is now actually on.
+                if (!selectionRectangle || verticalOverlap(node, nextRectangle) > verticalOverlap(node, selectionRectangle)) {
+                    selectionRectangle = nextRectangle;
+                }
+            }
+        }
+
+        return selectionRectangle;
+    }
+
+    /**
+     * Tweak the height and top offset of the caret to display closely inline in the text block.
+     * This uses ranges to account for line-height and text offsets
+     *
+     * This adjustment is necessary as various combinations of fonts and line sizes otherwise cause
+     * the caret to appear above or below the natural line of the text
+     * Fonts known to cause this problem:
+     * - STIXGeneral (MacOS, Chrome & Safari)
+     */
+    function updateVerticalCaretAlignment() {
+        var selectionRect = getSelectionRect(),
+            caretRect;
+
+        if (selectionRect) {
+            // Reset the top back to 0 so that the new client rect calculations are simple
+            // If this isn't done, the existing span's top setting would need to be taken into
+            // account (and converted if not in pixels) when calculating the new top value
+            span.style.top = "0";
+            caretRect = span.getBoundingClientRect();
+
+            if (selectionRect.height < MIN_CARET_HEIGHT_PX) {
+                // ClientRect's are read-only, so a whole new object is necessary to modify these values
+                selectionRect = {
+                    top: selectionRect.top - ((MIN_CARET_HEIGHT_PX - selectionRect.height) / 2),
+                    height: MIN_CARET_HEIGHT_PX
+                };
+            }
+            span.style.height = selectionRect.height + 'px';
+            span.style.top = (selectionRect.top - caretRect.top) + 'px';
+        } else {
+            // fallback to a relatively safe set of values
+            // This can happen if the caret is not currently visible, or is in the middle
+            // of a collection of nodes that have no client rects. In this case, the caret
+            // will fall back to the existing behaviour
+            span.style.height = DEFAULT_CARET_HEIGHT;
+            span.style.top = DEFAULT_CARET_TOP;
+        }
+    }
+    this.updateVerticalCaretAlignment = updateVerticalCaretAlignment;
+    
     this.refreshCursorBlinking = function () {
         if (blinkOnRangeSelect || cursor.getSelectedRange().collapsed) {
             shouldBlink = true;
@@ -205,6 +325,7 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
         } else if (caretRect.right > canvasContainerRect.right) {
             canvasContainerElement.scrollLeft += caretRect.right - canvasContainerRect.right;
         }
+        updateVerticalCaretAlignment();
     };
 
     /**
@@ -221,16 +342,16 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
             }
         });
     };
-
+    
     function init() {
         var dom = cursor.getOdtDocument().getDOM(),
             htmlns = dom.documentElement.namespaceURI;
-
         span = dom.createElementNS(htmlns, "span");
-
+        span.style.top = DEFAULT_CARET_TOP;
         cursorNode = cursor.getNode();
         cursorNode.appendChild(span);
         avatar = new gui.Avatar(cursorNode, avatarInitiallyVisible);
+        updateVerticalCaretAlignment();
     }
     init();
 };
