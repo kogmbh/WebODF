@@ -82,7 +82,7 @@ ops.OpRemoveAnnotation = function OpRemoveAnnotation() {
         odtDocument.getOdfCanvas().forgetAnnotations();
 
         // Move all cursors - outside and before the annotation node
-        cursors = domUtils.getElementsByTagNameNS(annotationNode, odf.Namespaces.webodfns + ':names:cursor', 'cursor');
+        cursors = domUtils.getElementsByTagNameNS(annotationNode, 'urn:webodf:names:cursor', 'cursor');
         while (cursors.length) {
             annotationNode.parentNode.insertBefore(cursors.pop(), annotationNode);
         }
