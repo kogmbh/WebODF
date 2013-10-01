@@ -296,6 +296,52 @@ core.DomUtilsTests = function DomUtilsTests(runner) {
         r.shouldBe(t, "t.result", "false");
     }
 
+    function removeUnwantedNodes_DiscardAll() {
+        var p = document.createElement("p"),
+            span1 = document.createElement("span"),
+            span2 = document.createElement("span"),
+            span3 = document.createElement("span"),
+            b = document.createElement("b");
+        b.textContent = "test";
+        span1.textContent = "hello";
+        span2.textContent = "world";
+        span3.appendChild(b);
+        p.appendChild(span1);
+        p.appendChild(span2);
+        p.appendChild(span3);
+        t.doc.appendChild(p);
+        t.parent = t.utils.removeUnwantedNodes(p, function (node) {
+            return node !== null;
+        });
+        r.shouldBe(t, "t.parent", "t.doc");
+        r.shouldBe(t, "t.parent.childNodes.length", "0");
+    }
+
+    function removeUnwantedNodes_DiscardSpanOnly() {
+        var p = document.createElement("p"),
+            span1 = document.createElement("span"),
+            span2 = document.createElement("span"),
+            span3 = document.createElement("span"),
+            b = document.createElement("b");
+        b.textContent = "test";
+        span1.textContent = "hello";
+        span2.textContent = "world";
+        span3.appendChild(b);
+        p.appendChild(span1);
+        p.appendChild(span2);
+        p.appendChild(span3);
+        t.doc.appendChild(p);
+        t.parent = t.utils.removeUnwantedNodes(p, function (node) {
+            return node.localName === 'span';
+        });
+        r.shouldBe(t, "t.parent", "t.doc");
+        r.shouldBe(t, "t.parent.firstChild.localName", "'p'");
+        r.shouldBe(t, "t.parent.firstChild.childNodes[0].textContent", "'hello'");
+        r.shouldBe(t, "t.parent.firstChild.childNodes[1].textContent", "'world'");
+        r.shouldBe(t, "t.parent.firstChild.childNodes[2].localName", "'b'");
+        r.shouldBe(t, "t.parent.firstChild.childNodes[2].firstChild.textContent", "'test'");
+    }
+
     this.tests = function () {
         return [
             normalizeTextNodes_TextWithTextSilblings,
@@ -315,7 +361,10 @@ core.DomUtilsTests = function DomUtilsTests(runner) {
 
             rangeContainsNode_ForFullyBracketedSpan_ReturnsTrue,
             rangeContainsNode_ForDifferentDepths_ReturnsTrue,
-            rangeContainsNode_ForAdjacentSpan_ReturnsFalse
+            rangeContainsNode_ForAdjacentSpan_ReturnsFalse,
+
+            removeUnwantedNodes_DiscardAll,
+            removeUnwantedNodes_DiscardSpanOnly
         ];
     };
     this.asyncTests = function () {

@@ -238,6 +238,7 @@ core.DomUtils = function DomUtils() {
     /**
      * Merge all child nodes into the targetNode's parent and remove the targetNode entirely
      * @param {Node} targetNode
+     * @return {Node} parent of targetNode
      */
     function mergeIntoParent(targetNode) {
         var parent = targetNode.parentNode;
@@ -248,6 +249,28 @@ core.DomUtils = function DomUtils() {
         return parent;
     }
     this.mergeIntoParent = mergeIntoParent;
+
+    /**
+     * Removes all unwanted nodes from targetNodes includes itself.
+     * @param {Node} targetNode
+     * @param {function(Node):!boolean} shouldRemove check whether a node should be removed or not
+     * @return {Node} parent of targetNode
+     */
+    function removeUnwantedNodes(targetNode, shouldRemove) {
+        var parent = targetNode.parentNode,
+            node = targetNode.firstChild,
+            next;
+        while (node) {
+            next = node.nextSibling;
+            removeUnwantedNodes(node, shouldRemove);
+            node = next;
+        }
+        if (shouldRemove(targetNode)) {
+            parent = mergeIntoParent(targetNode);
+        }
+        return parent;
+    }
+    this.removeUnwantedNodes = removeUnwantedNodes;
 
     /**
      * Get an array of nodes below the specified node with the specific namespace and tag name

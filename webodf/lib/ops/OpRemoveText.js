@@ -53,7 +53,9 @@ ops.OpRemoveText = function OpRemoveText() {
         length,
         odfUtils,
         domUtils,
-        editinfons = 'urn:webodf:names:editinfo';
+        editinfons = 'urn:webodf:names:editinfo',
+        /**@type {!Object.<!string, !boolean>}*/
+        odfNodeNamespaceMap = {};
 
     this.init = function (data) {
         runtime.assert(data.length >= 0, "OpRemoveText only supports positive lengths");
@@ -63,6 +65,22 @@ ops.OpRemoveText = function OpRemoveText() {
         length = parseInt(data.length, 10);
         odfUtils = new odf.OdfUtils();
         domUtils = new core.DomUtils();
+
+        // only add odf element namespaces here.
+        // Namespaces solely used for attributes are excluded. eg. fo, xlink & xml
+        odfNodeNamespaceMap[odf.Namespaces.dbns] = true;
+        odfNodeNamespaceMap[odf.Namespaces.dcns] = true;
+        odfNodeNamespaceMap[odf.Namespaces.dr3dns] = true;
+        odfNodeNamespaceMap[odf.Namespaces.drawns] = true;
+        odfNodeNamespaceMap[odf.Namespaces.chartns] = true;
+        odfNodeNamespaceMap[odf.Namespaces.formns] = true;
+        odfNodeNamespaceMap[odf.Namespaces.numberns] = true;
+        odfNodeNamespaceMap[odf.Namespaces.officens] = true;
+        odfNodeNamespaceMap[odf.Namespaces.presentationns] = true;
+        odfNodeNamespaceMap[odf.Namespaces.stylens] = true;
+        odfNodeNamespaceMap[odf.Namespaces.svgns] = true;
+        odfNodeNamespaceMap[odf.Namespaces.tablens] = true;
+        odfNodeNamespaceMap[odf.Namespaces.textns] = true;
     };
 
     /**
@@ -73,7 +91,16 @@ ops.OpRemoveText = function OpRemoveText() {
      */
     function CollapsingRules(rootNode) {
         /**
-         * Returns true if the supplied node contains no text or ODF character elements
+         * Returns true if the given node is an odf node
+         * @param {!Node} node
+         * @returns {!boolean}
+         */
+        function isOdfNode(node) {
+            return odfNodeNamespaceMap.hasOwnProperty(node.namespaceURI);
+        }
+
+        /**
+         * Returns true if the supplied node contains no text or ODF elements
          * @param {Node} node
          * @returns {boolean}
          */
@@ -87,7 +114,7 @@ ops.OpRemoveText = function OpRemoveText() {
             }
             childNode = node.firstChild;
             while (childNode) {
-                if (!isEmpty(childNode)) {
+                if (isOdfNode(childNode) || !isEmpty(childNode)) {
                     return false;
                 }
                 childNode = childNode.nextSibling;
@@ -109,11 +136,18 @@ ops.OpRemoveText = function OpRemoveText() {
 
         /**
          * Merge all child nodes into the node's parent and remove the node entirely
-         * @param {Node} node Node to merge into parent
+         * @param {Node} targetNode Node to merge into parent
          * @return {!Node} Final parent node collapsing ended at
          */
-        function mergeChildrenIntoParent(node) {
-            var parent = domUtils.mergeIntoParent(node);
+        function mergeChildrenIntoParent(targetNode) {
+            var parent;
+            if (targetNode.nodeType === Node.TEXT_NODE) {
+                parent = targetNode.parentNode;
+                parent.removeChild(targetNode);
+            } else {
+                // removes all odf nodes
+                parent = domUtils.removeUnwantedNodes(targetNode, isOdfNode);
+            }
             if (isCollapsibleContainer(parent)) {
                 return mergeChildrenIntoParent(parent);
             }
@@ -245,5 +279,4 @@ ops.OpRemoveText = function OpRemoveText() {
             length: length
         };
     };
-
 };
