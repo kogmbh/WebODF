@@ -172,8 +172,6 @@ gui.CaretManager = function CaretManager(sessionController) {
 
             // wire up the cursor update to caret visibility update
             cursor.handleUpdate = caret.ensureVisible;
-            // enable canvas to have focus
-            canvasElement.setAttribute("tabindex", 0);
             // Pass event focus to the session controller
             sessionController.getEventManager().focus();
         } else {
