@@ -162,7 +162,6 @@ gui.CaretManager = function CaretManager(sessionController) {
      */
     this.registerCursor = function (cursor, caretAvatarInitiallyVisible, blinkOnRangeSelect) {
         var memberid = cursor.getMemberId(),
-            canvasElement = getCanvasElement(),
             caret = new gui.Caret(cursor, caretAvatarInitiallyVisible, blinkOnRangeSelect);
 
         carets[memberid] = caret;
@@ -175,8 +174,8 @@ gui.CaretManager = function CaretManager(sessionController) {
             cursor.handleUpdate = caret.ensureVisible;
             // enable canvas to have focus
             canvasElement.setAttribute("tabindex", 0);
-            // wire up focus on canvas to caret
-            canvasElement.focus();
+            // Pass event focus to the session controller
+            sessionController.getEventManager().focus();
         } else {
             cursor.handleUpdate = caret.updateVerticalCaretAlignment;
         }
@@ -201,15 +200,15 @@ gui.CaretManager = function CaretManager(sessionController) {
      */
     this.destroy = function(callback) {
         var odtDocument = sessionController.getSession().getOdtDocument(),
-            canvasElement = getCanvasElement(),
+            eventManager = sessionController.getEventManager(),
             caretArray = getCarets();
 
         odtDocument.unsubscribe(ops.OdtDocument.signalParagraphChanged, ensureLocalCaretVisible);
         odtDocument.unsubscribe(ops.OdtDocument.signalCursorMoved, refreshLocalCaretBlinking);
         odtDocument.unsubscribe(ops.OdtDocument.signalCursorRemoved, removeCaret);
 
-        canvasElement.removeEventListener("focus", focusLocalCaret, false);
-        canvasElement.removeEventListener("blur", blurLocalCaret, false);
+        eventManager.unsubscribe("focus", focusLocalCaret);
+        eventManager.unsubscribe("blur", blurLocalCaret);
         window.removeEventListener("focus", showLocalCaret, false);
         window.removeEventListener("blur", hideLocalCaret, false);
 
@@ -228,14 +227,14 @@ gui.CaretManager = function CaretManager(sessionController) {
 
     function init() {
         var odtDocument = sessionController.getSession().getOdtDocument(),
-            canvasElement = getCanvasElement();
+            eventManager = sessionController.getEventManager();
 
         odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, ensureLocalCaretVisible);
         odtDocument.subscribe(ops.OdtDocument.signalCursorMoved, refreshLocalCaretBlinking);
         odtDocument.subscribe(ops.OdtDocument.signalCursorRemoved, removeCaret);
 
-        canvasElement.addEventListener("focus", focusLocalCaret, false);
-        canvasElement.addEventListener("blur", blurLocalCaret, false);
+        eventManager.subscribe("focus", focusLocalCaret);
+        eventManager.subscribe("blur", blurLocalCaret);
         window.addEventListener("focus", showLocalCaret, false);
         window.addEventListener("blur", hideLocalCaret, false);
     }

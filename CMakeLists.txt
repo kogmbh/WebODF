@@ -313,6 +313,7 @@ set(LIBJSFILES lib/packages.js lib/runtime.js lib/core/Base64.js
     lib/gui/DirectParagraphStyler.js
     lib/gui/ImageManager.js
     lib/gui/TextManipulator.js
+    lib/gui/EventManager.js
     lib/gui/SessionController.js
     lib/ops/MemberModel.js
     lib/ops/TrivialMemberModel.js

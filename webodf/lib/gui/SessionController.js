@@ -51,6 +51,7 @@ runtime.loadClass("gui.DirectTextStyler");
 runtime.loadClass("gui.DirectParagraphStyler");
 runtime.loadClass("gui.ImageManager");
 runtime.loadClass("gui.TextManipulator");
+runtime.loadClass("gui.EventManager");
 
 /**
  * @constructor
@@ -86,6 +87,7 @@ gui.SessionController = (function () {
             undoManager = null,
             imageManager = new gui.ImageManager(session, inputMemberId, objectNameGenerator),
             textManipulator = new gui.TextManipulator(session, inputMemberId),
+            eventManager = new gui.EventManager(odtDocument),
             directTextStyler = args && args.directStylingEnabled ? new gui.DirectTextStyler(session, inputMemberId) : null,
             directParagraphStyler = args && args.directStylingEnabled ? new gui.DirectParagraphStyler(session, inputMemberId, objectNameGenerator) : null;
 
@@ -94,48 +96,6 @@ gui.SessionController = (function () {
 
         keyboardMovementsFilter.addFilter('BaseFilter', baseFilter);
         keyboardMovementsFilter.addFilter('RootFilter', odtDocument.createRootFilter(inputMemberId));
-
-        /**
-         * @param {!Element|!Window} eventTarget
-         * @param {!string} eventType
-         * @param {function(!Event)|function()} eventHandler
-         * @param {boolean=} includeDirect
-         * @return {undefined}
-         */
-        function listenEvent(eventTarget, eventType, eventHandler, includeDirect) {
-            var onVariant = "on" + eventType,
-                bound = false;
-            if (eventTarget.attachEvent) {
-                bound = eventTarget.attachEvent(onVariant, eventHandler);
-            }
-            if (!bound && eventTarget.addEventListener) {
-                eventTarget.addEventListener(eventType, eventHandler, false);
-                bound = true;
-            }
-
-            if ((!bound || includeDirect) && eventTarget.hasOwnProperty(onVariant)) {
-                eventTarget[onVariant] = eventHandler;
-            }
-        }
-
-        /**
-         * @param {!Element|!Window} eventTarget
-         * @param {!string} eventType
-         * @param {function(!Event)|function()} eventHandler
-         * @return {undefined}
-         */
-        function removeEvent(eventTarget, eventType, eventHandler) {
-            var onVariant = "on" + eventType;
-            if (eventTarget.detachEvent) {
-                eventTarget.detachEvent(onVariant, eventHandler);
-            }
-            if (eventTarget.removeEventListener) {
-                eventTarget.removeEventListener(eventType, eventHandler, false);
-            }
-            if (eventTarget[onVariant] === eventHandler) {
-                eventTarget[onVariant] = null;
-            }
-        }
 
         /**
          * @param {!Event} event
@@ -414,7 +374,7 @@ gui.SessionController = (function () {
 
             // canvas element won't have focus if user click somewhere outside the canvas then drag and
             // release click inside the canvas.
-            canvasElement.focus();
+            eventManager.focus();
 
             return selection;
         }
@@ -1019,23 +979,19 @@ gui.SessionController = (function () {
          * @return {undefined}
          */
         this.startEditing = function () {
-            var canvasElement, op;
+            var op;
 
-            canvasElement = odtDocument.getOdfCanvas().getElement();
-            listenEvent(canvasElement, "keydown", keyDownHandler.handleEvent);
-            listenEvent(canvasElement, "keypress", keyPressHandler.handleEvent);
-            listenEvent(canvasElement, "keyup", dummyHandler);
-            // In Safari 6.0.5 (7536.30.1), Using either attachEvent or addEventListener
-            // results in the beforecut return value being ignored which prevents cut from being called.
-            listenEvent(canvasElement, "beforecut", handleBeforeCut, true);
-            listenEvent(canvasElement, "cut", handleCut);
-            listenEvent(canvasElement, "copy", handleCopy);
-            // Epiphany 3.6.1 requires this to allow the paste event to fire
-            listenEvent(canvasElement, "beforepaste", handleBeforePaste, true);
-            listenEvent(canvasElement, "paste", handlePaste);
-            listenEvent(window, "mousedown", filterMouseClicks);
-            listenEvent(window, "mouseup", handleMouseUp);
-            listenEvent(canvasElement, "contextmenu", handleContextMenu);
+            eventManager.subscribe("keydown", keyDownHandler.handleEvent);
+            eventManager.subscribe("keypress", keyPressHandler.handleEvent);
+            eventManager.subscribe("keyup", dummyHandler);
+            eventManager.subscribe("beforecut", handleBeforeCut);
+            eventManager.subscribe("cut", handleCut);
+            eventManager.subscribe("copy", handleCopy);
+            eventManager.subscribe("beforepaste", handleBeforePaste);
+            eventManager.subscribe("paste", handlePaste);
+            eventManager.subscribe("mousedown", filterMouseClicks);
+            eventManager.subscribe("mouseup", handleMouseUp);
+            eventManager.subscribe("contextmenu", handleContextMenu);
 
             // start maintaining the cursor selection now
             odtDocument.subscribe(ops.OdtDocument.signalOperationExecuted, maintainCursorSelection);
@@ -1055,23 +1011,22 @@ gui.SessionController = (function () {
          * @return {undefined}
          */
         this.endEditing = function () {
-            var canvasElement, op;
+            var op;
 
             odtDocument.unsubscribe(ops.OdtDocument.signalOperationExecuted, updateUndoStack);
             odtDocument.unsubscribe(ops.OdtDocument.signalOperationExecuted, maintainCursorSelection);
 
-            canvasElement = odtDocument.getOdfCanvas().getElement();
-            removeEvent(canvasElement, "keydown", keyDownHandler.handleEvent);
-            removeEvent(canvasElement, "keypress", keyPressHandler.handleEvent);
-            removeEvent(canvasElement, "keyup", dummyHandler);
-            removeEvent(canvasElement, "cut", handleCut);
-            removeEvent(canvasElement, "beforecut", handleBeforeCut);
-            removeEvent(canvasElement, "copy", handleCopy);
-            removeEvent(canvasElement, "paste", handlePaste);
-            removeEvent(canvasElement, "beforepaste", handleBeforePaste);
-            removeEvent(window, "mousedown", filterMouseClicks);
-            removeEvent(window, "mouseup", handleMouseUp);
-            removeEvent(canvasElement, "contextmenu", handleContextMenu);
+            eventManager.unsubscribe("keydown", keyDownHandler.handleEvent);
+            eventManager.unsubscribe("keypress", keyPressHandler.handleEvent);
+            eventManager.unsubscribe("keyup", dummyHandler);
+            eventManager.unsubscribe("cut", handleCut);
+            eventManager.unsubscribe("beforecut", handleBeforeCut);
+            eventManager.unsubscribe("copy", handleCopy);
+            eventManager.unsubscribe("paste", handlePaste);
+            eventManager.unsubscribe("beforepaste", handleBeforePaste);
+            eventManager.unsubscribe("mousedown", filterMouseClicks);
+            eventManager.unsubscribe("mouseup", handleMouseUp);
+            eventManager.unsubscribe("contextmenu", handleContextMenu);
 
             op = new ops.OpRemoveCursor();
             op.init({memberid: inputMemberId});
@@ -1151,6 +1106,13 @@ gui.SessionController = (function () {
          */
         this.getTextManipulator = function() {
             return textManipulator;
+        };
+
+        /**
+         * @returns {!gui.EventManager}
+         */
+        this.getEventManager = function() {
+            return eventManager;
         };
 
         /**

@@ -285,9 +285,7 @@ define("webodf/editor/Editor", [
             };
 
             function setFocusToOdfCanvas() {
-                if (odfCanvas) {
-                    odfCanvas.getElement().focus();
-                }
+                editorSession.sessionController.getEventManager().focus();
             }
 
             // init

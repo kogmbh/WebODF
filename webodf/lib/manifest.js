@@ -62,6 +62,7 @@
         "gui/DirectParagraphStyler.js",
         "gui/ImageManager.js",
         "gui/TextManipulator.js",
+        "gui/EventManager.js",
         "gui/SessionController.js",
         "gui/CaretManager.js",
         "gui/EditInfoHandle.js",
