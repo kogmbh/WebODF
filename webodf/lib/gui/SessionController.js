@@ -992,6 +992,7 @@ gui.SessionController = (function () {
             eventManager.subscribe("mousedown", filterMouseClicks);
             eventManager.subscribe("mouseup", handleMouseUp);
             eventManager.subscribe("contextmenu", handleContextMenu);
+            eventManager.subscribe("focus", maintainCursorSelection);
 
             // start maintaining the cursor selection now
             odtDocument.subscribe(ops.OdtDocument.signalOperationExecuted, maintainCursorSelection);
@@ -1027,6 +1028,7 @@ gui.SessionController = (function () {
             eventManager.unsubscribe("mousedown", filterMouseClicks);
             eventManager.unsubscribe("mouseup", handleMouseUp);
             eventManager.unsubscribe("contextmenu", handleContextMenu);
+            eventManager.unsubscribe("focus", maintainCursorSelection);
 
             op = new ops.OpRemoveCursor();
             op.init({memberid: inputMemberId});
