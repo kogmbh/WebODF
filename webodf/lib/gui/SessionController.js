@@ -802,12 +802,20 @@ gui.SessionController = (function () {
             var cursor = odtDocument.getCursor(inputMemberId),
                 selection = window.getSelection();
 
-            if (cursor) {
+            if (eventManager.hasFocus() && cursor) {
                 // May have just processed our own remove cursor operation...
                 // Probably not a good idea to try and update our selected range in this case ;-)
                 selection.removeAllRanges();
                 selection.addRange(cursor.getSelectedRange().cloneRange());
             }
+        }
+
+        /**
+         * The focus event will sometimes update the window's current selection after all
+         * event handlers have been called (observed on FF24, OSX).
+         */
+        function delayedMaintainCursor() {
+            runtime.setTimeout(maintainCursorSelection, 50);
         }
 
         /**
@@ -992,7 +1000,7 @@ gui.SessionController = (function () {
             eventManager.subscribe("mousedown", filterMouseClicks);
             eventManager.subscribe("mouseup", handleMouseUp);
             eventManager.subscribe("contextmenu", handleContextMenu);
-            eventManager.subscribe("focus", maintainCursorSelection);
+            eventManager.subscribe("focus", delayedMaintainCursor);
 
             // start maintaining the cursor selection now
             odtDocument.subscribe(ops.OdtDocument.signalOperationExecuted, maintainCursorSelection);
@@ -1028,7 +1036,7 @@ gui.SessionController = (function () {
             eventManager.unsubscribe("mousedown", filterMouseClicks);
             eventManager.unsubscribe("mouseup", handleMouseUp);
             eventManager.unsubscribe("contextmenu", handleContextMenu);
-            eventManager.unsubscribe("focus", maintainCursorSelection);
+            eventManager.unsubscribe("focus", delayedMaintainCursor);
 
             op = new ops.OpRemoveCursor();
             op.init({memberid: inputMemberId});
