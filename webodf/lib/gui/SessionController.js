@@ -488,7 +488,7 @@ gui.SessionController = (function () {
                 position: position,
                 length: length
             });
-            session.enqueue(op);
+            session.enqueue([op]);
         }
 
         /**
@@ -520,7 +520,7 @@ gui.SessionController = (function () {
                     (stepsToAnchor !== null && stepsToAnchor !== 0)) {
                     oldPosition = odtDocument.getCursorPosition(inputMemberId);
                     op = createOpMoveCursor(oldPosition + stepsToAnchor, stepsToFocus - stepsToAnchor);
-                    session.enqueue(op);
+                    session.enqueue([op]);
                 }
             }, 0);
         }
@@ -549,7 +549,7 @@ gui.SessionController = (function () {
                     : -stepCounter.convertBackwardStepsBetweenFilters(-lengthAdjust, keyboardMovementsFilter, baseFilter);
 
                 newLength = selection.length + lengthAdjust;
-                session.enqueue(createOpMoveCursor(selection.position, newLength));
+                session.enqueue([createOpMoveCursor(selection.position, newLength)]);
             }
         }
 
@@ -566,7 +566,7 @@ gui.SessionController = (function () {
                     : -stepCounter.convertBackwardStepsBetweenFilters(-positionAdjust, keyboardMovementsFilter, baseFilter);
 
                 position = position + positionAdjust;
-                session.enqueue(createOpMoveCursor(position, 0));
+                session.enqueue([createOpMoveCursor(position, 0)]);
             }
         }
 
@@ -827,7 +827,7 @@ gui.SessionController = (function () {
 
             iterator.moveToEnd();
             steps += odtDocument.getDistanceFromCursor(inputMemberId, iterator.container(), iterator.unfilteredDomOffset());
-            session.enqueue(createOpMoveCursor(0, steps));
+            session.enqueue([createOpMoveCursor(0, steps)]);
             return true;
         }
 
@@ -1043,7 +1043,7 @@ gui.SessionController = (function () {
 
             op = new ops.OpAddCursor();
             op.init({memberid: inputMemberId});
-            session.enqueue(op);
+            session.enqueue([op]);
 
             if (undoManager) {
                 // For most undo managers, the initial state is a clean document *with* a cursor present
@@ -1075,7 +1075,7 @@ gui.SessionController = (function () {
 
             op = new ops.OpRemoveCursor();
             op.init({memberid: inputMemberId});
-            session.enqueue(op);
+            session.enqueue([op]);
 
             if (undoManager) {
                 undoManager.resetInitialState();

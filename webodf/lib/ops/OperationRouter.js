@@ -59,14 +59,16 @@ ops.OperationRouter.prototype.setPlaybackFunction = function (playback_func) {"u
 
 /**
  * Brings the locally created operations into the game.
+ * The ops are guaranteed to be executed directly after each other, in the given order
+ * (first will be executed first).
  * TODO: currently all known implementations only use the specs of the operations,
  * so it might make sense to not create any operations outside of the operation router at all
  * and instead just create specs and pass them to this push method?
  *
- * @param {!ops.Operation} op
+ * @param {!Array.<!ops.Operation>} operations
  * @return {undefined}
  */
-ops.OperationRouter.prototype.push = function (op) {"use strict"; };
+ops.OperationRouter.prototype.push = function (operations) {"use strict"; };
 
 /**
  * Requests a gracefull shutdown of the Operation Router.

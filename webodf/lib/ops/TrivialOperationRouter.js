@@ -75,17 +75,19 @@ ops.TrivialOperationRouter = function TrivialOperationRouter() {
     /**
      * Brings the locally created operations into the game.
      *
-     * @param {!ops.Operation} op
+     * @param {!Array.<!ops.Operation>} operations
      * @return {undefined}
      */
-    this.push = function (op) {
-        var timedOp,
-            opspec = op.spec();
+    this.push = function (operations) {
+        operations.forEach(function(op) {
+            var timedOp,
+                opspec = op.spec();
 
-        opspec.timestamp = (new Date()).getTime();
-        timedOp = operationFactory.create(opspec);
+            opspec.timestamp = (new Date()).getTime();
+            timedOp = operationFactory.create(opspec);
 
-        playbackFunction(timedOp);
+            playbackFunction(timedOp);
+        });
     };
 
     this.close = function (cb) {

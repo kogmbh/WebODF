@@ -318,7 +318,7 @@ define("webodf/editor/EditorSession", [
                 length: length,
                 name: localMemberId + Date.now()
             });
-            session.enqueue(op);
+            session.enqueue([op]);
         };
 
         this.setCurrentParagraphStyle = function (value) {
@@ -330,7 +330,7 @@ define("webodf/editor/EditorSession", [
                     position: self.getCursorPosition(),
                     styleName: value
                 });
-                session.enqueue(op);
+                session.enqueue([op]);
             }
         };
 
@@ -345,7 +345,7 @@ define("webodf/editor/EditorSession", [
                 tableColumnStyleName: tableColumnStyleName,
                 tableCellStyleMatrix: tableCellStyleMatrix
             });
-            session.enqueue(op);
+            session.enqueue([op]);
         };
 
         /**
@@ -409,7 +409,7 @@ define("webodf/editor/EditorSession", [
                 setProperties: setProperties,
                 removedProperties: (!removedProperties) ? {} : removedProperties
             });
-            session.enqueue(op);
+            session.enqueue([op]);
         };
 
         /**
@@ -447,7 +447,7 @@ define("webodf/editor/EditorSession", [
                 styleFamily: 'paragraph',
                 setProperties: setProperties
             });
-            session.enqueue(op);
+            session.enqueue([op]);
 
             return newStyleName;
         };
@@ -460,7 +460,7 @@ define("webodf/editor/EditorSession", [
                 styleName: styleName,
                 styleFamily: 'paragraph'
             });
-            session.enqueue(op);
+            session.enqueue([op]);
         };
 
         /**

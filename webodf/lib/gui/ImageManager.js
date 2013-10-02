@@ -58,9 +58,9 @@ gui.ImageManager = function ImageManager(session, inputMemberId, objectNameGener
 
     /**
      * @param {!string} name
-     * @return {undefined}
+     * @return {!ops.Operation}
      */
-    function addGraphicsStyle(name) {
+    function createAddGraphicsStyleOp(name) {
         var op = new ops.OpAddStyle();
         op.init({
             memberid: inputMemberId,
@@ -82,15 +82,15 @@ gui.ImageManager = function ImageManager(session, inputMemberId, objectNameGener
                 }
             }
         });
-        session.enqueue(op);
+        return op;
     }
 
     /**
      * @param {!string} styleName
      * @param {!string} parentStyleName
-     * @return {undefined}
+     * @return {!ops.Operation}
      */
-    function addFrameStyle(styleName, parentStyleName) {
+    function createAddFrameStyleOp(styleName, parentStyleName) {
         var op = new ops.OpAddStyle();
         op.init({
             memberid: inputMemberId,
@@ -123,7 +123,7 @@ gui.ImageManager = function ImageManager(session, inputMemberId, objectNameGener
                 }
             }
         });
-        session.enqueue(op);
+        return op;
     }
 
     /**
@@ -149,7 +149,7 @@ gui.ImageManager = function ImageManager(session, inputMemberId, objectNameGener
             fileName,
             graphicsStyleElement,
             frameStyleName,
-            op;
+            op, operations = [];
 
         runtime.assert(fileExtension !== null, "Image type is not supported: " + mimetype);
         fileName = "Pictures/" + objectNameGenerator.generateImageName() + fileExtension;
@@ -162,18 +162,21 @@ gui.ImageManager = function ImageManager(session, inputMemberId, objectNameGener
             mimetype: mimetype,
             content: content
         });
-        session.enqueue(op);
+        operations.push(op);
 
         // Add the 'Graphics' style if it does not exist in office:styles. It is required by LO to popup the
         // picture option dialog when double clicking the image
+        // TODO: in collab mode this can result in unsolvable conflict if two add this style at the same time
         graphicsStyleElement = formatting.getStyleElement(graphicsStyleName, "graphic", [stylesElement]);
         if (!graphicsStyleElement) {
-            addGraphicsStyle(graphicsStyleName);
+            op = createAddGraphicsStyleOp(graphicsStyleName);
+            operations.push(op);
         }
 
         // TODO: reuse an existing graphic style (if there is one) that has same style as default;
         frameStyleName = objectNameGenerator.generateStyleName();
-        addFrameStyle(frameStyleName, graphicsStyleName);
+        op = createAddFrameStyleOp(frameStyleName, graphicsStyleName);
+        operations.push(op);
 
         op = new ops.OpInsertImage();
         op.init({
@@ -185,7 +188,9 @@ gui.ImageManager = function ImageManager(session, inputMemberId, objectNameGener
             frameStyleName: frameStyleName,
             frameName: objectNameGenerator.generateFrameName()
         });
-        session.enqueue(op);
+        operations.push(op);
+
+        session.enqueue(operations);
     }
 
     /**

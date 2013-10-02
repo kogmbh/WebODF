@@ -207,7 +207,7 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
             length: selection.length,
             setProperties: {'style:text-properties' : properties }
         });
-        session.enqueue(op);
+        session.enqueue([op]);
     }
 
     /**

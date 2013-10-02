@@ -136,18 +136,20 @@ define("webodf/editor/server/nowjs/OperationRouter", [], function () {
         /**
          * Brings the locally created operations into the game.
          *
-         * @param {!ops.Operation} op
+         * @param {!Array.<!ops.Operation>} operations
          * @return {undefined}
          */
-        this.push = function (op) {
-            // add client nonce and reference to server-side-op-sequence
-            var opspec = op.spec();
-            opspec.client_nonce = nextNonce();
-            opspec.parent_op = last_server_seq+"+"+sends_since_server_op;
-            sends_since_server_op += 1;
+        this.push = function (operations) {
+            operations.forEach(function(op) {
+                // add client nonce and reference to server-side-op-sequence
+                var opspec = op.spec();
+                opspec.client_nonce = nextNonce();
+                opspec.parent_op = last_server_seq+"+"+sends_since_server_op;
+                sends_since_server_op += 1;
 
-            runtime.log("op out: "+runtime.toJson(opspec));
-            nowObject.deliverOp(sessionId, opspec);
+                runtime.log("op out: "+runtime.toJson(opspec));
+                nowObject.deliverOp(sessionId, opspec);
+            });
         };
 
         this.requestReplay = function (done_cb) {

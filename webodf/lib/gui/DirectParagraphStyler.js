@@ -211,8 +211,7 @@ gui.DirectParagraphStyler = function DirectParagraphStyler(session, inputMemberI
                 position: paragraphStartPoint
             });
 
-            session.enqueue(opAddStyle);
-            session.enqueue(opSetParagraphStyle);
+            session.enqueue([opAddStyle, opSetParagraphStyle]);
         });
     }
 

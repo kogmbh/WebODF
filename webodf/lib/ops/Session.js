@@ -112,11 +112,11 @@ ops.Session = function Session(odfCanvas) {
     /**
      * Controller sends operations to this method.
      *
-     * @param {!ops.Operation} operation
+     * @param {!Array.<!ops.Operation>} ops
      * @return {undefined}
      */
-    this.enqueue = function (operation) {
-        operationRouter.push(operation);
+    this.enqueue = function (ops) {
+        operationRouter.push(ops);
     };
 
     /**

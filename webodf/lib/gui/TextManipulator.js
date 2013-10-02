@@ -79,11 +79,11 @@ gui.TextManipulator = function TextManipulator(session, inputMemberId) {
      */
     this.enqueueParagraphSplittingOps = function() {
         var selection = toForwardSelection(odtDocument.getCursorSelection(inputMemberId)),
-            op;
+            op, operations = [];
 
         if (selection.length > 0) {
             op = createOpRemoveSelection(selection);
-            session.enqueue(op);
+            operations.push(op);
         }
 
         op = new ops.OpSplitParagraph();
@@ -91,7 +91,7 @@ gui.TextManipulator = function TextManipulator(session, inputMemberId) {
             memberid: inputMemberId,
             position: selection.position
         });
-        session.enqueue(op);
+        operations.push(op);
 
         // disabled for now, because nowjs seems to revert the order of the ops, which does not work here TODO: grouping of ops
         /*
@@ -106,11 +106,12 @@ gui.TextManipulator = function TextManipulator(session, inputMemberId) {
                     position: position + 1, // +1 should be at the start of the new paragraph
                     styleName: nextStyleName
                 });
-                session.enqueue(op);
+                operations.push(op);
             }
          }
          */
 
+        session.enqueue(operations);
         return true;
     };
 
@@ -132,11 +133,11 @@ gui.TextManipulator = function TextManipulator(session, inputMemberId) {
                     position: selection.position - 1,
                     length: 1
                 });
-                session.enqueue(op);
+                session.enqueue([op]);
             }
         } else {
             op = createOpRemoveSelection(selection);
-            session.enqueue(op);
+            session.enqueue([op]);
         }
         return op !== null;
     };
@@ -159,11 +160,11 @@ gui.TextManipulator = function TextManipulator(session, inputMemberId) {
                     position: selection.position,
                     length: 1
                 });
-                session.enqueue(op);
+                session.enqueue([op]);
             }
         } else {
             op = createOpRemoveSelection(selection);
-            session.enqueue(op);
+            session.enqueue([op]);
         }
         return op !== null;
     };
@@ -177,7 +178,7 @@ gui.TextManipulator = function TextManipulator(session, inputMemberId) {
             op;
         if (selection.length !== 0) {
             op = createOpRemoveSelection(selection);
-            session.enqueue(op);
+            session.enqueue([op]);
         }
         return true; // The function is always considered handled, even if nothing is removed
     };
@@ -189,11 +190,11 @@ gui.TextManipulator = function TextManipulator(session, inputMemberId) {
      */
     function insertText(text) {
         var selection = toForwardSelection(odtDocument.getCursorSelection(inputMemberId)),
-            op = null;
+            op, operations = [];
 
         if (selection.length > 0) {
             op = createOpRemoveSelection(selection);
-            session.enqueue(op);
+            operations.push(op);
         }
 
         op = new ops.OpInsertText();
@@ -202,7 +203,9 @@ gui.TextManipulator = function TextManipulator(session, inputMemberId) {
             position: selection.position,
             text: text
         });
-        session.enqueue(op);
+        operations.push(op);
+
+        session.enqueue(operations);
     }
     this.insertText = insertText;
 };
