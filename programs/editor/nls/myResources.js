@@ -91,7 +91,8 @@ define({
         color: "Color",
         text: "Text",
         background: "Background",
-        defaultStyle: "Default Style"
+        defaultStyle: "Default Style",
+        insertImage: "Insert Image"
     },
 
     de: true,

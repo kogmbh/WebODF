@@ -1,6 +1,7 @@
 /**
- * Copyright (C) 2012 KO GmbH <copyright@kogmbh.com>
-
+ * @license
+ * Copyright (C) 2012-2013 KO GmbH <copyright@kogmbh.com>
+ *
  * @licstart
  * The JavaScript code in this page is free software: you can redistribute it
  * and/or modify it under the terms of the GNU Affero General Public License
@@ -31,32 +32,35 @@
  * @source: http://www.webodf.org/
  * @source: http://gitorious.org/webodf/webodf/
  */
-(function () {
+
+/*global ops */
+
+/**
+ * @constructor
+ * @implements ops.Operation
+ */
+ops.OpRemoveBlob = function OpRemoveBlob() {
     "use strict";
-    return [
-        "core/Base64Tests.js",
-        "core/DomUtilsTests.js",
-        "core/CursorTests.js",
-        "core/PositionIteratorTests.js",
-        "core/RuntimeTests.js",
-        "core/ZipTests.js",
-        "gui/UndoStateRulesTests.js",
-        "gui/TrivialUndoManagerTests.js",
-        "gui/SelectionMoverTests.js",
-        "gui/StyleHelperTests.js",
-        "gui/XMLEditTests.js",
-        "odf/OdfUtilsTests.js",
-        "odf/TextStyleApplicatorTests.js",
-        "odf/ObjectNameGeneratorTests.js",
-        "odf/FormattingTests.js",
-        "odf/OdfContainerTests.js",
-        "odf/StyleInfoTests.js",
-        "ops/OdtCursorTests.js",
-        "ops/OdtDocumentTests.js",
-        "ops/OperationTests.js",
-        "ops/SessionTests.js",
-        "tests.js",
-        "xmldom/LSSerializerTests.js",
-        "xmldom/XPathTests.js"
-    ];
-}());
+
+    var memberid, timestamp, filename;
+
+    this.init = function (data) {
+        memberid = data.memberid;
+        timestamp = data.timestamp;
+        filename = data.filename;
+    };
+
+    this.execute = function (odtDocument) {
+        odtDocument.getOdfCanvas().odfContainer().removeBlob(filename);
+        return true;
+    };
+
+    this.spec = function () {
+        return {
+            optype: "RemoveBlob",
+            memberid: memberid,
+            timestamp: timestamp,
+            filename: filename
+        };
+    };
+};

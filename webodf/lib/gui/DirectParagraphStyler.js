@@ -46,9 +46,9 @@ runtime.loadClass("gui.StyleHelper");
  * @constructor
  * @param {!ops.Session} session
  * @param {!string} inputMemberId
- * @param {!odf.StyleNameGenerator} styleNameGenerator
+ * @param {!odf.ObjectNameGenerator} objectNameGenerator
  */
-gui.DirectParagraphStyler = function DirectParagraphStyler(session, inputMemberId, styleNameGenerator) {
+gui.DirectParagraphStyler = function DirectParagraphStyler(session, inputMemberId, objectNameGenerator) {
     "use strict";
 
     var odtDocument = session.getOdtDocument(),
@@ -182,7 +182,7 @@ gui.DirectParagraphStyler = function DirectParagraphStyler(session, inputMemberI
         paragraphs.forEach(function(paragraph) {
             var paragraphStartPoint = position + odtDocument.getDistanceFromCursor(inputMemberId, paragraph, 0),
                 paragraphStyleName = paragraph.getAttributeNS(odf.Namespaces.textns, "style-name"),
-                newParagraphStyleName = styleNameGenerator.generateName(),
+                newParagraphStyleName = objectNameGenerator.generateStyleName(),
                 opAddStyle,
                 opSetParagraphStyle,
                 paragraphProperties;

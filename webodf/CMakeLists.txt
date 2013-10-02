@@ -16,7 +16,7 @@ set(TESTJSFILES tests/core/ZipTests.js
     tests/gui/XMLEditTests.js
     tests/gui/StyleHelperTests.js
     tests/odf/OdfUtilsTests.js
-    tests/odf/StyleNameGeneratorTests.js
+    tests/odf/ObjectNameGeneratorTests.js
     tests/odf/FormattingTests.js
     tests/odf/OdfContainerTests.js
     tests/odf/StyleInfoTests.js

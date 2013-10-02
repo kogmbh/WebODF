@@ -1180,4 +1180,15 @@
   </ops>
   <after><office:text><text:p>ab<office:annotation office:name="alice_1"><dc:creator e:memberid="Alice"></dc:creator><dc:date>2013-08-05T12:34:07.061Z</dc:date><text:list><text:list-item><text:p><c:cursor c:memberId="Alice"/></text:p></text:list-item></text:list></office:annotation>cd12<office:annotation-end office:name="alice_1"/><c:cursor c:memberId="Bob"/></text:p></office:text></after>
  </test>
+ <test name="InsertImage">
+  <before>
+   <office:text><text:p><text:span>HelloWorld</text:span><draw:frame draw:name="graphics1"><draw:image/></draw:frame></text:p></office:text>
+  </before>
+  <ops>
+   <op optype="InsertImage" position="5" filename="Pictures/helloworld.jpg" base64string='HELLOWORLD' frameWidth="5cm" frameHeight="6cm" frameStyleName="fr1" frameName="graphics2" />
+  </ops>
+  <after>
+   <office:text><text:p><text:span>Hello<draw:frame draw:name="graphics2" draw:style-name="fr1" text:anchor-type="as-char" svg:width="5cm" svg:height="6cm" styleid="graphics2"><draw:image xlink:href="Pictures/helloworld.jpg" xlink:type="simple" xlink:actuate="onLoad" xlink:show="embed" styleid="graphics2img"/></draw:frame>World</text:span><draw:frame draw:name="graphics1"><draw:image/></draw:frame></text:p></office:text>
+  </after>
+ </test>
 </tests>

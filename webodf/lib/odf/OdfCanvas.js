@@ -355,7 +355,7 @@ odf.OdfCanvas = (function () {
         /**@const@type {!string}*/presentationns = odf.Namespaces.presentationns,
         /**@type{?Window}*/window = runtime.getWindow(),
         xpath = new xmldom.XPath(),
-        utils = new odf.OdfUtils(),
+        odfUtils = new odf.OdfUtils(),
         domUtils = new core.DomUtils(),
         /** FIXME: shadowContent needs to be part of OdfCanvas instance, not class */
         shadowContent;
@@ -930,7 +930,7 @@ odf.OdfCanvas = (function () {
                 if (styleName) {
                     node = listStyleMap[styleName];
                     // TODO: getFirstNonWhitespaceChild() could also return a comment. Ensure the result is proper!
-                    bulletRule = getBulletsRule(/**@type{Element|undefined}*/(utils.getFirstNonWhitespaceChild(node)));
+                    bulletRule = getBulletsRule(/**@type{Element|undefined}*/(odfUtils.getFirstNonWhitespaceChild(node)));
                 }
 
                 if (continueList) {
@@ -1583,6 +1583,16 @@ odf.OdfCanvas = (function () {
             return element;
         };
 
+        /**
+         * Add additional css rules for newly inserted draw:frame and draw:image. eg. position, dimensions and background image
+         * @param {!Element} frame
+         */
+        this.addCssForFrameWithImage = function (frame) {
+            // TODO: frameid and imageid generation here is better brought in sync with that for the images on loading of a odf file.
+            var frameName = frame.getAttributeNS(drawns, 'name');
+            setFramePosition(odfcontainer, frameName, frame, positioncss.sheet);
+            setImage(frameName + 'img', odfcontainer, /**@type{!Element}*/(frame.firstChild), positioncss.sheet);
+        };
         /**
          * @param {!function(!Object=)} callback, passing an error object in case of error
          * @return {undefined}

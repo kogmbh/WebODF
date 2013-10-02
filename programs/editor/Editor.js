@@ -298,6 +298,7 @@ define("webodf/editor/Editor", [
                     memberListElement = document.getElementById('memberList'),
                     collabEditing = Boolean(server),
                     directStylingEnabled = (! collabEditing) || args.unstableFeaturesEnabled,
+                    imageInsertingEnabled = (! collabEditing) || args.unstableFeaturesEnabled,
                     // annotations not yet properly supported for OT
                     annotationsEnabled = (! collabEditing) || args.unstableFeaturesEnabled,
                      // undo manager is not yet integrated with collaboration
@@ -373,6 +374,7 @@ define("webodf/editor/Editor", [
                         saveOdtFile: saveOdtFile,
                         close: close,
                         directStylingEnabled: directStylingEnabled,
+                        imageInsertingEnabled: imageInsertingEnabled,
                         annotationsEnabled: annotationsEnabled,
                         undoRedoEnabled: undoRedoEnabled
                     });
@@ -391,7 +393,8 @@ define("webodf/editor/Editor", [
                     session = new ops.Session(odfCanvas);
                     editorSession = new EditorSession(session, pendingMemberId, {
                         viewOptions: viewOptions,
-                        directStylingEnabled: directStylingEnabled
+                        directStylingEnabled: directStylingEnabled,
+                        imageInsertingEnabled: imageInsertingEnabled
                     });
                     if (undoRedoEnabled) {
                         editorSession.sessionController.setUndoManager(new gui.TrivialUndoManager());

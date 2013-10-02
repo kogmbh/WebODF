@@ -456,6 +456,22 @@ core.Zip = function Zip(url, entriesReadCallback) {
         entries.push(entry);
     }
     /**
+     * Removes entry from the zip.
+     * @param {!string} filename
+     * @return {!boolean} return false if entry is not found; otherwise true.
+     */
+    function remove(filename) {
+        var i, entry;
+        for (i = 0; i < entries.length; i += 1) {
+            entry = entries[i];
+            if (entry.filename === filename) {
+                entries.splice(i, 1);
+                return true;
+            }
+        }
+        return false;
+    }
+    /**
      * @param {!ZipEntry} entry
      * @return {!core.ByteArrayWriter}
      */
@@ -587,9 +603,9 @@ core.Zip = function Zip(url, entriesReadCallback) {
     function write(callback) {
         writeAs(url, callback);
     }
-
     this.load = load;
     this.save = save;
+    this.remove = remove;
     this.write = write;
     this.writeAs = writeAs;
     this.createByteArray = createByteArray;

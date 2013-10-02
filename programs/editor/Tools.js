@@ -46,8 +46,9 @@ define("webodf/editor/Tools", [
     "webodf/editor/widgets/undoRedoMenu",
     "webodf/editor/widgets/toolbarWidgets/currentStyle",
     "webodf/editor/widgets/paragraphStylesDialog",
+    "webodf/editor/widgets/imageInserter",
     "webodf/editor/widgets/zoomSlider"],
-    function (ready, MenuItem, DropDownMenu, Button, DropDownButton, Toolbar, ParagraphAlignment, SimpleStyles, UndoRedoMenu, CurrentStyle, ParagraphStylesDialog, ZoomSlider) {
+    function (ready, MenuItem, DropDownMenu, Button, DropDownButton, Toolbar, ParagraphAlignment, SimpleStyles, UndoRedoMenu, CurrentStyle, ParagraphStylesDialog, ImageInserter, ZoomSlider) {
         "use strict";
 
         return function Tools(args) {
@@ -64,6 +65,7 @@ define("webodf/editor/Tools", [
                 undoRedoMenu,
                 editorSession,
                 paragraphAlignment,
+                imageInserter,
                 sessionSubscribers = [];
 
             function setEditorSession(session) {
@@ -201,6 +203,15 @@ define("webodf/editor/Tools", [
                 });
                 sessionSubscribers.push(paragraphStylesDialog);
                 paragraphStylesDialog.onToolDone = onToolDone;
+
+                if (args.imageInsertingEnabled) {
+                    imageInserter = new ImageInserter(function (widget) {
+                        widget.placeAt(toolbar);
+                        widget.startup();
+                    });
+                    sessionSubscribers.push(imageInserter);
+                    imageInserter.onToolDone = onToolDone;
+                }
 
                 formatMenuButton = new DropDownButton({
                     dropDown: formatDropDownMenu,

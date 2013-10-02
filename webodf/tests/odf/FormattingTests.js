@@ -60,12 +60,20 @@ odf.FormattingTests = function FormattingTests(runner) {
         t = {};
         core.UnitTest.cleanupTestAreaDiv();
     };
-    function createDocument(dom) {
+    /**
+     * @param {!string} dom
+     * @param {string=} pageLayoutStyle
+     * @returns {!Node}
+     */
+    function createDocument(dom, pageLayoutStyle) {
         var xml, container, fragment;
 
         xml = "<office:styles>";
-        xml += "    <style:style style:name='P1' style:display-name='P1 Display' style:family='paragraph'>";
+        xml += "    <style:style style:name='P1' style:display-name='P1 Display' style:family='paragraph' master-page-name='Index'>";
         xml += "        <style:text-properties fo:font-name='P1 Font' />";
+        xml += "    </style:style>";
+        xml += "    <style:style style:name='P2' style:display-name='P1 Display' style:family='paragraph'>";
+        xml += "        <style:text-properties fo:font-name='P2 Font' />";
         xml += "    </style:style>";
         xml += "    <style:style style:name='S1' style:display-name='S1 Display' style:family='text'>";
         xml += "        <style:text-properties fo:font-name='S1 Font' />";
@@ -76,6 +84,7 @@ odf.FormattingTests = function FormattingTests(runner) {
         xml += "</office:styles>";
 
         xml += "<office:automatic-styles>";
+        xml += pageLayoutStyle;
         xml += "    <text:list-style style:name='L1' style:display-name='L1 Display'>";
         xml += "        <text:list-level-style-bullet text:level='1' text:bullet-char='*' />";
         xml += "        <text:list-level-style-bullet text:level='2' text:bullet-char='@' />";
@@ -92,11 +101,17 @@ odf.FormattingTests = function FormattingTests(runner) {
         xml += "</office:automatic-styles>";
         xml += "<office:text>" + dom + "</office:text>";
 
+        xml += "<office:master-styles>";
+        xml += "    <style:master-page style:name='Standard' style:page-layout-name='pm1'/>";
+        xml += "    <style:master-page style:name='Index' style:page-layout-name='pm2'/>";
+        xml += "</office:master-styles>";
+
         fragment = core.UnitTest.createOdtDocument(xml, namespace);
         t.body.appendChild(fragment.documentElement);
         container = { rootElement : {
             styles : t.body.firstChild.childNodes[0],
-            automaticStyles: t.body.firstChild.childNodes[1]
+            automaticStyles: t.body.firstChild.childNodes[1],
+            masterStyles : t.body.firstChild.childNodes[2]
         }};
         t.formatting.setOdfContainer(container);
         t.range = t.body.ownerDocument.createRange();
@@ -194,13 +209,6 @@ odf.FormattingTests = function FormattingTests(runner) {
         r.shouldBe(t, "t.newStyle['style:family']", "'text'");
         r.shouldBe(t, "t.newStyle['style:text-properties']", "({ 'fo:font-weight' : 'bold' })");
     }
-    function getAllStyleNames_ReturnsAllStyle_AndListStyle_Elements() {
-        createDocument("<text:p/>");
-
-        t.styleNames = t.formatting.getAllStyleNames();
-
-        r.shouldBe(t, "t.styleNames", "['L1','L2','autoWithInherit','autoWithoutInherit','P1','S1','S2']");
-    }
     function getStyleAttributes_ReturnsAllStyleAttributes() {
         createDocument("<text:p/>");
         t.styleElement = t.formatting.getStyleElement('P1', 'paragraph');
@@ -211,6 +219,16 @@ odf.FormattingTests = function FormattingTests(runner) {
         r.shouldBe(t, "t.styleAttributes['style:display-name']", "'P1 Display'");
         r.shouldBe(t, "t.styleAttributes['style:family']", "'paragraph'");
         r.shouldBe(t, "t.styleAttributes['style:text-properties']", "({'fo:font-name':'P1 Font'})");
+    }
+    function getContentSize_PageSizePaddingAndMarginSpecified() {
+        createDocument("<text:p style:name='P1'/>", "<style:page-layout name='pm2' scope='document-styles'><style:page-layout-properties fo:page-width='10cm' fo:page-height='20cm' fo:margin-top='1cm' fo:margin-bottom='0cm' fo:margin-left='1.5cm' fo:margin-right='1.5cm' fo:padding='3cm' /></style:page-layout>");
+        t.contentSize = t.formatting.getContentSize("P1", "paragraph");
+        r.shouldBe(t, "t.contentSize", "({'width':1,'height':13})");
+    }
+    function getContentSize_PageSizePaddingAndMarginNotSpecified() {
+        createDocument("<text:p style:name='P2'/>", "<style:page-layout name='pm1' scope='document-styles'><style:page-layout-properties style:print-orientation='landscape' /></style:page-layout>");
+        t.contentSize = t.formatting.getContentSize("P2", "paragraph");
+        r.shouldBe(t, "t.contentSize", "({'width':25.7,'height':17.001})");
     }
     this.tests = function () {
         return [
@@ -226,9 +244,10 @@ odf.FormattingTests = function FormattingTests(runner) {
             createDerivedStyleObject_AutomaticStyle_Inherited,
             createDerivedStyleObject_AutomaticStyle_NonInherited,
 
-            getAllStyleNames_ReturnsAllStyle_AndListStyle_Elements,
+            getStyleAttributes_ReturnsAllStyleAttributes,
 
-            getStyleAttributes_ReturnsAllStyleAttributes
+            getContentSize_PageSizePaddingAndMarginSpecified,
+            getContentSize_PageSizePaddingAndMarginNotSpecified
         ];
     };
     this.asyncTests = function () {

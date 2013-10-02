@@ -117,6 +117,35 @@ core.ZipTests = function ZipTests(runner) {
         });
     }
 
+    function testSave() {
+        var zip = new core.Zip("savetest.zip", null),
+            data = runtime.byteArrayFromString("hello", "utf8");
+        zip.save("a", data, false, new Date());
+        zip.save("b", data, false, new Date());
+        zip.save("c", data, false, new Date());
+        t.entries = zip.getEntries();
+        r.shouldBe(t, "t.entries.length", "3");
+        r.shouldBe(t, "t.entries[0].filename", "'a'");
+        r.shouldBe(t, "t.entries[1].filename", "'b'");
+        r.shouldBe(t, "t.entries[2].filename", "'c'");
+    }
+
+    function testRemove() {
+        var zip = new core.Zip("savetest.zip", null),
+            data = runtime.byteArrayFromString("hello", "utf8");
+        zip.save("a", data, false, new Date());
+        zip.save("b", data, false, new Date());
+        zip.save("c", data, false, new Date());
+        t.removeA = zip.remove("a");
+        t.remove1 = zip.remove("1");
+        t.entries = zip.getEntries();
+        r.shouldBe(t, "t.removeA", "true");
+        r.shouldBe(t, "t.remove1", "false");
+        r.shouldBe(t, "t.entries.length", "2");
+        r.shouldBe(t, "t.entries[0].filename", "'b'");
+        r.shouldBe(t, "t.entries[1].filename", "'c'");
+    }
+
     this.setUp = function () {
         t = {};
     };
@@ -124,7 +153,10 @@ core.ZipTests = function ZipTests(runner) {
         t = {};
     };
     this.tests = function () {
-        return [];
+        return [
+            testSave,
+            testRemove
+        ];
     };
     this.asyncTests = function () {
         return [

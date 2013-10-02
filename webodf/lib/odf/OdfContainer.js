@@ -847,7 +847,29 @@ odf.OdfContainer = (function () {
             // TODO: saveAs seems to not update the url, is that wanted?
             return url;
         };
-
+        /**
+         * Add a new blob or overwrite any existing blob which has the same filename.
+         * @param {!string} filename
+         * @param {!string} mimetype
+         * @param {!string} content base64 encoded string
+         */
+        this.setBlob = function (filename, mimetype, content) {
+            var data = base64.convertBase64ToByteArray(content),
+                date = new Date();
+            zip.save(filename, data, false, date);
+            if (partMimetypes.hasOwnProperty(filename)) {
+                runtime.log(filename + " has been overwritten.");
+            }
+            partMimetypes[filename] = mimetype;
+        };
+        /**
+         * @param {!string} filename
+         */
+        this.removeBlob = function (filename) {
+            var foundAndRemoved = zip.remove(filename);
+            runtime.assert(foundAndRemoved, "file is not found: " + filename);
+            delete partMimetypes[filename];
+        };
         // initialize public variables
         this.state = OdfContainer.LOADING;
         this.rootElement = createElement(ODFDocumentElement);

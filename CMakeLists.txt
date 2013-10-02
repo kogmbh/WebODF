@@ -276,7 +276,7 @@ set(LIBJSFILES lib/packages.js lib/runtime.js lib/core/Base64.js
     lib/odf/Style2CSS.js
     lib/odf/OdfContainer.js
     lib/odf/FontLoader.js
-    lib/odf/StyleNameGenerator.js
+    lib/odf/ObjectNameGenerator.js
     lib/odf/Formatting.js
     lib/odf/OdfCanvas.js
     lib/odf/CommandLineTools.js
@@ -288,6 +288,9 @@ set(LIBJSFILES lib/packages.js lib/runtime.js lib/core/Base64.js
     lib/ops/OpApplyDirectStyling.js
     lib/ops/OpRemoveCursor.js
     lib/ops/OpMoveCursor.js
+    lib/ops/OpSetBlob.js
+    lib/ops/OpRemoveBlob.js
+    lib/ops/OpInsertImage.js
     lib/ops/OpInsertTable.js
     lib/ops/OpInsertText.js
     lib/ops/OpRemoveText.js
@@ -308,6 +311,7 @@ set(LIBJSFILES lib/packages.js lib/runtime.js lib/core/Base64.js
     lib/gui/Clipboard.js
     lib/gui/DirectTextStyler.js
     lib/gui/DirectParagraphStyler.js
+    lib/gui/ImageManager.js
     lib/gui/TextManipulator.js
     lib/gui/SessionController.js
     lib/ops/MemberModel.js
