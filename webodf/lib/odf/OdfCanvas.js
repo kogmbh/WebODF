@@ -423,6 +423,23 @@ odf.OdfCanvas = (function () {
     }
 
     /**
+     * @param {!Node} clonedNode
+     * @return {undefined}
+     */
+    function dropTemplateDrawFrames(clonedNode) {
+        // drop all frames which are just template frames
+        var i, element, presentationClass,
+            clonedDrawFrameElements = clonedNode.getElementsByTagNameNS(drawns, 'frame');
+        for (i = 0; i < clonedDrawFrameElements.length; i += 1) {
+            element = clonedDrawFrameElements[i];
+            presentationClass = element.getAttributeNS(presentationns, 'class');
+            if (presentationClass && ! /^(date-time|footer|header|page-number')$/.test(presentationClass)) {
+                element.parentNode.removeChild(element);
+            }
+        }
+    }
+
+    /**
      * @param {!odf.OdfContainer} odfContainer
      * @param {!string} id
      * @param {!Node} frame
@@ -468,6 +485,8 @@ odf.OdfCanvas = (function () {
                 node = node.nextElementSibling;
                 j += 1;
             }
+            // TODO: above already do not clone nodes which match the rule for being dropped
+            dropTemplateDrawFrames(clonedPage);
 
             // Append the cloned master page to the "Shadow Content" element outside the main ODF dom
             shadowContent.appendChild(clonedPage);
