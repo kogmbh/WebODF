@@ -46,26 +46,33 @@ define("webodf/editor/widgets/imageInserter", [
                 widget = {},
                 insertImageButton,
                 editorSession,
-                fileLoader,
-                hiddenImage; // an off-screen image control used for working out the size of an given image
+                fileLoader;
 
-            function createHiddenImage() {
-                var img = new Image();
-                img.id = "hiddenImg";
-                img.style.position = "absolute";
-                img.style.left = "-99999px";
-                document.body.appendChild(img);
-                return img;
-            }
-            function insertImageIfLoaded(mimetype, content) {
-                if (hiddenImage.width === 0 || hiddenImage.height === 0) {
-                    window.setTimeout(insertImageIfLoaded, 50, mimetype, content);
-                } else {
+
+            /**
+             * @param {!string} content  as datauri
+             * @param {!string} mimetype
+             * @return {undefined}
+             */
+            function insertImageOnceLoaded(mimetype, content) {
+                var hiddenImage = new Image();
+
+                hiddenImage.style.position = "absolute";
+                hiddenImage.style.left = "-99999px";
+                document.body.appendChild(hiddenImage);
+                hiddenImage.onload = function () {
+                    // remove the data:image/jpg;base64, bit
+                    content = content.substring(content.indexOf(",") + 1);
                     if (editorSession) {
                         editorSession.insertImage(mimetype, content, hiddenImage.width, hiddenImage.height);
                     }
-                }
+                    // clean up
+                    document.body.removeChild(hiddenImage);
+                    self.onToolDone();
+                };
+                hiddenImage.src = content;
             }
+
             function fileSelectHandler(evt) {
                 var file, files, reader;
                 files = (evt.target && evt.target.files) || (evt.dataTransfer && evt.dataTransfer.files);
@@ -73,21 +80,12 @@ define("webodf/editor/widgets/imageInserter", [
                     file = files[0];
                     reader = new FileReader();
                     reader.onloadend = function () {
-                        var content = reader.result;
                         if (reader.readyState === 2) {
-                            if (!hiddenImage) {
-                                hiddenImage = createHiddenImage();
-                            }
-                            if (hiddenImage.src !== content) {
-                                hiddenImage.src = content;
-                            }
-                            // remove the data:image/jpg;base64, bit
-                            content = content.substring(content.indexOf(",") + 1);
-                            insertImageIfLoaded(file.type, content);
+                            insertImageOnceLoaded(file.type, reader.result);
                         } else {
                             runtime.log("Image could not be loaded");
+                            self.onToolDone();
                         }
-                        self.onToolDone();
                     };
                     reader.readAsDataURL(file);
                 }
