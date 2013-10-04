@@ -50,6 +50,38 @@ odf.OdfUtils = function OdfUtils() {
         domUtils = new core.DomUtils();
 
     /**
+     * Determine if the node is a draw:image element.
+     * @param {?Node} e
+     * @return {!boolean}
+     */
+    function isImage(e) {
+        var name = e && e.localName;
+        return name === "image" && e.namespaceURI === drawns;
+    }
+    this.isImage = isImage;
+
+    /**
+     * Determine if the node is a draw:frame element and has its text:anchor-type attribute set to 'as-char'.
+     * @param {?Node} e
+     * @return {!boolean}
+     */
+    function isCharacterFrame(e) {
+        var name = e && e.localName;
+        return name === "frame" && e.namespaceURI === drawns && e.getAttributeNS(textns, "anchor-type") === "as-char";
+    }
+    this.isCharacterFrame = isCharacterFrame;
+
+    /**
+     * Determine if the node is a text:span element.
+     * @param {?Node} e
+     * @return {!boolean}
+     */
+    this.isTextSpan = function (e) {
+        var name = e && e.localName;
+        return name === "span" && e.namespaceURI === textns;
+    };
+
+    /**
      * Determine if the node is a text:p or a text:h element.
      * @param {?Node} e
      * @return {!boolean}
@@ -137,8 +169,8 @@ odf.OdfUtils = function OdfUtils() {
             ns = e.namespaceURI;
             if (ns === textns) {
                 r = n === "s" || n === "tab" || n === "line-break";
-            } else if (ns === drawns) {
-                r = n === "frame" && e.getAttributeNS(textns, "anchor-type") === "as-char";
+            } else {
+                r = isCharacterFrame(e);
             }
         }
         return r;
@@ -671,6 +703,30 @@ odf.OdfUtils = function OdfUtils() {
                 return NodeFilter.FILTER_SKIP;
             }
             return NodeFilter.FILTER_REJECT;
+        }
+
+        elements = domUtils.getNodesInRange(range, nodeFilter);
+        nodeRange.detach();
+
+        return elements;
+    };
+
+    /**
+     * Get all image elements that fully contained within the supplied range in document order
+     * @param {!Range} range
+     * @returns {!Array.<Node>}
+     */
+    this.getImageElements = function (range) {
+        var document = range.startContainer.ownerDocument,
+            nodeRange = document.createRange(),
+            elements;
+
+        function nodeFilter(node) {
+            nodeRange.selectNodeContents(node);
+            if (isImage(node) && domUtils.containsRange(range, nodeRange)) {
+                return NodeFilter.FILTER_ACCEPT;
+            }
+            return NodeFilter.FILTER_SKIP;
         }
 
         elements = domUtils.getNodesInRange(range, nodeFilter);

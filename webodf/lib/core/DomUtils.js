@@ -145,14 +145,16 @@ core.DomUtils = function DomUtils() {
             elements = [],
             root = /**@type{!Node}*/(range.commonAncestorContainer),
             n,
+            filterResult,
             treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_ALL, nodeFilter, false);
 
         treeWalker.currentNode = range.startContainer;
         n = range.startContainer;
         while (n) {
-            if (nodeFilter(n) === NodeFilter.FILTER_ACCEPT) {
+            filterResult = nodeFilter(n);
+            if (filterResult === NodeFilter.FILTER_ACCEPT) {
                 elements.push(n);
-            } else if (nodeFilter(n) === NodeFilter.FILTER_REJECT) {
+            } else if (filterResult === NodeFilter.FILTER_REJECT) {
                 break;
             }
             n = n.parentNode;
