@@ -79,6 +79,11 @@ define("webodf/editor/widgets/imageInserter", [
                                 hiddenImage = createHiddenImage();
                             }
                             if (hiddenImage.src !== content) {
+                                // reset src to empty string before load the new image; otherwise the
+                                // insertImageIfLoaded method could incorrectly assume the image has
+                                // already been loaded as the width and height of the hiddenImage
+                                // are greater than 0 (from previous loaded image).
+                                hiddenImage.src = "";
                                 hiddenImage.src = content;
                             }
                             // remove the data:image/jpg;base64, bit
