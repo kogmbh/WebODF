@@ -437,7 +437,7 @@ gui.SessionController = (function () {
          * @return {undefined}
          */
         function removeAnnotation(annotationNode) {
-            var position, length, op;
+            var position, length, op, moveCursor;
 
             position = getFirstWalkablePositionInNode(annotationNode);
             length = getWalkableNodeLength(annotationNode);
@@ -448,7 +448,13 @@ gui.SessionController = (function () {
                 position: position,
                 length: length
             });
-            session.enqueue([op]);
+            moveCursor = new ops.OpMoveCursor();
+            moveCursor.init({
+                memberid: inputMemberId,
+                position: position-1, // Last position just before the annotation starts
+                length: 0
+            });
+            session.enqueue([op, moveCursor]);
         }
 
         /**

@@ -48,7 +48,8 @@ runtime.loadClass("gui.Caret");
 gui.CaretManager = function CaretManager(sessionController) {
     "use strict";
     var carets = {},
-        window = runtime.getWindow();
+        window = runtime.getWindow(),
+        scrollIntoViewScheduled = false;
 
     /**
      * @param {!string} memberId
@@ -98,19 +99,29 @@ gui.CaretManager = function CaretManager(sessionController) {
         }
     }
 
+    function ensureCaretVisible() {
+        var caret = getCaret(sessionController.getInputMemberId());
+        if (caret && !scrollIntoViewScheduled) {
+            caret.updateVerticalCaretAlignment(); // This is really noticeable if delayed. Calculate the cursor size immediately
+            scrollIntoViewScheduled = true;
+            // Delay the actual scrolling just in case there are a batch of operations
+            // being performed. 50ms is close enough to "instant" that the user won't notice
+            // the delay here.
+            runtime.setTimeout(function() {
+                scrollIntoViewScheduled = false;
+                caret.ensureVisible();
+            }, 50);
+        }
+    }
+
     /**
      * @param {!Object} info
      * @return {undefined}
      */
     function ensureLocalCaretVisible(info) {
-        var caret;
-
         if (info.memberId === sessionController.getInputMemberId()) {
             // on member edit actions ensure visibility of cursor
-            caret = getCaret(info.memberId);
-            if (caret) {
-                caret.ensureVisible();
-            }
+            ensureCaretVisible();
         }
     }
 
@@ -171,7 +182,7 @@ gui.CaretManager = function CaretManager(sessionController) {
             runtime.log("Starting to track input on new cursor of " + memberid);
 
             // wire up the cursor update to caret visibility update
-            cursor.handleUpdate = caret.ensureVisible;
+            cursor.handleUpdate = ensureCaretVisible;
             // Pass event focus to the session controller
             sessionController.getEventManager().focus();
         } else {
