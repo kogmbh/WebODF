@@ -320,11 +320,56 @@ core.PositionIteratorTests = function PositionIteratorTests(runner) {
             testPositions(xml.n);
         }
     }
+    function testRoundTripStability() {
+        createWalker('<p><b id="b1"/><a id="a1"/><b id="b2"/><b id="b3"/><a id="a2"/><b id="b4"/><a id="a3"/></p>');
+        t.iterator.setUnfilteredPosition(t.doc.documentElement, 0);
+        t.forwardPositions = [];
+        do {
+            t.forwardPositions.push({node: t.iterator.container(), offset: t.iterator.unfilteredDomOffset()});
+        } while (t.iterator.nextPosition());
+
+        t.backwardPositions = [];
+        do {
+            t.backwardPositions.unshift({node: t.iterator.container(), offset: t.iterator.unfilteredDomOffset()});
+        } while (t.iterator.previousPosition());
+
+        t.backwardPositions.forEach(function(pos, index) {
+            t.expected = t.forwardPositions[index];
+            t.actual = pos;
+            r.shouldBe(t, "t.actual.node", "t.expected.node");
+            r.shouldBe(t, "t.actual.offset", "t.expected.offset");
+        });
+    }
     function testSetUnfilteredPosition_UsesUnfilteredOffsets() {
         createWalker('<p><b id="b1"/><a id="a1"/><b id="b2"/><b id="b3"/><a id="a2"/><b id="b4"/><a id="a3"/></p>');
         t.iterator.setUnfilteredPosition(t.doc.documentElement, 4);
         r.shouldBe(t, "t.iterator.leftNode() && t.iterator.leftNode().getAttribute('id')", "'a1'");
         r.shouldBe(t, "t.iterator.rightNode() && t.iterator.rightNode().getAttribute('id')", "'a2'");
+    }
+    function testSetUnfilteredPosition_RoundTripStability() {
+        createWalker('<p><b id="b1"/><a id="a1">ABC</a><b id="b2">DEF</b>HIJ<b id="b3"/>KLM<a id="a2"/><b id="b4"/><a id="a3"/></p>');
+        t.iterator.setUnfilteredPosition(t.doc.documentElement, 0);
+        t.forwardPositions = [];
+        do {
+            t.forwardPositions.push({node: t.iterator.container(), offset: t.iterator.unfilteredDomOffset()});
+        } while (t.iterator.nextPosition());
+
+        t.resultPositions = [];
+        t.forwardPositions.forEach(function(pos, index) {
+            t.iterator.setUnfilteredPosition(pos.node, pos.offset);
+            t.expected = pos;
+            t.resultPositions.push({node: t.iterator.container(), offset: t.iterator.unfilteredDomOffset()});
+            r.shouldBe(t, "t.iterator.container()", "t.expected.node");
+            r.shouldBe(t, "t.iterator.unfilteredDomOffset()", "t.expected.offset");
+
+            if (t.forwardPositions[index + 1]) {
+                t.expected = t.forwardPositions[index + 1];
+                t.hasNext = t.iterator.nextPosition();
+                r.shouldBe(t, "t.hasNext", "true");
+                r.shouldBe(t, "t.iterator.container()", "t.expected.node");
+                r.shouldBe(t, "t.iterator.unfilteredDomOffset()", "t.expected.offset");
+            }
+        });
     }
     function testSetUnfilteredPosition_ImmediatelyMovesToNextValidPosition() {
         createWalker('<p><b id="b1"/><a id="a1"/><b id="b2"/><b id="b3"/><a id="a2"/><b id="b4"/><a id="a3"/></p>');
@@ -439,6 +484,9 @@ core.PositionIteratorTests = function PositionIteratorTests(runner) {
             rejectedNodes,
             emptyTextNodes,
             testSplitTextNodes,
+
+            testRoundTripStability,
+
             testSetUnfilteredPosition_UsesUnfilteredOffsets,
             testSetUnfilteredPosition_ImmediatelyMovesToNextValidPosition,
             testSetUnfilteredPosition_ChildOfInvalidNode_ImmediatelyMovesToNextValidPosition,
@@ -448,6 +496,7 @@ core.PositionIteratorTests = function PositionIteratorTests(runner) {
             testSetUnfilteredPosition_ChildOfNonVisibleNode,
             testSetUnfilteredPosition_ChildOfSkippedNode,
             testSetUnfilteredPosition_NestedChildOfSkippedNode,
+            testSetUnfilteredPosition_RoundTripStability,
 
             iterateOverNode_NextPosition_EventuallyStops,
             iterateOverDisconnectedNode_NextPosition_EventuallyStops,

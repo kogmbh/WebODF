@@ -537,10 +537,22 @@ gui.SelectionMover = function SelectionMover(cursor, rootNode) {
         // differently than the dom positions, so we normalize them by calling
         // setPosition with these values
         iterator.setUnfilteredPosition(targetNode, targetOffset);
+        // The below counting logic relies on the iterators initially being in accepted positions.
+        // This is achieved by rewinding both the iterator and the cursor back to the last acceptable position
+        // before, or equal to, the requested the point.
+        // Failure to do this rewinding will result in the counting results being off-by-one occasionally when counting backwards
+        while (filter.acceptPosition(iterator) !== FILTER_ACCEPT && iterator.previousPosition()) {
+            watch.check();
+        }
         targetNode = iterator.container();
         runtime.assert(Boolean(targetNode), "SelectionMover.countStepsToPosition: positionIterator.container() returned null");
         targetOffset = iterator.unfilteredDomOffset();
+
         iterator.setUnfilteredPosition(c, o);
+        // See previous comment on rewinding. This prevents off-by-one when counting in reverse
+        while (filter.acceptPosition(iterator) !== FILTER_ACCEPT && iterator.previousPosition()) {
+            watch.check();
+        }
 
         comparison = domUtils.comparePoints(targetNode, targetOffset, iterator.container(), iterator.unfilteredDomOffset());
         if (comparison < 0) {
@@ -549,10 +561,8 @@ gui.SelectionMover = function SelectionMover(cursor, rootNode) {
                 if (filter.acceptPosition(iterator) === FILTER_ACCEPT) {
                     steps += 1;
                 }
-                if (iterator.container() === targetNode) {
-                    if (iterator.unfilteredDomOffset() === targetOffset) {
-                        return steps;
-                    }
+                if (iterator.container() === targetNode && iterator.unfilteredDomOffset() === targetOffset) {
+                    return steps;
                 }
             }
         } else if (comparison > 0) {
@@ -563,12 +573,7 @@ gui.SelectionMover = function SelectionMover(cursor, rootNode) {
                     // Every point from the root node to the *first* valid position is effectively position = 0
                     // Therefore, when counting steps backwards we need to count to the earliest position preceding (or equal)
                     // to the supplied point
-                    if (domUtils.comparePoints(targetNode, targetOffset, iterator.container(), iterator.unfilteredDomOffset()) <= 0) {
-                        // Note, comparePoints(...) <= 0 is required because this loop is only allowed to be broken on a
-                        // valid position. There is no requirement however that the passed in posElement + posOffset
-                        // correspond to a position that is accepted by the supplied filter.
-                        // So rather than simply being able to check using equality as the (comparison < 0) branch do,
-                        // this actually needs to see if the target point has been passed.
+                    if (iterator.container() === targetNode && iterator.unfilteredDomOffset() === targetOffset) {
                         break;
                     }
                 }

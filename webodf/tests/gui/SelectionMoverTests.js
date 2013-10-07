@@ -83,13 +83,6 @@ gui.SelectionMoverTests = function SelectionMoverTests(runner) {
         r.shouldBe(t, "'MMMM MMMMM MMMMM MMMMM MMMMM'", "t.cursor.getNode().nextSibling.data");
         t.mover.movePointBackward(1);
         r.shouldBe(t, "'MMMMM MMMMM MMMMM MMMMM MMMMM'", "t.cursor.getNode().nextSibling.data");
-/*
-        t.mover.moveLineForward();
-//        t.selection.modify("move", "forward", "line");
-        t.r = t.selection.getRangeAt(0);
-        r.shouldBe(t, "t.r.startContainer", "t.p.firstChild");
-        r.shouldBe(t, "t.r.startOffset", "6");
-*/
     }
     function testForthBack() {
         setupDoc();
@@ -131,7 +124,7 @@ gui.SelectionMoverTests = function SelectionMoverTests(runner) {
      */
     function AcceptAllPositionFilter() {
         this.acceptPosition = function () {
-            return 1;
+            return core.PositionFilter.FilterResult.FILTER_ACCEPT;
         };
     }
     function testXMLsForthBack() {
@@ -177,6 +170,52 @@ gui.SelectionMoverTests = function SelectionMoverTests(runner) {
         steps = counter.countStepsToPosition(emptyNode, 0, new AcceptAllPositionFilter());
         r.shouldBe(t, steps.toString(), "0");
     }
+    /**
+     * @constructor
+     * @implements core.PositionFilter
+     */
+    function AcceptNonSpanPositionFilter() {
+        this.acceptPosition = function (iterator) {
+            var node = iterator.container();
+            if (node.nodeType === Node.ELEMENT_NODE
+                && node.localName === "a") {
+                return core.PositionFilter.FilterResult.FILTER_ACCEPT;
+            }
+            return core.PositionFilter.FilterResult.FILTER_REJECT;
+        };
+    }
+    function countStepsToPosition_CursorInInvalidPlace_ValidPositionRequested() {
+        createDoc("<t><p><a id='a1'/><a id='a2'/><a id='a3'/><b>|</b></p></t>");
+        var range = t.root.ownerDocument.createRange(),
+            counter = t.mover.getStepCounter(),
+            cursorSelection = t.root.getElementsByTagName("b")[0],
+            target;
+
+        range.setStart(cursorSelection.firstChild, 0);
+        range.collapse(true);
+        t.cursor.setSelectedRange(range);
+        target = t.root.getElementsByTagName("a")[1];
+
+        t.steps = counter.countStepsToPosition(target, 0, new AcceptNonSpanPositionFilter());
+
+        r.shouldBe(t, "t.steps", "-1");
+    }
+    function countStepsToPosition_CursorInInvalidPlace_InvalidPositionRequested() {
+        createDoc("<t><p><a id='a1'/><b>|</b><a id='a2'/><b>|</b></p></t>");
+        var range = t.root.ownerDocument.createRange(),
+            counter = t.mover.getStepCounter(),
+            cursorSelection = t.root.getElementsByTagName("b")[1],
+            target;
+
+        range.setStart(cursorSelection.firstChild, 0);
+        range.collapse(true);
+        t.cursor.setSelectedRange(range);
+        target = t.root.getElementsByTagName("b")[0].firstChild;
+
+        t.steps = counter.countStepsToPosition(target, 0, new AcceptNonSpanPositionFilter());
+
+        r.shouldBe(t, "t.steps", "-1");
+    }
     this.setUp = function () {
         t = {};
         testarea = core.UnitTest.provideTestAreaDiv();
@@ -192,7 +231,9 @@ gui.SelectionMoverTests = function SelectionMoverTests(runner) {
             testForthBack,
             testXMLsForthBack,
             testCountAndConfirm,
-            testCountStepsToNode
+            testCountStepsToNode,
+            countStepsToPosition_CursorInInvalidPlace_ValidPositionRequested,
+            countStepsToPosition_CursorInInvalidPlace_InvalidPositionRequested
         ];
     };
     this.asyncTests = function () {

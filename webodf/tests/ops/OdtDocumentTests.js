@@ -332,6 +332,10 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         // TODO behaviour is different from README_cursorpositions
         // cursorPositionsTest("<text:p> <text:span>|A| |</text:span> <text:s></text:s>| <text:span><text:s> </text:s>|B|</text:span> </text:p>");
     }
+    function testAvailablePositions_Annotations() {
+        testCursorPositions('<text:p>|a|b|<office:annotation><text:list><text:list-item><text:p>|</text:p></text:list-item></text:list></office:annotation>c|d|<office:annotation-end></office:annotation-end>1|2|</text:p>');
+    }
+
     this.setUp = function () {
         var doc, stylesElement;
         testarea = core.UnitTest.provideTestAreaDiv();
@@ -385,7 +389,8 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             testAvailablePositions_SimpleTextNodes,
             testAvailablePositions_MixedSpans,
             testAvailablePositions_Whitespace,
-            testAvailablePositions_SpaceElements
+            testAvailablePositions_SpaceElements,
+            testAvailablePositions_Annotations
         ];
     };
     this.asyncTests = function () {

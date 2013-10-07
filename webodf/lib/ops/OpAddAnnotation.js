@@ -179,7 +179,7 @@ ops.OpAddAnnotation = function OpAddAnnotation() {
         }
         // Track this annotation
         odtDocument.getOdfCanvas().addAnnotation(annotation);
-
+        odtDocument.fixCursorPositions(memberid);
 
         return true;
     };

@@ -296,7 +296,7 @@ core.PositionIterator = function PositionIterator(root, whatToShow, filter,
             // - or offset === childNodes.length
             // - or the container is rejected.
             // If the container is rejected, this will get modified later regardless, so don't bother checking now
-            currentPos = offset === 0 ? 0 : 1;
+            currentPos = 1;
         }
 
         if (filterResult === NodeFilter.FILTER_REJECT) {
