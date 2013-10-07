@@ -99,18 +99,26 @@ gui.CaretManager = function CaretManager(sessionController) {
         }
     }
 
-    function ensureCaretVisible() {
+    function executeEnsureCaretVisible() {
         var caret = getCaret(sessionController.getInputMemberId());
-        if (caret && !scrollIntoViewScheduled) {
+        scrollIntoViewScheduled = false;
+        if (caret) {
+            // Just in case CaretManager was destroyed whilst waiting for the timeout to elapse
+            caret.ensureVisible();
+        }
+    }
+
+    function scheduleCaretVisibilityCheck() {
+        var caret = getCaret(sessionController.getInputMemberId());
+        if (caret) {
             caret.updateVerticalCaretAlignment(); // This is really noticeable if delayed. Calculate the cursor size immediately
-            scrollIntoViewScheduled = true;
-            // Delay the actual scrolling just in case there are a batch of operations
-            // being performed. 50ms is close enough to "instant" that the user won't notice
-            // the delay here.
-            runtime.setTimeout(function() {
-                scrollIntoViewScheduled = false;
-                caret.ensureVisible();
-            }, 50);
+            if (!scrollIntoViewScheduled) {
+                scrollIntoViewScheduled = true;
+                // Delay the actual scrolling just in case there are a batch of operations
+                // being performed. 50ms is close enough to "instant" that the user won't notice
+                // the delay here.
+                runtime.setTimeout(executeEnsureCaretVisible, 50);
+            }
         }
     }
 
@@ -121,7 +129,7 @@ gui.CaretManager = function CaretManager(sessionController) {
     function ensureLocalCaretVisible(info) {
         if (info.memberId === sessionController.getInputMemberId()) {
             // on member edit actions ensure visibility of cursor
-            ensureCaretVisible();
+            scheduleCaretVisibilityCheck();
         }
     }
 
@@ -182,7 +190,7 @@ gui.CaretManager = function CaretManager(sessionController) {
             runtime.log("Starting to track input on new cursor of " + memberid);
 
             // wire up the cursor update to caret visibility update
-            cursor.handleUpdate = ensureCaretVisible;
+            cursor.handleUpdate = scheduleCaretVisibilityCheck;
             // Pass event focus to the session controller
             sessionController.getEventManager().focus();
         } else {
@@ -232,6 +240,7 @@ gui.CaretManager = function CaretManager(sessionController) {
                 }
             }
         }(0, undefined));
+        carets = {};
     };
 
     function init() {
