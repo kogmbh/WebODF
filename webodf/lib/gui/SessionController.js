@@ -821,7 +821,7 @@ gui.SessionController = (function () {
          * event handlers have been called (observed on FF24, OSX).
          */
         function delayedMaintainCursor() {
-            runtime.setTimeout(maintainCursorSelection, 50);
+            runtime.setTimeout(maintainCursorSelection, 0);
         }
 
         /**

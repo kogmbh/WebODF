@@ -44,7 +44,8 @@
  */
 gui.EventManager = function EventManager(odtDocument) {
     "use strict";
-    var eventTrapDiv,
+    var canvasElement,
+        window = runtime.getWindow(),
         bindToDirectHandler = {
             // In Safari 6.0.5 (7536.30.1), Using either attachEvent or addEventListener
             // results in the beforecut return value being ignored which prevents cut from being called.
@@ -58,27 +59,41 @@ gui.EventManager = function EventManager(odtDocument) {
             "mousedown": true,
             // Capture selections that start inside the canvas element and end outside of the element or even window
             "mouseup": true
-        },
-        delegatedEvents = {};
+        };
 
     /**
-     * Delegates non-bubbling events to handlers
+     * @param {!Window} window
      * @constructor
      */
-    function EventDelegate() {
-        var self = this;
-        this.handlers = [];
+    function WindowScrollState(window) {
+        var x = window.scrollX,
+            y = window.scrollY;
 
         /**
-         * @param {!Event} e
+         * Restore the scroll state captured on construction
          */
-        this.delegate = function(e) {
-            if (!e.bubbles) {
-                // Non-bubbling events such as focus and blur can be manually delegated to interested handlers
-                self.handlers.forEach(function(handler) {
-                    // Yes yes... this is not a spec-compliant event processor... sorry!
-                    handler(e);
-                });
+        this.restore = function() {
+            if (window.scrollX !== x || window.scrollY !== y) {
+                window.scrollTo(x, y);
+            }
+        };
+    }
+
+    /**
+     * @param {!HTMLElement} element
+     * @constructor
+     */
+    function ElementScrollState(element) {
+        var top = element.scrollTop,
+            left = element.scrollLeft;
+
+        /**
+         * Restore the scroll state captured on construction
+         */
+        this.restore = function() {
+            if (element.scrollTop !== top || element.scrollLeft !== left) {
+                element.scrollTop = top;
+                element.scrollLeft = left;
             }
         };
     }
@@ -129,19 +144,9 @@ gui.EventManager = function EventManager(odtDocument) {
      * @param {function(!Event)|function()} handler
      */
     this.subscribe = function(eventName, handler) {
-        var element = odtDocument.getOdfCanvas().getElement(),
-            delegatedEvent;
-        if (bindToWindow[eventName] && runtime.getWindow()) {
-            element = runtime.getWindow();
-        } else {
-        delegatedEvent = delegatedEvents[eventName];
-        if (!delegatedEvent) {
-            delegatedEvent = delegatedEvents[eventName] = new EventDelegate();
-            listenEvent(eventTrapDiv, eventName, delegatedEvent.delegate);
-        }
-        if (delegatedEvent.handlers.indexOf(handler) === -1) {
-            delegatedEvent.handlers.push(handler);
-        }
+        var element = canvasElement;
+        if (bindToWindow[eventName] && window) {
+            element = window;
         }
         listenEvent(element, eventName, handler);
     };
@@ -151,19 +156,11 @@ gui.EventManager = function EventManager(odtDocument) {
      * @param {function(!Event)|function()} handler
      */
     this.unsubscribe = function(eventName, handler) {
-        var element = odtDocument.getOdfCanvas().getElement(),
-            delegatedEvent = delegatedEvents[eventName],
-            removeIndex;
-        if (bindToWindow[eventName] && runtime.getWindow()) {
-            element = runtime.getWindow();
+        var element = canvasElement;
+        if (bindToWindow[eventName] && window) {
+            element = window;
         }
         removeEvent(element, eventName, handler);
-        if (delegatedEvent) {
-            removeIndex = delegatedEvent.handlers.indexOf(handler);
-            if (removeIndex !== -1) {
-                delegatedEvent.handlers.splice(removeIndex, 1);
-            }
-        }
     };
 
     /**
@@ -172,34 +169,49 @@ gui.EventManager = function EventManager(odtDocument) {
      */
     function hasFocus() {
         var activeElement = odtDocument.getDOM().activeElement;
-        return activeElement === eventTrapDiv || activeElement === odtDocument.getOdfCanvas().getElement();
+        return activeElement === canvasElement;
     }
     this.hasFocus = hasFocus;
+
+    /**
+     * Find the closest scrolled ancestor to the specified element
+     * @param {HTMLElement} element
+     * @returns {*}
+     */
+    function findScrollableParent(element) {
+        // If a scrollable parent exists with a non-0 top or left scroll then return this as the container to restore
+        while (element && !element.scrollTop && !element.scrollLeft) {
+            element = /**@type {HTMLElement}*/(element.parentNode);
+        }
+        if (element) {
+            return new ElementScrollState(element);
+        }
+        if (window) {
+            return new WindowScrollState(window);
+        }
+        return null;
+    }
 
     /**
      * Return event focus back to the event manager
      */
     this.focus = function() {
+        var scrollParent;
         if (!hasFocus()) {
-            eventTrapDiv.focus();
+            // http://www.whatwg.org/specs/web-apps/current-work/#focus-management
+            // Passing focus back to an element that did not previously have it will also
+            // cause the element to attempt to recentre back into scroll view
+            scrollParent = findScrollableParent(canvasElement);
+            canvasElement.focus();
+            if (scrollParent) {
+                scrollParent.restore();
+            }
         }
     };
 
     function init() {
-        var canvasElement = odtDocument.getOdfCanvas().getElement();
-
-        eventTrapDiv = odtDocument.getDOM().createElement("div");
-        eventTrapDiv.id = "eventTrap";
-        eventTrapDiv.style.position = "fixed";
-        // Centre the event trap as otherwise the browser will try and scroll the element into the centre of
-        // the viewport on focus
-        eventTrapDiv.style.top = "50%";
-        eventTrapDiv.style.left = "50%";
-        eventTrapDiv.style.height = "0";
-        eventTrapDiv.style.width = "0";
-        eventTrapDiv.style.backgroundColor = "transparent";
-        eventTrapDiv.tabIndex = "-1"; // Negative tab index still allows focus, but removes accessibility by keyboard
-        canvasElement.appendChild(eventTrapDiv);
+        canvasElement = odtDocument.getOdfCanvas().getElement();
+        canvasElement.tabIndex = "-1"; // Negative tab index still allows focus, but removes accessibility by keyboard
     }
 
     init();
