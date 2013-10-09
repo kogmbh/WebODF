@@ -460,12 +460,19 @@
   </ops>
   <after><office:text><text:p><text:span>a<text:tab>&#09;</text:tab><c:cursor c:memberId="Bob"/></text:span></text:p></office:text></after>
  </test>
- <test name="Remove_DeleteImage">
+ <test name="Remove_DeleteImageWithText">
   <before><office:text><text:p><draw:frame draw:name="graphics1" draw:style-name="fr1" text:anchor-type="as-char" svg:width="5cm" svg:height="6cm"><draw:image xlink:href="Pictures/helloworld.jpg" xlink:type="simple" xlink:actuate="onLoad" xlink:show="embed" /></draw:frame><text:span>hello</text:span></text:p></office:text></before>
   <ops>
    <op optype="RemoveText" position="0" length="3"/>
   </ops>
   <after><office:text><text:p><text:span>llo</text:span></text:p></office:text></after>
+ </test>
+ <test name="Remove_DeleteImageWithSvgDesc">
+  <before><office:text><text:p><draw:frame draw:name="graphics1" draw:style-name="fr1" text:anchor-type="as-char" svg:width="5cm" svg:height="6cm"><draw:image xlink:href="Pictures/helloworld.jpg" xlink:type="simple" xlink:actuate="onLoad" xlink:show="embed" /><svg:desc>hello world</svg:desc></draw:frame></text:p></office:text></before>
+  <ops>
+   <op optype="RemoveText" position="0" length="1"/>
+  </ops>
+  <after><office:text><text:p/></office:text></after>
  </test>
  <test name="Remove_deleteMergeListItem1">
   <before><office:text><text:list><text:list-item><text:p><text:span>hello</text:span></text:p></text:list-item><text:list-item><text:p><text:span>world</text:span></text:p></text:list-item></text:list></office:text></before>

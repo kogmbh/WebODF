@@ -74,7 +74,7 @@ odf.OdfUtilsTests = function OdfUtilsTests(runner) {
             : t.testArea.firstChild.firstChild;
     }
     function getTextElements_EncompassedWithinParagraph() {
-        t.doc = createDocument("<text:p>AB<text:s/>CD</text:p>");
+        t.doc = createDocument("<text:p>AB<text:s> </text:s>CD</text:p>");
         t.range.setStart(t.doc.childNodes[0], 0);
         t.range.setEnd(t.doc.childNodes[2], 0);
 
@@ -139,7 +139,7 @@ odf.OdfUtilsTests = function OdfUtilsTests(runner) {
         r.shouldBe(t, "t.textElements.shift()", "t.doc.childNodes[1].childNodes[1]"); // text:s
     }
     function getTextElements_IncludesInsignificantWhitespace() {
-        t.doc = createDocument("<text:p>AB<text:s/>CD</text:p>\n<text:p>EF<text:s/>GH</text:p>");
+        t.doc = createDocument("<text:p>AB<text:s> </text:s>CD</text:p>\n<text:p>EF<text:s/>GH</text:p>");
         t.range.setStart(t.doc.childNodes[0].childNodes[0], 0);
         t.range.setEnd(t.doc.childNodes[2].childNodes[1], 0);
 
@@ -159,7 +159,7 @@ odf.OdfUtilsTests = function OdfUtilsTests(runner) {
         r.shouldBe(t, "t.textElements.shift()", "t.doc.childNodes[2].childNodes[1]"); // text:s
     }
     function getTextElements_ExcludesInsignificantWhitespace() {
-        t.doc = createDocument("<text:p>AB<text:s/>CD</text:p>\n<text:p>EF<text:s/>GH</text:p>");
+        t.doc = createDocument("<text:p>AB<text:s> </text:s>CD</text:p>\n<text:p>EF<text:s/>GH</text:p>");
         t.range.setStart(t.doc.childNodes[0].childNodes[0], 0);
         t.range.setEnd(t.doc.childNodes[2].childNodes[1], 0);
 
@@ -177,6 +177,18 @@ odf.OdfUtilsTests = function OdfUtilsTests(runner) {
         r.shouldBe(t, "t.textElements.shift()", "t.doc.childNodes[2].childNodes[0]"); // "EF"
         r.shouldBe(t, "t.textElements.shift()", "t.doc.childNodes[2].childNodes[1]"); // text:s
     }
+    function getTextElements_CharacterElements() {
+        t.doc = createDocument("<text:p><text:s> </text:s><text:tab>	</text:tab><text:line-break>\n</text:line-break><draw:frame text:anchor-type='as-char'><draw:image/></draw:frame></text:p>");
+        t.range.selectNode(t.doc);
+
+        t.textElements = t.odfUtils.getTextElements(t.range, true);
+
+        r.shouldBe(t, "t.textElements.length", "4");
+        r.shouldBe(t, "t.textElements.shift()", "t.doc.childNodes[0]"); // text:s
+        r.shouldBe(t, "t.textElements.shift()", "t.doc.childNodes[1]"); // text:tab
+        r.shouldBe(t, "t.textElements.shift()", "t.doc.childNodes[2]"); // text:line-break
+        r.shouldBe(t, "t.textElements.shift()", "t.doc.childNodes[3]"); // draw:frame
+    }
     this.tests = function () {
         return [
             getTextElements_EncompassedWithinParagraph,
@@ -184,7 +196,8 @@ odf.OdfUtilsTests = function OdfUtilsTests(runner) {
             getTextElements_IgnoresEditInfo,
             getTextElements_SpansMultipleParagraphs,
             getTextElements_IncludesInsignificantWhitespace,
-            getTextElements_ExcludesInsignificantWhitespace
+            getTextElements_ExcludesInsignificantWhitespace,
+            getTextElements_CharacterElements
         ];
     };
     this.asyncTests = function () {

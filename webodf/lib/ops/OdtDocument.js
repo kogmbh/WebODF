@@ -781,23 +781,6 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     };
 
     /**
-     * @param {!Range} range
-     * @param {!boolean} includeInsignificantWhitespace
-     * @returns {!Array.<Node>}
-     */
-    this.getTextElements = function (range, includeInsignificantWhitespace) {
-        return odfUtils.getTextElements(range, includeInsignificantWhitespace);
-    };
-
-    /**
-     * @param {!Range} range
-     * @returns {!Array.<Node>}
-     */
-    this.getParagraphElements = function (range) {
-        return odfUtils.getParagraphElements(range);
-    };
-
-    /**
      * @param {!string} eventid
      * @param {*} args
      * @return {undefined}

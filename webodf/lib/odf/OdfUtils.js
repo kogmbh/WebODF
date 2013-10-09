@@ -617,9 +617,13 @@ odf.OdfUtils = function OdfUtils() {
             elements;
 
         function nodeFilter(node) {
-            var nodeType = node.nodeType;
             nodeRange.selectNodeContents(node);
-            if (nodeType === Node.TEXT_NODE) {
+            // do not return anything inside the character element
+            if (isCharacterElement(node.parentNode)) {
+                return NodeFilter.FILTER_REJECT;
+            }
+
+            if (node.nodeType === Node.TEXT_NODE) {
                 if (domUtils.containsRange(range, nodeRange)
                         && (includeInsignificantWhitespace || isSignificantTextContent(node))) {
                     // text nodes should only be returned if they are fully contained within the range
