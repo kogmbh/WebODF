@@ -36,6 +36,7 @@
 /*global runtime, core, gui, ops*/
 
 runtime.loadClass("gui.Caret");
+runtime.loadClass("ops.OdtCursor");
 
 /**
  * The caret manager is responsible for creating a caret as UI representation
@@ -94,7 +95,12 @@ gui.CaretManager = function CaretManager(sessionController) {
         if (memberId === sessionController.getInputMemberId()) {
             caret = getCaret(memberId);
             if (caret) {
-                caret.refreshCursorBlinking();
+                if (cursor.getSelectionType() === ops.OdtCursor.RangeSelection) {
+                    caret.show();
+                    caret.refreshCursorBlinking();
+                } else {
+                    caret.hide();
+                }
             }
         }
     }
@@ -159,7 +165,9 @@ gui.CaretManager = function CaretManager(sessionController) {
     function showLocalCaret() {
         var caret = getCaret(sessionController.getInputMemberId());
         if (caret) {
-            caret.show();
+            if (caret.getCursor().getSelectionType() === ops.OdtCursor.RangeSelection) {
+                caret.show();
+            }
         }
     }
 

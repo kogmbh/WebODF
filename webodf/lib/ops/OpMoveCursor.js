@@ -33,7 +33,7 @@
  * @source: http://gitorious.org/webodf/webodf/
  */
 
-/*global ops*/
+/*global runtime, ops*/
 
 /**
  * @constructor
@@ -42,13 +42,14 @@
 ops.OpMoveCursor = function OpMoveCursor() {
     "use strict";
 
-    var memberid, timestamp, position, length;
+    var memberid, timestamp, position, length, /**@type {!string}*/selectionType;
 
     this.init = function (data) {
         memberid = data.memberid;
         timestamp = data.timestamp;
         position = data.position;
         length = data.length || 0;
+        selectionType = data.selectionType || ops.OdtCursor.RangeSelection;
     };
 
     function countSteps(number, stepCounter, positionFilter) {
@@ -86,6 +87,7 @@ ops.OpMoveCursor = function OpMoveCursor() {
             cursor.move(stepsToSelectionEnd, true);
         }
 
+        cursor.setSelectionType(selectionType);
         odtDocument.emit(ops.OdtDocument.signalCursorMoved, cursor);
         return true;
     };
@@ -96,8 +98,8 @@ ops.OpMoveCursor = function OpMoveCursor() {
             memberid: memberid,
             timestamp: timestamp,
             position: position,
-            length: length
+            length: length,
+            selectionType: selectionType
         };
     };
-
 };
