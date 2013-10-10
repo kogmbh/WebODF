@@ -191,6 +191,8 @@ gui.CaretManager = function CaretManager(sessionController) {
 
             // wire up the cursor update to caret visibility update
             cursor.handleUpdate = scheduleCaretVisibilityCheck;
+            // Negative tab index still allows focus, but removes accessibility by keyboard
+            getCanvasElement().setAttribute("tabIndex", -1);
             // Pass event focus to the session controller
             sessionController.getEventManager().focus();
         } else {
