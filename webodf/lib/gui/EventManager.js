@@ -44,7 +44,7 @@
  */
 gui.EventManager = function EventManager(odtDocument) {
     "use strict";
-    var canvasElement,
+    var canvasElement = odtDocument.getOdfCanvas().getElement(),
         window = runtime.getWindow(),
         bindToDirectHandler = {
             // In Safari 6.0.5 (7536.30.1), Using either attachEvent or addEventListener
@@ -208,11 +208,4 @@ gui.EventManager = function EventManager(odtDocument) {
             }
         }
     };
-
-    function init() {
-        canvasElement = odtDocument.getOdfCanvas().getElement();
-        canvasElement.tabIndex = "-1"; // Negative tab index still allows focus, but removes accessibility by keyboard
-    }
-
-    init();
 };
