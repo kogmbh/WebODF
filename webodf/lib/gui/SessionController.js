@@ -37,14 +37,16 @@
 runtime.loadClass("core.DomUtils");
 runtime.loadClass("odf.OdfUtils");
 runtime.loadClass("odf.ObjectNameGenerator");
+runtime.loadClass("ops.OdtCursor");
 runtime.loadClass("ops.OpAddCursor");
 runtime.loadClass("ops.OpRemoveCursor");
 runtime.loadClass("ops.OpRemoveAnnotation");
 runtime.loadClass("gui.Clipboard");
-runtime.loadClass("gui.KeyboardHandler");
 runtime.loadClass("gui.DirectTextStyler");
 runtime.loadClass("gui.DirectParagraphStyler");
+runtime.loadClass("gui.KeyboardHandler");
 runtime.loadClass("gui.ImageManager");
+runtime.loadClass("gui.ImageSelector");
 runtime.loadClass("gui.TextManipulator");
 runtime.loadClass("gui.EventManager");
 
@@ -80,11 +82,12 @@ gui.SessionController = (function () {
             clickStartedWithinContainer = false,
             objectNameGenerator = new odf.ObjectNameGenerator(odtDocument.getOdfCanvas().odfContainer(), inputMemberId),
             undoManager = null,
-            imageManager = new gui.ImageManager(session, inputMemberId, objectNameGenerator),
             textManipulator = new gui.TextManipulator(session, inputMemberId),
             eventManager = new gui.EventManager(odtDocument),
             directTextStyler = args && args.directStylingEnabled ? new gui.DirectTextStyler(session, inputMemberId) : null,
-            directParagraphStyler = args && args.directStylingEnabled ? new gui.DirectParagraphStyler(session, inputMemberId, objectNameGenerator) : null;
+            directParagraphStyler = args && args.directStylingEnabled ? new gui.DirectParagraphStyler(session, inputMemberId, objectNameGenerator) : null,
+            imageManager = new gui.ImageManager(session, inputMemberId, objectNameGenerator),
+            imageSelector = new gui.ImageSelector(odtDocument.getOdfCanvas());
 
         runtime.assert(window !== null,
             "Expected to be run in an environment which has a global window, like a browser.");
@@ -116,11 +119,17 @@ gui.SessionController = (function () {
         /**
          * @param {!number} position
          * @param {!number} length
+         * @param {string=} selectionType
          * @return {!ops.Operation}
          */
-        function createOpMoveCursor(position, length) {
+        function createOpMoveCursor(position, length, selectionType) {
             var op = new ops.OpMoveCursor();
-            op.init({memberid: inputMemberId, position: position, length: length || 0});
+            op.init({
+                memberid: inputMemberId,
+                position: position,
+                length: length || 0,
+                selectionType: selectionType
+            });
             return op;
         }
 
@@ -222,14 +231,6 @@ gui.SessionController = (function () {
         }
 
         /**
-         * @param {!Node} node
-         * @return {!boolean}
-         */
-        function isTextSpan(node) {
-            return node.namespaceURI === odf.Namespaces.textns && node.localName === 'span';
-        }
-
-        /**
          * Expands the supplied selection to the nearest word boundaries
          * @param {{anchorNode: !Node, anchorOffset: !number, focusNode: !Node, focusOffset: !number}} selection
          */
@@ -257,7 +258,7 @@ gui.SessionController = (function () {
                     if (!alphaNumeric.test(c)) {
                         break;
                     }
-                } else if (!isTextSpan(currentNode)) {
+                } else if (!odfUtils.isTextSpan(currentNode)) {
                     break;
                 }
                 startPoint.node = iterator.container();
@@ -272,7 +273,7 @@ gui.SessionController = (function () {
                     if (!alphaNumeric.test(c)) {
                         break;
                     }
-                } else if (!isTextSpan(currentNode)) {
+                } else if (!odfUtils.isTextSpan(currentNode)) {
                     break;
                 }
             } while (iterator.nextPosition());
@@ -324,11 +325,11 @@ gui.SessionController = (function () {
          * @param {!UIEvent} e
          * @return {?{anchorNode:!Node, anchorOffset:!number, focusNode:!Node, focusOffset:!number}}
          */
-        function getSelection (e) {
+        function getSelection(e) {
             var canvasElement = odtDocument.getOdfCanvas().getElement(),
                 selection = mutableSelection(window.getSelection()),
-                clickCount = e.detail, // See http://www.w3.org/TR/DOM-Level-3-Events/#event-type-mouseup
-                anchorNodeInsideCanvas, focusNodeInsideCanvas, caretPos, node;
+                clickCount = e.detail, // See http://www.w3.org/TR/DOM-Level-3-Events/#event-type-mouseup,
+                caretPos, anchorNodeInsideCanvas, focusNodeInsideCanvas, position;
 
             if (selection.anchorNode === null && selection.focusNode === null) { // chrome & safari
                 caretPos = caretPositionFromPoint(e.clientX, e.clientY);
@@ -351,14 +352,14 @@ gui.SessionController = (function () {
                 return null;
             }
             if (!anchorNodeInsideCanvas) {
-                node = findClosestPosition(selection.anchorNode);
-                selection.anchorNode = node.node;
-                selection.anchorOffset = node.offset;
+                position = findClosestPosition(selection.anchorNode);
+                selection.anchorNode = position.node;
+                selection.anchorOffset = position.offset;
             }
             if (!focusNodeInsideCanvas) {
-                node = findClosestPosition(selection.focusNode);
-                selection.focusNode = node.node;
-                selection.focusOffset = node.offset;
+                position = findClosestPosition(selection.focusNode);
+                selection.focusNode = position.node;
+                selection.focusOffset = position.offset;
             }
 
             if (clickCount === 2) {
@@ -462,25 +463,40 @@ gui.SessionController = (function () {
             // by the browser. Unfortunately this is only working in Firefox. For other browsers, we have to work
             // out the caret position from two coordinates.
             runtime.setTimeout(function () {
-                var selection = getSelection(e),
-                    oldPosition, stepsToAnchor, stepsToFocus, op;
+                var /** @type {?Node} */targetNode = /** @type {?Node} */(e.target),
+                    selection, selectionType, stepsToAnchor, stepsToFocus, oldPosition, op;
 
-                if (selection === null) {
+                if (imageSelector.isSelectorElement(targetNode)) {
                     return;
                 }
 
-                stepsToAnchor = countStepsToNode(selection.anchorNode, selection.anchorOffset);
-                if (selection.focusNode === selection.anchorNode
-                    && selection.focusOffset === selection.anchorOffset) {
-                    stepsToFocus = stepsToAnchor;
+                if (odfUtils.isImage(targetNode)) {
+                    stepsToAnchor = countStepsToNode(targetNode.parentNode, 0);
+                    stepsToFocus = stepsToAnchor !== null ? stepsToAnchor + 1 : null;
+                    selectionType = ops.OdtCursor.RegionSelection;
                 } else {
-                    stepsToFocus = countStepsToNode(selection.focusNode, selection.focusOffset);
+                    selection = getSelection(e);
+                    if (selection === null) {
+                        return;
+                    }
+
+                    stepsToAnchor = countStepsToNode(selection.anchorNode, selection.anchorOffset);
+                    if (selection.focusNode === selection.anchorNode
+                            && selection.focusOffset === selection.anchorOffset) {
+                        stepsToFocus = stepsToAnchor;
+                    } else {
+                        stepsToFocus = countStepsToNode(selection.focusNode, selection.focusOffset);
+                    }
                 }
 
-                if ((stepsToFocus !== null && stepsToFocus !== 0 ) ||
-                    (stepsToAnchor !== null && stepsToAnchor !== 0)) {
+                if ((stepsToFocus !== null && stepsToFocus !== 0) ||
+                        (stepsToAnchor !== null && stepsToAnchor !== 0)) {
                     oldPosition = odtDocument.getCursorPosition(inputMemberId);
-                    op = createOpMoveCursor(oldPosition + stepsToAnchor, stepsToFocus - stepsToAnchor);
+                    op = createOpMoveCursor(
+                        oldPosition + stepsToAnchor,
+                        stepsToFocus - stepsToAnchor,
+                        selectionType
+                    );
                     session.enqueue([op]);
                 }
             }, 0);
@@ -801,13 +817,23 @@ gui.SessionController = (function () {
          */
         function maintainCursorSelection() {
             var cursor = odtDocument.getCursor(inputMemberId),
-                selection = window.getSelection();
+                selection = window.getSelection(),
+                imageElement;
 
             if (eventManager.hasFocus() && cursor) {
-                // May have just processed our own remove cursor operation...
-                // Probably not a good idea to try and update our selected range in this case ;-)
+                imageSelector.clearSelection();
                 selection.removeAllRanges();
-                selection.addRange(cursor.getSelectedRange().cloneRange());
+
+                if (cursor.getSelectionType() === ops.OdtCursor.RegionSelection) {
+                    imageElement = odfUtils.getImageElements(cursor.getSelectedRange())[0];
+                    if (imageElement) {
+                        imageSelector.select(/** @type {!Element}*/(imageElement.parentNode));
+                    }
+                } else {
+                    // May have just processed our own remove cursor operation...
+                    // Probably not a good idea to try and update our selected range in this case ;-)
+                    selection.addRange(cursor.getSelectedRange().cloneRange());
+                }
             }
         }
 
