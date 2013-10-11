@@ -464,14 +464,15 @@ gui.SessionController = (function () {
             // out the caret position from two coordinates.
             runtime.setTimeout(function () {
                 var /** @type {?Node} */targetNode = /** @type {?Node} */(e.target),
+                    parentNode = targetNode.parentNode,
                     selection, selectionType, stepsToAnchor, stepsToFocus, oldPosition, op;
 
                 if (imageSelector.isSelectorElement(targetNode)) {
                     return;
                 }
 
-                if (odfUtils.isImage(targetNode)) {
-                    stepsToAnchor = countStepsToNode(targetNode.parentNode, 0);
+                if (odfUtils.isImage(targetNode) && odfUtils.isCharacterFrame(parentNode)) {
+                    stepsToAnchor = countStepsToNode(parentNode, 0);
                     stepsToFocus = stepsToAnchor !== null ? stepsToAnchor + 1 : null;
                     selectionType = ops.OdtCursor.RegionSelection;
                 } else {
@@ -1193,92 +1194,109 @@ gui.SessionController = (function () {
             };
         }
 
+        /**
+         * Executes the given function only on range selection only
+         * @param {!Function} fn
+         * @return {!Function}
+         */
+        function rangeSelectionOnly(fn) {
+            return function (e) {
+                var selectionType = odtDocument.getCursor(inputMemberId).getSelectionType();
+                if (selectionType === ops.OdtCursor.RangeSelection) {
+                    return fn(e);
+                }
+                return true;
+            };
+        }
+
         function init() {
             var isMacOS = window.navigator.appVersion.toLowerCase().indexOf("mac") !== -1,
                 modifier = gui.KeyboardHandler.Modifier,
                 keyCode = gui.KeyboardHandler.KeyCode;
 
-            keyDownHandler.bind(keyCode.Tab, modifier.None, function () {
+            // TODO: deselect the currently selected image when press Esc
+            // TODO: move the image selection box to next image/frame when press tab on selected image
+            keyDownHandler.bind(keyCode.Tab, modifier.None, rangeSelectionOnly(function () {
                 textManipulator.insertText("\t");
                 return true;
-            });
-            keyDownHandler.bind(keyCode.Left, modifier.None, moveCursorToLeft);
-            keyDownHandler.bind(keyCode.Right, modifier.None, moveCursorToRight);
-            keyDownHandler.bind(keyCode.Up, modifier.None, moveCursorUp);
-            keyDownHandler.bind(keyCode.Down, modifier.None, moveCursorDown);
+            }));
+            keyDownHandler.bind(keyCode.Left, modifier.None, rangeSelectionOnly(moveCursorToLeft));
+            keyDownHandler.bind(keyCode.Right, modifier.None, rangeSelectionOnly(moveCursorToRight));
+            keyDownHandler.bind(keyCode.Up, modifier.None, rangeSelectionOnly(moveCursorUp));
+            keyDownHandler.bind(keyCode.Down, modifier.None, rangeSelectionOnly(moveCursorDown));
             // Most browsers will go back one page when given an unhandled backspace press
             // To prevent this, the event handler for this key should always return true
             keyDownHandler.bind(keyCode.Backspace, modifier.None, returnTrue(textManipulator.removeTextByBackspaceKey));
             keyDownHandler.bind(keyCode.Delete, modifier.None, textManipulator.removeTextByDeleteKey);
-            keyDownHandler.bind(keyCode.Left, modifier.Shift, extendSelectionToLeft);
-            keyDownHandler.bind(keyCode.Right, modifier.Shift, extendSelectionToRight);
-            keyDownHandler.bind(keyCode.Up, modifier.Shift, extendSelectionUp);
-            keyDownHandler.bind(keyCode.Down, modifier.Shift, extendSelectionDown);
+            keyDownHandler.bind(keyCode.Left, modifier.Shift, rangeSelectionOnly(extendSelectionToLeft));
+            keyDownHandler.bind(keyCode.Right, modifier.Shift, rangeSelectionOnly(extendSelectionToRight));
+            keyDownHandler.bind(keyCode.Up, modifier.Shift, rangeSelectionOnly(extendSelectionUp));
+            keyDownHandler.bind(keyCode.Down, modifier.Shift, rangeSelectionOnly(extendSelectionDown));
 
-            keyDownHandler.bind(keyCode.Home, modifier.None, moveCursorToLineStart);
-            keyDownHandler.bind(keyCode.End, modifier.None, moveCursorToLineEnd);
-            keyDownHandler.bind(keyCode.Home, modifier.Ctrl, moveCursorToDocumentStart);
-            keyDownHandler.bind(keyCode.End, modifier.Ctrl, moveCursorToDocumentEnd);
-            keyDownHandler.bind(keyCode.Home, modifier.Shift, extendSelectionToLineStart);
-            keyDownHandler.bind(keyCode.End, modifier.Shift, extendSelectionToLineEnd);
-            keyDownHandler.bind(keyCode.Up, modifier.CtrlShift, extendSelectionToParagraphStart);
-            keyDownHandler.bind(keyCode.Down, modifier.CtrlShift, extendSelectionToParagraphEnd);
-            keyDownHandler.bind(keyCode.Home, modifier.CtrlShift, extendSelectionToDocumentStart);
-            keyDownHandler.bind(keyCode.End, modifier.CtrlShift, extendSelectionToDocumentEnd);
+            keyDownHandler.bind(keyCode.Home, modifier.None, rangeSelectionOnly(moveCursorToLineStart));
+            keyDownHandler.bind(keyCode.End, modifier.None, rangeSelectionOnly(moveCursorToLineEnd));
+            keyDownHandler.bind(keyCode.Home, modifier.Ctrl, rangeSelectionOnly(moveCursorToDocumentStart));
+            keyDownHandler.bind(keyCode.End, modifier.Ctrl, rangeSelectionOnly(moveCursorToDocumentEnd));
+            keyDownHandler.bind(keyCode.Home, modifier.Shift, rangeSelectionOnly(extendSelectionToLineStart));
+            keyDownHandler.bind(keyCode.End, modifier.Shift, rangeSelectionOnly(extendSelectionToLineEnd));
+            keyDownHandler.bind(keyCode.Up, modifier.CtrlShift, rangeSelectionOnly(extendSelectionToParagraphStart));
+            keyDownHandler.bind(keyCode.Down, modifier.CtrlShift, rangeSelectionOnly(extendSelectionToParagraphEnd));
+            keyDownHandler.bind(keyCode.Home, modifier.CtrlShift, rangeSelectionOnly(extendSelectionToDocumentStart));
+            keyDownHandler.bind(keyCode.End, modifier.CtrlShift, rangeSelectionOnly(extendSelectionToDocumentEnd));
 
             if (isMacOS) {
                 keyDownHandler.bind(keyCode.Clear, modifier.None, textManipulator.removeCurrentSelection);
-                keyDownHandler.bind(keyCode.Left, modifier.Meta, moveCursorToLineStart);
-                keyDownHandler.bind(keyCode.Right, modifier.Meta, moveCursorToLineEnd);
-                keyDownHandler.bind(keyCode.Home, modifier.Meta, moveCursorToDocumentStart);
-                keyDownHandler.bind(keyCode.End, modifier.Meta, moveCursorToDocumentEnd);
-                keyDownHandler.bind(keyCode.Left, modifier.MetaShift, extendSelectionToLineStart);
-                keyDownHandler.bind(keyCode.Right, modifier.MetaShift, extendSelectionToLineEnd);
-                keyDownHandler.bind(keyCode.Up, modifier.AltShift, extendSelectionToParagraphStart);
-                keyDownHandler.bind(keyCode.Down, modifier.AltShift, extendSelectionToParagraphEnd);
-                keyDownHandler.bind(keyCode.Up, modifier.MetaShift, extendSelectionToDocumentStart);
-                keyDownHandler.bind(keyCode.Down, modifier.MetaShift, extendSelectionToDocumentEnd);
-                keyDownHandler.bind(keyCode.A, modifier.Meta, extendSelectionToEntireDocument);
+                keyDownHandler.bind(keyCode.Left, modifier.Meta, rangeSelectionOnly(moveCursorToLineStart));
+                keyDownHandler.bind(keyCode.Right, modifier.Meta, rangeSelectionOnly(moveCursorToLineEnd));
+                keyDownHandler.bind(keyCode.Home, modifier.Meta, rangeSelectionOnly(moveCursorToDocumentStart));
+                keyDownHandler.bind(keyCode.End, modifier.Meta, rangeSelectionOnly(moveCursorToDocumentEnd));
+                keyDownHandler.bind(keyCode.Left, modifier.MetaShift, rangeSelectionOnly(extendSelectionToLineStart));
+                keyDownHandler.bind(keyCode.Right, modifier.MetaShift, rangeSelectionOnly(extendSelectionToLineEnd));
+                keyDownHandler.bind(keyCode.Up, modifier.AltShift, rangeSelectionOnly(extendSelectionToParagraphStart));
+                keyDownHandler.bind(keyCode.Down, modifier.AltShift, rangeSelectionOnly(extendSelectionToParagraphEnd));
+                keyDownHandler.bind(keyCode.Up, modifier.MetaShift, rangeSelectionOnly(extendSelectionToDocumentStart));
+                keyDownHandler.bind(keyCode.Down, modifier.MetaShift, rangeSelectionOnly(extendSelectionToDocumentEnd));
+                keyDownHandler.bind(keyCode.A, modifier.Meta, rangeSelectionOnly(extendSelectionToEntireDocument));
                 if (directTextStyler) {
-                    keyDownHandler.bind(keyCode.B, modifier.Meta, directTextStyler.toggleBold);
-                    keyDownHandler.bind(keyCode.I, modifier.Meta, directTextStyler.toggleItalic);
-                    keyDownHandler.bind(keyCode.U, modifier.Meta, directTextStyler.toggleUnderline);
+                    keyDownHandler.bind(keyCode.B, modifier.Meta, rangeSelectionOnly(directTextStyler.toggleBold));
+                    keyDownHandler.bind(keyCode.I, modifier.Meta, rangeSelectionOnly(directTextStyler.toggleItalic));
+                    keyDownHandler.bind(keyCode.U, modifier.Meta, rangeSelectionOnly(directTextStyler.toggleUnderline));
                 }
                 if (directParagraphStyler) {
-                    keyDownHandler.bind(keyCode.L, modifier.MetaShift, directParagraphStyler.alignParagraphLeft);
-                    keyDownHandler.bind(keyCode.E, modifier.MetaShift, directParagraphStyler.alignParagraphCenter);
-                    keyDownHandler.bind(keyCode.R, modifier.MetaShift, directParagraphStyler.alignParagraphRight);
-                    keyDownHandler.bind(keyCode.J, modifier.MetaShift, directParagraphStyler.alignParagraphJustified);
+                    keyDownHandler.bind(keyCode.L, modifier.MetaShift, rangeSelectionOnly(directParagraphStyler.alignParagraphLeft));
+                    keyDownHandler.bind(keyCode.E, modifier.MetaShift, rangeSelectionOnly(directParagraphStyler.alignParagraphCenter));
+                    keyDownHandler.bind(keyCode.R, modifier.MetaShift, rangeSelectionOnly(directParagraphStyler.alignParagraphRight));
+                    keyDownHandler.bind(keyCode.J, modifier.MetaShift, rangeSelectionOnly(directParagraphStyler.alignParagraphJustified));
                 }
                 keyDownHandler.bind(keyCode.Z, modifier.Meta, undo);
                 keyDownHandler.bind(keyCode.Z, modifier.MetaShift, redo);
             } else {
-                keyDownHandler.bind(keyCode.A, modifier.Ctrl, extendSelectionToEntireDocument);
+                keyDownHandler.bind(keyCode.A, modifier.Ctrl, rangeSelectionOnly(extendSelectionToEntireDocument));
                 if (directTextStyler) {
-                    keyDownHandler.bind(keyCode.B, modifier.Ctrl, directTextStyler.toggleBold);
-                    keyDownHandler.bind(keyCode.I, modifier.Ctrl, directTextStyler.toggleItalic);
-                    keyDownHandler.bind(keyCode.U, modifier.Ctrl, directTextStyler.toggleUnderline);
+                    keyDownHandler.bind(keyCode.B, modifier.Ctrl, rangeSelectionOnly(directTextStyler.toggleBold));
+                    keyDownHandler.bind(keyCode.I, modifier.Ctrl, rangeSelectionOnly(directTextStyler.toggleItalic));
+                    keyDownHandler.bind(keyCode.U, modifier.Ctrl, rangeSelectionOnly(directTextStyler.toggleUnderline));
                 }
                 if (directParagraphStyler) {
-                    keyDownHandler.bind(keyCode.L, modifier.CtrlShift, directParagraphStyler.alignParagraphLeft);
-                    keyDownHandler.bind(keyCode.E, modifier.CtrlShift, directParagraphStyler.alignParagraphCenter);
-                    keyDownHandler.bind(keyCode.R, modifier.CtrlShift, directParagraphStyler.alignParagraphRight);
-                    keyDownHandler.bind(keyCode.J, modifier.CtrlShift, directParagraphStyler.alignParagraphJustified);
+                    keyDownHandler.bind(keyCode.L, modifier.CtrlShift, rangeSelectionOnly(directParagraphStyler.alignParagraphLeft));
+                    keyDownHandler.bind(keyCode.E, modifier.CtrlShift, rangeSelectionOnly(directParagraphStyler.alignParagraphCenter));
+                    keyDownHandler.bind(keyCode.R, modifier.CtrlShift, rangeSelectionOnly(directParagraphStyler.alignParagraphRight));
+                    keyDownHandler.bind(keyCode.J, modifier.CtrlShift, rangeSelectionOnly(directParagraphStyler.alignParagraphJustified));
                 }
                 keyDownHandler.bind(keyCode.Z, modifier.Ctrl, undo);
                 keyDownHandler.bind(keyCode.Z, modifier.CtrlShift, redo);
             }
 
             // the default action is to insert text into the document
-            keyPressHandler.setDefault(function (e) {
+            keyPressHandler.setDefault(rangeSelectionOnly(function (e) {
                 var text = stringFromKeyPress(e);
                 if (text && !(e.altKey || e.ctrlKey || e.metaKey)) {
                     textManipulator.insertText(text);
                     return true;
                 }
                 return false;
-            });
-            keyPressHandler.bind(keyCode.Enter, modifier.None, textManipulator.enqueueParagraphSplittingOps);
+            }));
+            keyPressHandler.bind(keyCode.Enter, modifier.None, rangeSelectionOnly(textManipulator.enqueueParagraphSplittingOps));
         }
 
         init();
