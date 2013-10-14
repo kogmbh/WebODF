@@ -33,17 +33,19 @@
  * @source: http://gitorious.org/webodf/webodf/
  */
 
-/*global define,require,document */
+/*global define,require,document,ops,gui */
 
 define("webodf/editor/widgets/paragraphAlignment", [
     "dijit/form/ToggleButton",
-    "dijit/form/Button"],
+    "dijit/form/Button",
+    "webodf/editor/EditorSession"],
 
-    function (ToggleButton, Button) {
+    function (ToggleButton, Button, EditorSession) {
         "use strict";
 
         var ParagraphAlignment = function (callback) {
             var self = this,
+                editorSession,
                 widget = {},
                 directParagraphStyler,
                 justifyLeft,
@@ -161,7 +163,14 @@ define("webodf/editor/widgets/paragraphAlignment", [
                 });
             }
 
-            this.setEditorSession = function(session) {
+            function handleCursorMoved(cursor) {
+                var disabled = cursor.getSelectionType() === ops.OdtCursor.RegionSelection;
+                widget.children.forEach(function (element) {
+                    element.setAttribute('disabled', disabled);
+                });
+            }
+
+            this.setEditorSession = function (session) {
                 if (directParagraphStyler) {
                     directParagraphStyler.unsubscribe(gui.DirectParagraphStyler.paragraphStylingChanged, updateStyleButtons);
                 }
@@ -178,6 +187,14 @@ define("webodf/editor/widgets/paragraphAlignment", [
                     isAlignedRight:     directParagraphStyler ? directParagraphStyler.isAlignedRight() :     false,
                     isAlignedJustified: directParagraphStyler ? directParagraphStyler.isAlignedJustified() : false
                 });
+
+                if (editorSession) {
+                    editorSession.unsubscribe(EditorSession.signalCursorMoved, handleCursorMoved);
+                }
+                editorSession = session;
+                if (editorSession) {
+                    editorSession.subscribe(EditorSession.signalCursorMoved, handleCursorMoved);
+                }
             };
 
             this.onToolDone = function () {};
