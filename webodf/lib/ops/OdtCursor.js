@@ -76,7 +76,8 @@ ops.OdtCursor = function OdtCursor(memberId, odtDocument) {
     };
 
     /**
-     * @param {!number} number
+     * Move the cursor the supplied number of positions in either a forward (positive) or backwards (negative) direction
+     * @param {!number} number positions
      * @param {boolean=} extend true if range is to be expanded from the current
      *                      point
      * @return {!number}

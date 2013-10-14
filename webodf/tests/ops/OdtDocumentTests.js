@@ -31,11 +31,11 @@
  * @source: http://gitorious.org/webodf/webodf/
  */
 /*global runtime, core, gui, odf, ops, Node, NodeFilter, xmldom*/
-runtime.loadClass("core.Cursor");
 runtime.loadClass("xmldom.LSSerializer");
 runtime.loadClass("odf.Namespaces");
 runtime.loadClass("gui.SelectionMover");
 runtime.loadClass("ops.OdtDocument");
+runtime.loadClass("ops.OdtCursor");
 /**
  * @constructor
  * @param {core.UnitTestRunner} runner
@@ -61,42 +61,38 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
     function createOdtDocument(xml) {
         var domDocument = testarea.ownerDocument,
             doc = core.UnitTest.createOdtDocument("<office:text>" + xml + "</office:text>", odf.Namespaces.namespaceMap),
-            mover,
-            cursor,
             node = /**@type{!Element}*/(domDocument.importNode(doc.documentElement, true));
+
         testarea.appendChild(node);
-        cursor = new core.Cursor(domDocument, "Joe");
-        mover = new gui.SelectionMover(cursor, node);
+
         t.root = node;
-        t.mover = mover;
-        t.cursor = cursor;
+        t.odtDocument = new ops.OdtDocument(new OdfCanvasAdapter(t.root));
+        t.cursor = new ops.OdtCursor("Joe", t.odtDocument);
+        t.odtDocument.addCursor(t.cursor);
+        t.counter = t.cursor.getStepCounter();
+
+        t.range = t.root.ownerDocument.createRange();
+        t.filter = t.odtDocument.getPositionFilter();
     }
     function appendCssRule(rule) {
         t.styles.insertRule(rule, t.styles.cssRules.length);
     }
     /**
      * @param {!number} startOffset
+     * @param {!number=} selectionLength
      */
-    function setCursorPosition(startOffset) {
-        var range = t.root.ownerDocument.createRange(),
-            filter = new ops.OdtDocument(new OdfCanvasAdapter(t.root)).getPositionFilter(),
-            counter = t.mover.getStepCounter(),
-            officeText = t.root.getElementsByTagNameNS(odf.Namespaces.officens, "text")[0],
-            stepsToStartOffset;
-        t.filter = filter;
-        t.counter = counter;
-        range.setStart(officeText, 0);
-        range.collapse(true);
-        t.cursor.setSelectedRange(range);
-        while (!counter.isPositionWalkable(filter)) {
-            t.mover.movePointForward(1, false);
+    function setCursorPosition(startOffset, selectionLength) {
+        var stepsToStartOffset;
+        stepsToStartOffset = t.counter.countForwardSteps(startOffset, t.filter);
+        t.cursor.move(stepsToStartOffset, false);
+        if (selectionLength) {
+            t.cursor.move(selectionLength, true);
+        } else {
+            // workaround for SelectionMover cachedXOffset "feature"
+            // Failure to do this will leave SelectionMover incorrectly assuming countLineSteps wants to get
+            // to left = 8px due to the fact setCursorPosition moved over multiple lines in a single command
+            t.cursor.move(0, false);
         }
-        stepsToStartOffset = counter.countForwardSteps(startOffset, filter);
-        t.mover.movePointForward(stepsToStartOffset, false);
-        // workaround for SelectionMover cachedXOffset "feature"
-        // Failure to do this will leave SelectionMover incorrectly assuming countLineSteps wants to get
-        // to left = 8px due to the fact setCursorPosition moved over multiple lines in a single command
-        t.mover.movePointForward(0, false);
     }
 
     /**
@@ -124,7 +120,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             t.result = t.result.replace(cursorSerialized, "|");
             r.shouldBe(t, "t.result", "t.expected");
             t.stepsToNextPosition = t.counter.countForwardSteps(1, t.filter);
-            t.mover.movePointForward(t.stepsToNextPosition, false);
+            t.cursor.move(t.stepsToNextPosition, false);
         }
         // Ensure there are no other walkable positions in the document
         r.shouldBe(t, "t.stepsToNextPosition", "0");
@@ -138,7 +134,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             t.result = t.result.replace(cursorSerialized, "|");
             r.shouldBe(t, "t.result", "t.expected");
             t.stepsToNextPosition = t.counter.countBackwardSteps(1, t.filter);
-            t.mover.movePointBackward(t.stepsToNextPosition, false);
+            t.cursor.move(-t.stepsToNextPosition, false);
         }
         // Ensure there are no other walkable positions in the document
         r.shouldBe(t, "t.stepsToNextPosition", "0");
@@ -284,6 +280,72 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         t.steps = t.counter.countStepsToPosition(span, span.childNodes.length, t.filter);
         r.shouldBe(t, "t.steps", "1");
     }
+
+    /**
+     * Wraps the supplied node in a parent div
+     * @param {!Node} node
+     */
+    function wrapInDiv(node) {
+        var container = t.root.ownerDocument.createElement("div");
+        node.parentNode.insertBefore(container, node);
+        container.appendChild(node);
+    }
+    function testFixCursorPositions_AnchorInInvalidPlace() {
+        createOdtDocument("<text:p>ABCD</text:p>");
+        setCursorPosition(1, 2);
+        wrapInDiv(t.cursor.getAnchorNode());
+
+        t.odtDocument.fixCursorPositions();
+
+        t.isWalkable = t.counter.isPositionWalkable(t.filter);
+        t.stepsToAnchor = t.counter.countStepsToPosition(t.cursor.getAnchorNode(), 0, t.filter);
+        t.stepsToRoot = t.counter.countStepsToPosition(t.root, 0, t.filter);
+        r.shouldBe(t, "t.isWalkable", "true");
+        r.shouldBe(t, "t.stepsToAnchor", "-2");
+        r.shouldBe(t, "t.stepsToRoot", "-3");
+    }
+    function testFixCursorPositions_Range_CursorInInvalidPlace() {
+        createOdtDocument("<text:p>ABCD</text:p>");
+        setCursorPosition(1, 2);
+        wrapInDiv(t.cursor.getNode());
+
+        t.odtDocument.fixCursorPositions();
+
+        t.isWalkable = t.counter.isPositionWalkable(t.filter);
+        t.stepsToAnchor = t.counter.countStepsToPosition(t.cursor.getAnchorNode(), 0, t.filter);
+        t.stepsToRoot = t.counter.countStepsToPosition(t.root, 0, t.filter);
+        r.shouldBe(t, "t.isWalkable", "true");
+        r.shouldBe(t, "t.stepsToAnchor", "-2");
+        r.shouldBe(t, "t.stepsToRoot", "-3");
+    }
+    function testFixCursorPositions_Range_AnchorAndCursorInInvalidPlace() {
+        createOdtDocument("<text:p>ABCD</text:p>");
+        setCursorPosition(1, 2);
+        wrapInDiv(t.cursor.getNode());
+        wrapInDiv(t.cursor.getAnchorNode());
+
+        t.odtDocument.fixCursorPositions();
+
+        t.isWalkable = t.counter.isPositionWalkable(t.filter);
+        t.stepsToAnchor = t.counter.countStepsToPosition(t.cursor.getAnchorNode(), 0, t.filter);
+        t.stepsToRoot = t.counter.countStepsToPosition(t.root, 0, t.filter);
+        r.shouldBe(t, "t.isWalkable", "true");
+        r.shouldBe(t, "t.stepsToAnchor", "-2");
+        r.shouldBe(t, "t.stepsToRoot", "-3");
+    }
+    function testFixCursorPositions_Collapsed_CursorInInvalidPlace() {
+        createOdtDocument("<text:p>ABCD</text:p>");
+        setCursorPosition(1);
+        wrapInDiv(t.cursor.getNode());
+
+        t.odtDocument.fixCursorPositions();
+
+        t.isWalkable = t.counter.isPositionWalkable(t.filter);
+        t.stepsToRoot = t.counter.countStepsToPosition(t.root, 0, t.filter);
+        r.shouldBe(t, "t.isWalkable", "true");
+        r.shouldBe(t, "t.stepsToRoot", "-1");
+    }
+
     function testAvailablePositions_EmptyParagraph() {
         // Examples from README_cursorpositions.txt
         testCursorPositions("<text:p>|</text:p>");
@@ -384,6 +446,11 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
 
             testcountStepsToPosition_CursorNearBeginningOfSpan,
             testcountStepsToPosition_CursorNearEndOfSpan,
+
+            testFixCursorPositions_AnchorInInvalidPlace,
+            testFixCursorPositions_Range_CursorInInvalidPlace,
+            testFixCursorPositions_Range_AnchorAndCursorInInvalidPlace,
+            testFixCursorPositions_Collapsed_CursorInInvalidPlace,
 
             testAvailablePositions_EmptyParagraph,
             testAvailablePositions_SimpleTextNodes,

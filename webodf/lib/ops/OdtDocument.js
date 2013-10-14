@@ -54,7 +54,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     var self = this,
         odfUtils,
         domUtils,
-        /**Object.<!ops.OdtCursor>*/cursors = {},
+        /**!Object.<!ops.OdtCursor>*/cursors = {},
         eventNotifier = new core.EventNotifier([
             ops.OdtDocument.signalCursorAdded,
             ops.OdtDocument.signalCursorRemoved,
@@ -561,40 +561,51 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      * Iterates through all cursors and checks if they are in
      * walkable positions; if not, move the cursor 1 filtered step backward
      * which guarantees walkable state for all cursors,
-     * while keeping them inside the same root.
-     * @param {?string} localMemberId An event will be raised for this cursor if it is moved
+     * while keeping them inside the same root. An event will be raised for this cursor if it is moved
      */
-    this.fixCursorPositions = function (localMemberId) {
-        var memberId,
-            cursor,
-            stepCounter,
-            steps,
-            rootConstrainedFilter = new core.PositionFilterChain();
+    this.fixCursorPositions = function () {
+        var rootConstrainedFilter = new core.PositionFilterChain();
+        rootConstrainedFilter.addFilter('BaseFilter', filter);
 
-        rootConstrainedFilter.addFilter('BaseFilter', self.getPositionFilter());
+        Object.keys(cursors).forEach(function(memberId) {
+            var cursor = cursors[memberId],
+                stepCounter = cursor.getStepCounter(),
+                stepsToAnchor = stepCounter.countStepsToPosition(cursor.getAnchorNode(), 0, filter),
+                positionsToAdjustFocus = 0,
+                positionsToAnchor = 0,
+                cursorMoved = false;
 
-        for (memberId in cursors) {
-            if (cursors.hasOwnProperty(memberId)) {
-                // Equip a Root Filter for specifically this cursor
-                rootConstrainedFilter.addFilter('RootFilter', self.createRootFilter(memberId));
-                cursor = cursors[memberId];
-                stepCounter = cursor.getStepCounter();
+            // Equip a Root Filter for specifically this cursor
+            rootConstrainedFilter.addFilter('RootFilter', self.createRootFilter(memberId));
 
-                if (!stepCounter.isPositionWalkable(rootConstrainedFilter)) {
-                    steps = stepCounter.countStepsToValidPosition(rootConstrainedFilter);
-                    cursor.move(steps);
-                    if (memberId === localMemberId) {
-                        self.emit(ops.OdtDocument.signalCursorMoved, cursor);
-                    }
-                } else if (self.getCursorSelection(memberId).length === 0) {
-                    // call move(0) here to force the cursor to reset its selection to collapsed
-                    // and remove the now-unnecessary anchor node
-                    cursor.move(0);
+            if (!stepCounter.isPositionWalkable(rootConstrainedFilter)) {
+                cursorMoved = true;
+                positionsToAdjustFocus = stepCounter.countPositionsToNearestStep(rootConstrainedFilter);
+                cursor.move(positionsToAdjustFocus);
+
+                if (stepsToAnchor !== 0) {
+                    positionsToAnchor = stepsToAnchor < 0
+                        ? -stepCounter.countBackwardSteps(-stepsToAnchor, rootConstrainedFilter)
+                        : stepCounter.countForwardSteps(stepsToAnchor, rootConstrainedFilter);
+                    // Cursor extension implicitly goes anchor-to-focus. As such, the cursor needs to be navigated
+                    // first to the anchor position, then extended to the focus node to ensure the focus ends up at the
+                    // correct end of the selection
+                    cursor.move(positionsToAnchor);
+                    cursor.move(-positionsToAnchor, true);
                 }
-                // Un-equip the Root Filter for this cursor because we are done with it
-                rootConstrainedFilter.removeFilter('RootFilter');
+            } else if (stepsToAnchor === 0) {
+                cursorMoved = true;
+                // call move(0) here to force the cursor to reset its selection to collapsed
+                // and remove the now-unnecessary anchor node
+                cursor.move(0);
             }
-        }
+
+            if (cursorMoved) {
+                self.emit(ops.OdtDocument.signalCursorMoved, cursor);
+            }
+            // Un-equip the Root Filter for this cursor because we are done with it
+            rootConstrainedFilter.removeFilter('RootFilter');
+        });
     };
 
     /**
