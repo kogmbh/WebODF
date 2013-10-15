@@ -249,6 +249,7 @@ ops.OpRemoveText = function OpRemoveText() {
             range,
             textNodes,
             paragraphs,
+            cursor = odtDocument.getCursor(memberid),
             collapseRules = new CollapsingRules(odtDocument.getRootNode());
 
         odtDocument.upgradeWhitespacesAtPosition(position);
@@ -278,7 +279,11 @@ ops.OpRemoveText = function OpRemoveText() {
             memberId: memberid,
             timeStamp: timestamp
         });
-        odtDocument.emit(ops.OdtDocument.signalCursorMoved, odtDocument.getCursor(memberid));
+
+        if (cursor) {
+            cursor.resetSelectionType();
+            odtDocument.emit(ops.OdtDocument.signalCursorMoved, cursor);
+        }
 
         odtDocument.getOdfCanvas().rerenderAnnotations();
         return true;

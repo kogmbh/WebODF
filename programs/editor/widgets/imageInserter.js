@@ -33,12 +33,13 @@
  * @source: http://gitorious.org/webodf/webodf/
  */
 
-/*global define,require,document,Image,FileReader,window,runtime */
+/*global define,require,document,Image,FileReader,window,runtime,ops */
 
 define("webodf/editor/widgets/imageInserter", [
-    "dijit/form/Button"],
+    "dijit/form/Button",
+    "webodf/editor/EditorSession"],
 
-    function (Button) {
+    function (Button, EditorSession) {
         "use strict";
 
         var ImageInserter = function (callback) {
@@ -133,8 +134,21 @@ define("webodf/editor/widgets/imageInserter", [
                 return widget;
             };
 
+            function handleCursorMoved(cursor) {
+                var disabled = cursor.getSelectionType() === ops.OdtCursor.RegionSelection;
+                // LO/AOO pops up the picture/frame option dialog if image is selected when pressing the button
+                // Since we only support inline images, disable the button for now.
+                insertImageButton.setAttribute('disabled', disabled);
+            }
+
             this.setEditorSession = function (session) {
+                if (editorSession) {
+                    editorSession.unsubscribe(EditorSession.signalCursorMoved, handleCursorMoved);
+                }
                 editorSession = session;
+                if (editorSession) {
+                    editorSession.subscribe(EditorSession.signalCursorMoved, handleCursorMoved);
+                }
                 widget.children.forEach(function (element) {
                     element.setAttribute("disabled", !session);
                 });

@@ -54,6 +54,7 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
         span,
         avatar,
         cursorNode,
+        isShown = true,
         shouldBlink = false,
         blinking = false,
         blinkTimeout;
@@ -187,9 +188,15 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
      * Fonts known to cause this problem:
      * - STIXGeneral (MacOS, Chrome & Safari)
      */
-    function updateVerticalCaretAlignment() {
+    function handleUpdate() {
         var selectionRect = getSelectionRect(),
             caretRect;
+
+        if (isShown && cursor.getSelectionType() === ops.OdtCursor.RangeSelection) {
+            span.style.visibility = "visible";
+        } else {
+            span.style.visibility = "hidden";
+        }
 
         if (selectionRect) {
             // Reset the top back to 0 so that the new client rect calculations are simple
@@ -216,7 +223,7 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
             span.style.top = DEFAULT_CARET_TOP;
         }
     }
-    this.updateVerticalCaretAlignment = updateVerticalCaretAlignment;
+    this.handleUpdate = handleUpdate;
     
     this.refreshCursorBlinking = function () {
         if (blinkOnRangeSelect || cursor.getSelectedRange().collapsed) {
@@ -239,11 +246,13 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
         span.style.opacity = "1";
     };
     this.show = function () {
-        span.style.visibility = "visible";
+        isShown = true;
+        handleUpdate();
         avatar.markAsFocussed(true);
     };
     this.hide = function () {
-        span.style.visibility = "hidden";
+        isShown = false;
+        handleUpdate();
         avatar.markAsFocussed(false);
     };
     this.setAvatarImageUrl = function (url) {
@@ -325,7 +334,7 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
         } else if (caretRect.right > canvasContainerRect.right) {
             canvasContainerElement.scrollLeft += caretRect.right - canvasContainerRect.right;
         }
-        updateVerticalCaretAlignment();
+        handleUpdate();
     };
 
     /**
@@ -351,7 +360,7 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
         cursorNode = cursor.getNode();
         cursorNode.appendChild(span);
         avatar = new gui.Avatar(cursorNode, avatarInitiallyVisible);
-        updateVerticalCaretAlignment();
+        handleUpdate();
     }
     init();
 };

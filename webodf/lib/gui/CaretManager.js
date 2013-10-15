@@ -111,7 +111,7 @@ gui.CaretManager = function CaretManager(sessionController) {
     function scheduleCaretVisibilityCheck() {
         var caret = getCaret(sessionController.getInputMemberId());
         if (caret) {
-            caret.updateVerticalCaretAlignment(); // This is really noticeable if delayed. Calculate the cursor size immediately
+            caret.handleUpdate(); // This is really noticeable if delayed. Calculate the cursor size immediately
             if (!scrollIntoViewScheduled) {
                 scrollIntoViewScheduled = true;
                 // Delay the actual scrolling just in case there are a batch of operations
@@ -196,7 +196,7 @@ gui.CaretManager = function CaretManager(sessionController) {
             // Pass event focus to the session controller
             sessionController.getEventManager().focus();
         } else {
-            cursor.handleUpdate = caret.updateVerticalCaretAlignment;
+            cursor.handleUpdate = caret.handleUpdate;
         }
 
         return caret;

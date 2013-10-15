@@ -175,6 +175,7 @@ ops.OpAddAnnotation = function OpAddAnnotation() {
         if (cursor) {
             stepsToParagraph = countSteps(lengthToMove, cursor.getStepCounter(), positionFilter);
             cursor.move(stepsToParagraph);
+            cursor.resetSelectionType();
             odtDocument.emit(ops.OdtDocument.signalCursorMoved, cursor);
         }
         // Track this annotation

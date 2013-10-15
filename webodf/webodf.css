@@ -487,3 +487,63 @@ dc|*::-moz-selection {
     width: 0;
     height: 0;
 }
+
+#imageSelector {
+    display: none;
+    position: absolute;
+    border-style: solid;
+    border-color: black;
+}
+
+#imageSelector > div {
+    width: 5px;
+    height: 5px;
+    display: block;
+    position: absolute;
+    border: 1px solid black;
+    background-color: #ffffff;
+}
+
+#imageSelector > .topLeft {
+    top: -4px;
+    left: -4px;
+}
+
+#imageSelector > .topRight {
+    top: -4px;
+    right: -4px;
+}
+
+#imageSelector > .bottomRight {
+    right: -4px;
+    bottom: -4px;
+}
+
+#imageSelector > .bottomLeft {
+    bottom: -4px;
+    left: -4px;
+}
+
+#imageSelector > .topMiddle {
+    top: -4px;
+    left: 50%;
+    margin-left: -2.5px; /* half of the width defined in #imageSelector > div */
+}
+
+#imageSelector > .rightMiddle {
+    top: 50%;
+    right: -4px;
+    margin-top: -2.5px; /* half of the height defined in #imageSelector > div */
+}
+
+#imageSelector > .bottomMiddle {
+    bottom: -4px;
+    left: 50%;
+    margin-left: -2.5px; /* half of the width defined in #imageSelector > div */
+}
+
+#imageSelector > .leftMiddle {
+    top: 50%;
+    left: -4px;
+    margin-top: -2.5px; /* half of the height defined in #imageSelector > div */
+}

@@ -62,6 +62,8 @@ runtime.loadClass("gui.SelectionMover");
 ops.OdtCursor = function OdtCursor(memberId, odtDocument) {
     "use strict";
     var self = this,
+        validSelectionTypes = {},
+        selectionType,
         /**@type{gui.SelectionMover}*/
         selectionMover,
         cursor;
@@ -160,10 +162,51 @@ ops.OdtCursor = function OdtCursor(memberId, odtDocument) {
         return odtDocument;
     };
 
+    /**
+     * Gets the current selection type.
+     * @return {!string}
+     */
+    this.getSelectionType = function() {
+        return selectionType;
+    };
+
+    /**
+     * Sets the current selection type to the given value.
+     * @param {!string} value
+     * @return {undefined}
+     */
+    this.setSelectionType = function(value) {
+        if (validSelectionTypes.hasOwnProperty(value)) {
+            selectionType = value;
+        } else {
+            runtime.log("Invalid selection type: " + value);
+        }
+    };
+
+    /**
+     * Reset selection type to default.
+     * @return {undefined}
+     */
+    this.resetSelectionType = function() {
+        self.setSelectionType(ops.OdtCursor.RangeSelection);
+    };
+
     function init() {
         cursor = new core.Cursor(odtDocument.getDOM(), memberId);
         selectionMover = new gui.SelectionMover(cursor, odtDocument.getRootNode());
+
+        validSelectionTypes[ops.OdtCursor.RangeSelection] = true;
+        validSelectionTypes[ops.OdtCursor.RegionSelection] = true;
+        self.resetSelectionType();
     }
 
     init();
 };
+
+/** @const@type {!string} */ops.OdtCursor.RangeSelection = 'Range';
+/** @const@type {!string} */ops.OdtCursor.RegionSelection = 'Region';
+
+(function () {
+    "use strict";
+    return ops.OdtCursor;
+}());
