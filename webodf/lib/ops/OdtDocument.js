@@ -82,12 +82,13 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
 
     /**
      * A filter that allows a position if it has the same closest
-     * whitelisted root as the specified memberid's cursor
+     * whitelisted root as the specified 'anchor', which can be the cursor
+     * of the given memberid, or a given node
      * @constructor
      * @implements {core.PositionFilter}
-     * @param {!string} memberId
+     * @param {!string|!Node} anchor 
      */
-    function RootFilter(memberId) {
+    function RootFilter(anchor) {
         /**
          * @param {!Node} node
          * @return {!boolean}
@@ -105,7 +106,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
          * @return {!Node}
          */
         function getRoot(node) {
-            while (!isRoot(node)) {
+            while (node && !isRoot(node)) {
                 node = /**@type{!Node}*/(node.parentNode);
             }
             return node;
@@ -117,9 +118,15 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
          */
         this.acceptPosition = function (iterator) {
             var node = iterator.container(),
-                cursorNode = cursors[memberId].getNode();
+                anchorNode;
 
-            if (getRoot(node) === getRoot(cursorNode)) {
+            if (typeof anchor === "string") {
+                anchorNode = cursors[anchor].getNode();
+            } else {
+                anchorNode = anchor;
+            }
+
+            if (getRoot(node) === getRoot(anchorNode)) {
                 return FILTER_ACCEPT;
             }
             return FILTER_REJECT;
@@ -742,7 +749,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         var distanceToFirstTextNode = cursor.getStepCounter().countForwardSteps(1, filter),
             memberid = cursor.getMemberId();
 
-        runtime.assert(Boolean(memberid), "OdtDocument::addCursor has cursor without memberid");
+        runtime.assert(typeof memberid === "string", "OdtDocument::addCursor has cursor without memberid");
         runtime.assert(!cursors[memberid], "OdtDocument::addCursor is adding a duplicate cursor with memberid " + memberid);
         cursor.move(distanceToFirstTextNode);
 

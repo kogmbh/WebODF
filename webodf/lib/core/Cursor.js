@@ -227,7 +227,7 @@ core.Cursor = function Cursor(document, memberId) {
      * same direction as the direction of the range
      * @return {boolean}
      */
-    this.hasForwardSelection = function() {
+    this.hasForwardSelection = function () {
         return forwardSelection;
     };
     /**

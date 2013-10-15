@@ -52,6 +52,7 @@ runtime.loadClass("gui.EventManager");
  * @constructor
  * @param {!ops.Session} session
  * @param {!string} inputMemberId
+ * @param {!ops.OdtCursor} shadowCursor
  * @param {!{directStylingEnabled:boolean}=} args
  * @return {?}
  */
@@ -64,10 +65,11 @@ gui.SessionController = (function () {
      * @constructor
      * @param {!ops.Session} session
      * @param {!string} inputMemberId
+     * @param {!ops.OdtCursor} shadowCursor
      * @param {!{directStylingEnabled:boolean}=} args
      * @return {?}
      */
-    gui.SessionController = function SessionController(session, inputMemberId, args) {
+    gui.SessionController = function SessionController(session, inputMemberId, shadowCursor, args) {
         var /**@type{!Window}*/window = /**@type{!Window}*/(runtime.getWindow()),
             odtDocument = session.getOdtDocument(),
             domUtils = new core.DomUtils(),
@@ -79,6 +81,9 @@ gui.SessionController = (function () {
             baseFilter = odtDocument.getPositionFilter(),
             clickStartedWithinContainer = false,
             objectNameGenerator = new odf.ObjectNameGenerator(odtDocument.getOdfCanvas().odfContainer(), inputMemberId),
+            isMouseDown = false,
+            isMouseMoved = false,
+            mouseDownRootFilter = null,
             undoManager = null,
             imageManager = new gui.ImageManager(session, inputMemberId, objectNameGenerator),
             textManipulator = new gui.TextManipulator(session, inputMemberId),
@@ -968,6 +973,19 @@ gui.SessionController = (function () {
             return false;
         }
 
+        function maintainShadowSelection() {
+            var selection = window.getSelection(),
+                range = shadowCursor.getSelectedRange();
+
+            if (shadowCursor.hasForwardSelection()) {
+                selection.collapse(range.startContainer, range.startOffset);
+                selection.extend(range.endContainer, range.endOffset);
+            } else {
+                selection.collapse(range.endContainer, range.endOffset);
+                selection.extend(range.startContainer, range.startOffset);
+            }
+        }
+
         /**
          * Updates a flag indicating whether the mouse down event occurred within the OdfCanvas element.
          * This is necessary because the mouse-up binding needs to be global in order to handle mouse-up
@@ -977,6 +995,11 @@ gui.SessionController = (function () {
          */
         function filterMouseClicks(e) {
             clickStartedWithinContainer = e.target && domUtils.containsNode(odtDocument.getOdfCanvas().getElement(), e.target);
+            if (clickStartedWithinContainer) {
+                isMouseDown = true;
+                isMouseMoved = false;
+                mouseDownRootFilter = odtDocument.createRootFilter(caretPositionFromPoint(e.clientX, e.clientY).container);
+            }
         }
 
         function handleMouseUp(event) {
@@ -986,9 +1009,43 @@ gui.SessionController = (function () {
                 annotationNode = domUtils.getElementsByTagNameNS(target.parentNode, odf.Namespaces.officens, 'annotation')[0];
                 removeAnnotation(annotationNode);
             } else if (clickStartedWithinContainer) {
+                // If a selection was being drawn, then call maintainShadowSelection
+                // to save the state of the shadow cursor's selection into the actual
+                // browser selection, to work around a quirk wherein the selection would
+                // revert to an unmanaged browser selection after mouseup.
+                if (isMouseDown && isMouseMoved) {
+                    maintainShadowSelection();
+                }
                 selectRange(event);
             }
             // Expect that each mouse-up event is preceded by a mouse down that will update clickStartedWithinContainer
+            isMouseDown = false;
+            isMouseMoved = false;
+        }
+
+        function handleMouseMove(event) {
+            if (isMouseDown) {
+                isMouseMoved = true;
+                runtime.setTimeout(function () {
+                    var selection,
+                        position = caretPositionFromPoint(event.clientX, event.clientY),
+                        iterator = gui.SelectionMover.createPositionIterator(odtDocument.getRootNode()),
+                        selectionRange,
+                        isForwardSelection;
+
+                    iterator.setUnfilteredPosition(position.container, position.offset);
+
+                    if (mouseDownRootFilter.acceptPosition(iterator) === FILTER_ACCEPT) {
+                        selection = window.getSelection();
+                        selectionRange = selection.getRangeAt(0);
+                        isForwardSelection = (selection.anchorNode === selectionRange.startContainer) && (selection.anchorOffset === selectionRange.startOffset);
+                        shadowCursor.setSelectedRange(/**@type{!Range}*/(selection.getRangeAt(0).cloneRange()), isForwardSelection);
+                        odtDocument.emit(ops.OdtDocument.signalCursorMoved, shadowCursor);
+                    } else {
+                        maintainShadowSelection();
+                    }
+                }, 0);
+            }
         }
 
         /**
@@ -1006,6 +1063,7 @@ gui.SessionController = (function () {
             eventManager.subscribe("beforepaste", handleBeforePaste);
             eventManager.subscribe("paste", handlePaste);
             eventManager.subscribe("mousedown", filterMouseClicks);
+            eventManager.subscribe("mousemove", handleMouseMove);
             eventManager.subscribe("mouseup", handleMouseUp);
             eventManager.subscribe("contextmenu", handleContextMenu);
             eventManager.subscribe("focus", delayedMaintainCursor);

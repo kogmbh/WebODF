@@ -81,18 +81,25 @@ gui.SessionView = (function () {
     }
 
     /**
+     * TODO: We really don't want to let SessionView be aware of localMemberId,
+     * so eventually we'll need to refactor this. It is only here so that the id can
+     * be matched with the memberids for which CSS is generated, to generate the same CSS
+     * for shadow cursors.
      * @constructor
      * @param {!gui.SessionViewOptions} viewOptions
      * @param {!ops.Session} session
      * @param {!gui.CaretManager} caretManager
      */
-    function SessionView(viewOptions, session, caretManager) {
+    function SessionView(viewOptions, localMemberId, session, caretManager, selectionViewManager) {
         var avatarInfoStyles,
             editInfons = 'urn:webodf:names:editinfo',
             editInfoMap = {},
             showEditInfoMarkers = configOption(viewOptions.editInfoMarkersInitiallyVisible, true),
             showCaretAvatars = configOption(viewOptions.caretAvatarsInitiallyVisible, true),
-            blinkOnRangeSelect = configOption(viewOptions.caretBlinksOnRangeSelect, true);
+            blinkOnRangeSelect = configOption(viewOptions.caretBlinksOnRangeSelect, true),
+            rerenderIntervalId,
+            rerenderSelectionViews = false,
+            /**@const*/RERENDER_INTERVAL = 200; // milliseconds
 
         /**
          * @param {!string} nodeName
@@ -101,7 +108,7 @@ gui.SessionView = (function () {
          * @return {!string}
          */
         function createAvatarInfoNodeMatch(nodeName, memberId, pseudoClass) {
-            return nodeName + '[editinfo|memberid^="' + memberId + '"]' + pseudoClass;
+            return nodeName + '[editinfo|memberid="' + memberId + '"]' + pseudoClass;
         }
 
         /**
@@ -155,6 +162,7 @@ gui.SessionView = (function () {
             setStyle('span.editInfoAuthor', '{ content: "' + name + '"; }', ':before');
             setStyle('dc|creator', '{ content: "' + name + '"; display: none;}', ':before');
             setStyle('dc|creator', '{ background-color: ' + color + '; }', '');
+            setStyle('div.selectionOverlay', '{ background-color: ' + color + ';}', '');
         }
 
         /**
@@ -309,6 +317,10 @@ gui.SessionView = (function () {
             }
 
             setAvatarInfoStyle(memberId, memberData.fullname, memberData.color);
+            if (localMemberId === memberId) {
+                // Shadow cursor has an empty member ID
+                setAvatarInfoStyle("", memberData.fullname, memberData.color);
+            }
         }
 
         /**
@@ -320,6 +332,7 @@ gui.SessionView = (function () {
                 memberModel = session.getMemberModel();
 
             caretManager.registerCursor(cursor, showCaretAvatars, blinkOnRangeSelect);
+            selectionViewManager.registerCursor(cursor, true);
 
             // preset bogus data
             // TODO: indicate loading state
@@ -329,6 +342,29 @@ gui.SessionView = (function () {
             memberModel.getMemberDetailsAndUpdates(memberId, renderMemberData);
 
             runtime.log("+++ View here +++ eagerly created an Caret for '" + memberId + "'! +++");
+        }
+
+        function onCursorMoved(cursor) {
+            var memberId = cursor.getMemberId(),
+                localSelectionView = selectionViewManager.getSelectionView(localMemberId),
+                shadowSelectionView = selectionViewManager.getSelectionView(""),
+                localCaret = caretManager.getCaret(localMemberId);
+
+            if (memberId === localMemberId) {
+                // If our actual cursor moved, then hide the shadow cursor's selection
+                shadowSelectionView.hide();
+                localSelectionView.show();
+                if (localCaret) {
+                    localCaret.show();
+                }
+            } else if (memberId === "") {
+                // If the shadow cursor moved, then hide the current cursor's selection
+                shadowSelectionView.show();
+                localSelectionView.hide();
+                if (localCaret) {
+                    localCaret.hide();
+                }
+            }
         }
 
         /**
@@ -348,6 +384,8 @@ gui.SessionView = (function () {
                 }
             }
 
+            selectionViewManager.removeSelectionView(memberid);
+
             if (!hasMemberEditInfo) {
                 session.getMemberModel().unsubscribeMemberDetailsUpdates(memberid, renderMemberData);
             }
@@ -362,6 +400,33 @@ gui.SessionView = (function () {
         }
 
         /**
+         * @return {undefined}
+         */
+        function requestRerenderOfSelectionViews() {
+            rerenderSelectionViews = true;
+        }
+
+        /**
+         * Starts an interval loop that rerenders selection views and whatever else
+         * needs refreshing every RERENDER_INTERVAL milliseconds.
+         * @return {undefined}
+         */
+        function startRerenderLoop() {
+            rerenderIntervalId = runtime.getWindow().setInterval(function () {
+                if (rerenderSelectionViews) {
+                    selectionViewManager.rerenderSelectionViews();
+                    rerenderSelectionViews = false;
+                }
+            }, RERENDER_INTERVAL);
+        }
+        /**
+         * Stops the rerender loop.
+         */
+        function stopRerenderLoop() {
+            runtime.getWindow().clearInterval(rerenderIntervalId);
+        }
+
+        /**
          * @param {!function(!Object=)} callback, passing an error object in case of error
          * @return {undefined}
          */
@@ -373,6 +438,13 @@ gui.SessionView = (function () {
             odtDocument.unsubscribe(ops.OdtDocument.signalCursorAdded, onCursorAdded);
             odtDocument.unsubscribe(ops.OdtDocument.signalCursorRemoved, onCursorRemoved);
             odtDocument.unsubscribe(ops.OdtDocument.signalParagraphChanged, onParagraphChanged);
+            odtDocument.unsubscribe(ops.OdtDocument.signalCursorMoved, onCursorMoved);
+
+            odtDocument.unsubscribe(ops.OdtDocument.signalParagraphChanged, requestRerenderOfSelectionViews);
+            odtDocument.unsubscribe(ops.OdtDocument.signalTableAdded, requestRerenderOfSelectionViews);
+            odtDocument.unsubscribe(ops.OdtDocument.signalParagraphStyleModified, requestRerenderOfSelectionViews);
+
+            stopRerenderLoop();
 
             caretManager.getCarets().forEach(function(caret) {
                 memberModel.unsubscribeMemberDetailsUpdates(caret.getCursor().getMemberId(), renderMemberData);
@@ -400,6 +472,13 @@ gui.SessionView = (function () {
             odtDocument.subscribe(ops.OdtDocument.signalCursorAdded, onCursorAdded);
             odtDocument.subscribe(ops.OdtDocument.signalCursorRemoved, onCursorRemoved);
             odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, onParagraphChanged);
+            odtDocument.subscribe(ops.OdtDocument.signalCursorMoved, onCursorMoved);
+
+            startRerenderLoop();
+
+            odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, requestRerenderOfSelectionViews);
+            odtDocument.subscribe(ops.OdtDocument.signalTableAdded, requestRerenderOfSelectionViews);
+            odtDocument.subscribe(ops.OdtDocument.signalParagraphStyleModified, requestRerenderOfSelectionViews);
 
             // Add a css sheet for user info-edited styling
             avatarInfoStyles = document.createElementNS(head.namespaceURI, 'style');

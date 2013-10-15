@@ -136,12 +136,20 @@ ops.OdtCursor = function OdtCursor(memberId, odtDocument) {
     this.getSelectedRange = function () {
         return cursor.getSelectedRange();
     };
+    /** Set the given range as the selected range for this cursor
+     * @param {!Range} range,
+     * @param {boolean} isForwardSelection
+     * @return {undefined}
+     */
+    this.setSelectedRange = function (range, isForwardSelection) {
+        cursor.setSelectedRange(range, isForwardSelection);
+    };
     /**
      * Returns if the selection of this cursor has the
      * same direction as the direction of the range
      * @return {boolean}
      */
-    this.hasForwardSelection = function() {
+    this.hasForwardSelection = function () {
         return cursor.hasForwardSelection();
     };
     /**
