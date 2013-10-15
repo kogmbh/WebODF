@@ -73,6 +73,31 @@ odf.OdfUtilsTests = function OdfUtilsTests(runner) {
             ? t.testArea.firstChild.firstChild.firstChild
             : t.testArea.firstChild.firstChild;
     }
+    function isCharacterElement_ReturnTrueForTab() {
+        t.doc = createDocument("<text:p><text:tab/></text:p>");
+        t.isCharacter = t.odfUtils.isCharacterElement(t.doc.firstChild);
+        r.shouldBe(t, "t.isCharacter", "true");
+    }
+    function isCharacterElement_ReturnTrueForSpace() {
+        t.doc = createDocument("<text:p><text:s/></text:p>");
+        t.isCharacter = t.odfUtils.isCharacterElement(t.doc.firstChild);
+        r.shouldBe(t, "t.isCharacter", "true");
+    }
+    function isCharacterElement_ReturnTrueForLineBreak() {
+        t.doc = createDocument("<text:p><text:line-break/></text:p>");
+        t.isCharacter = t.odfUtils.isCharacterElement(t.doc.firstChild);
+        r.shouldBe(t, "t.isCharacter", "true");
+    }
+    function isCharacterElement_ReturnTrueForCharacterFrame() {
+        t.doc = createDocument("<text:p><draw:frame text:anchor-type='as-char'/></text:p>");
+        t.isCharacter = t.odfUtils.isCharacterElement(t.doc.firstChild);
+        r.shouldBe(t, "t.isCharacter", "true");
+    }
+    function isCharacterElement_ReturnFalseForNonCharacterFrame() {
+        t.doc = createDocument("<text:p><draw:frame text:anchor-type='char'/></text:p>");
+        t.isCharacter = t.odfUtils.isCharacterElement(t.doc.firstChild);
+        r.shouldBe(t, "t.isCharacter", "false");
+    }
     function getTextElements_EncompassedWithinParagraph() {
         t.doc = createDocument("<text:p>AB<text:s> </text:s>CD</text:p>");
         t.range.setStart(t.doc.childNodes[0], 0);
@@ -189,15 +214,32 @@ odf.OdfUtilsTests = function OdfUtilsTests(runner) {
         r.shouldBe(t, "t.textElements.shift()", "t.doc.childNodes[2]"); // text:line-break
         r.shouldBe(t, "t.textElements.shift()", "t.doc.childNodes[3]"); // draw:frame
     }
+    function getImageElements_ReturnTwoImages() {
+        t.doc = createDocument("<text:h><text:span><draw:frame><draw:image/></draw:frame></text:span></text:h><text:p><text:span><draw:a><draw:frame><draw:image/></draw:frame></draw:a></text:span></text:p>");
+        t.range.setStartBefore(t.doc.firstChild);
+        t.range.setEndAfter(t.doc.lastChild);
+        t.imageElements = t.odfUtils.getImageElements(t.range);
+
+        r.shouldBe(t, "t.imageElements.length", "2");
+        r.shouldBe(t, "t.imageElements.shift()", "t.doc.childNodes[0].firstChild.firstChild.firstChild");
+        r.shouldBe(t, "t.imageElements.shift()", "t.doc.childNodes[1].firstChild.firstChild.firstChild.firstChild");
+    }
     this.tests = function () {
         return [
+            isCharacterElement_ReturnTrueForTab,
+            isCharacterElement_ReturnTrueForSpace,
+            isCharacterElement_ReturnTrueForLineBreak,
+            isCharacterElement_ReturnTrueForCharacterFrame,
+            isCharacterElement_ReturnFalseForNonCharacterFrame,
+
             getTextElements_EncompassedWithinParagraph,
             getTextElements_EncompassedWithinSpan_And_Paragraph,
             getTextElements_IgnoresEditInfo,
             getTextElements_SpansMultipleParagraphs,
             getTextElements_IncludesInsignificantWhitespace,
             getTextElements_ExcludesInsignificantWhitespace,
-            getTextElements_CharacterElements
+            getTextElements_CharacterElements,
+            getImageElements_ReturnTwoImages
         ];
     };
     this.asyncTests = function () {

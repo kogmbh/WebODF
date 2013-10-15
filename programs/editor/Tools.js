@@ -32,7 +32,7 @@
  * @source: http://gitorious.org/webodf/webodf/
  */
 
-/*global define,document,require */
+/*global define,document,require,ops */
 
 define("webodf/editor/Tools", [
     "dojo/ready",
@@ -47,8 +47,9 @@ define("webodf/editor/Tools", [
     "webodf/editor/widgets/toolbarWidgets/currentStyle",
     "webodf/editor/widgets/paragraphStylesDialog",
     "webodf/editor/widgets/imageInserter",
-    "webodf/editor/widgets/zoomSlider"],
-    function (ready, MenuItem, DropDownMenu, Button, DropDownButton, Toolbar, ParagraphAlignment, SimpleStyles, UndoRedoMenu, CurrentStyle, ParagraphStylesDialog, ImageInserter, ZoomSlider) {
+    "webodf/editor/widgets/zoomSlider",
+    "webodf/editor/EditorSession"],
+    function (ready, MenuItem, DropDownMenu, Button, DropDownButton, Toolbar, ParagraphAlignment, SimpleStyles, UndoRedoMenu, CurrentStyle, ParagraphStylesDialog, ImageInserter, ZoomSlider, EditorSession) {
         "use strict";
 
         return function Tools(args) {
@@ -68,8 +69,22 @@ define("webodf/editor/Tools", [
                 imageInserter,
                 sessionSubscribers = [];
 
+            function handleCursorMoved(cursor) {
+                var disabled = cursor.getSelectionType() === ops.OdtCursor.RegionSelection;
+                if (formatMenuButton) {
+                    formatMenuButton.setAttribute('disabled', disabled);
+                }
+            }
+
             function setEditorSession(session) {
+                if (editorSession) {
+                    editorSession.unsubscribe(EditorSession.signalCursorMoved, handleCursorMoved);
+                }
                 editorSession = session;
+                if (editorSession) {
+                    editorSession.subscribe(EditorSession.signalCursorMoved, handleCursorMoved);
+                }
+
                 sessionSubscribers.forEach(function (subscriber) {
                     subscriber.setEditorSession(editorSession);
                 });
@@ -204,15 +219,6 @@ define("webodf/editor/Tools", [
                 sessionSubscribers.push(paragraphStylesDialog);
                 paragraphStylesDialog.onToolDone = onToolDone;
 
-                if (args.imageInsertingEnabled) {
-                    imageInserter = new ImageInserter(function (widget) {
-                        widget.placeAt(toolbar);
-                        widget.startup();
-                    });
-                    sessionSubscribers.push(imageInserter);
-                    imageInserter.onToolDone = onToolDone;
-                }
-
                 formatMenuButton = new DropDownButton({
                     dropDown: formatDropDownMenu,
                     label: translator('format'),
@@ -222,6 +228,15 @@ define("webodf/editor/Tools", [
                     }
                 });
                 formatMenuButton.placeAt(toolbar);
+
+                if (args.imageInsertingEnabled) {
+                    imageInserter = new ImageInserter(function (widget) {
+                        widget.placeAt(toolbar);
+                        widget.startup();
+                    });
+                    sessionSubscribers.push(imageInserter);
+                    imageInserter.onToolDone = onToolDone;
+                }
 
                 if (close) {
                     closeButton = new Button({

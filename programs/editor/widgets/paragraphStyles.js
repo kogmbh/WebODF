@@ -38,7 +38,7 @@
 define("webodf/editor/widgets/paragraphStyles",
        ["webodf/editor/EditorSession"],
 
-   function (EditorSession) {
+    function (EditorSession) {
     "use strict";
     /**
      * @constructor
@@ -166,15 +166,24 @@ define("webodf/editor/widgets/paragraphStyles",
             });
         }
 
+        function handleCursorMoved(cursor) {
+            var disabled = cursor.getSelectionType() === ops.OdtCursor.RegionSelection;
+            if (select) {
+                select.setAttribute('disabled', disabled);
+            }
+        }
+
         this.setEditorSession = function(session) {
             if (editorSession) {
                 editorSession.unsubscribe(EditorSession.signalCommonStyleCreated, addStyle);
                 editorSession.unsubscribe(EditorSession.signalCommonStyleDeleted, removeStyle);
+                editorSession.unsubscribe(EditorSession.signalCursorMoved, handleCursorMoved);
             }
             editorSession = session;
             if (editorSession) {
                 editorSession.subscribe(EditorSession.signalCommonStyleCreated, addStyle);
                 editorSession.subscribe(EditorSession.signalCommonStyleDeleted, removeStyle);
+                editorSession.subscribe(EditorSession.signalCursorMoved, handleCursorMoved);
                 populateStyles();
             }
         };

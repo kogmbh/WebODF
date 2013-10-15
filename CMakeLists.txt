@@ -314,11 +314,12 @@ set(LIBJSFILES lib/packages.js lib/runtime.js lib/core/Base64.js
     lib/ops/EditInfo.js
     lib/gui/Avatar.js
     lib/gui/Caret.js
-    lib/gui/KeyboardHandler.js
     lib/gui/Clipboard.js
     lib/gui/DirectTextStyler.js
     lib/gui/DirectParagraphStyler.js
+    lib/gui/KeyboardHandler.js
     lib/gui/ImageManager.js
+    lib/gui/ImageSelector.js
     lib/gui/TextManipulator.js
     lib/gui/EventManager.js
     lib/gui/SessionController.js

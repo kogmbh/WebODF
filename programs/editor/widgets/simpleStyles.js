@@ -33,18 +33,20 @@
  * @source: http://gitorious.org/webodf/webodf/
  */
 
-/*global define,require,document */
+/*global define,require,document,gui,ops */
 
 define("webodf/editor/widgets/simpleStyles", [
     "webodf/editor/widgets/fontPicker",
     "dijit/form/ToggleButton",
-    "dijit/form/NumberSpinner"],
+    "dijit/form/NumberSpinner",
+    "webodf/editor/EditorSession"],
 
-    function (FontPicker, ToggleButton, NumberSpinner) {
+    function (FontPicker, ToggleButton, NumberSpinner, EditorSession) {
         "use strict";
 
         var SimpleStyles = function(callback) {
             var self = this,
+                editorSession,
                 widget = {},
                 directTextStyler,
                 boldButton,
@@ -170,6 +172,13 @@ define("webodf/editor/widgets/simpleStyles", [
                 });
             }
 
+            function handleCursorMoved(cursor) {
+                var disabled = cursor.getSelectionType() === ops.OdtCursor.RegionSelection;
+                widget.children.forEach(function (element) {
+                    element.setAttribute('disabled', disabled);
+                });
+            }
+
             this.setEditorSession = function(session) {
                 if (directTextStyler) {
                     directTextStyler.unsubscribe(gui.DirectTextStyler.textStylingChanged, updateStyleButtons);
@@ -190,6 +199,14 @@ define("webodf/editor/widgets/simpleStyles", [
                     fontSize: directTextStyler ? directTextStyler.fontSize() : undefined,
                     fontName: directTextStyler ? directTextStyler.fontName() : undefined
                 });
+
+                if (editorSession) {
+                    editorSession.unsubscribe(EditorSession.signalCursorMoved, handleCursorMoved);
+                }
+                editorSession = session;
+                if (editorSession) {
+                    editorSession.subscribe(EditorSession.signalCursorMoved, handleCursorMoved);
+                }
             };
 
             this.onToolDone = function () {};
