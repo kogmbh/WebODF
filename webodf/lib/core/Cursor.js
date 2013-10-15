@@ -223,6 +223,14 @@ core.Cursor = function Cursor(document, memberId) {
         recentlyModifiedNodes.length = 0;
     };
     /**
+     * Returns if the selection of this cursor has the
+     * same direction as the direction of the range
+     * @return {boolean}
+     */
+    this.hasForwardSelection = function() {
+        return forwardSelection;
+    };
+    /**
      * Remove the cursor from the document tree.
      * @return {undefined}
      */

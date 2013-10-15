@@ -801,13 +801,20 @@ gui.SessionController = (function () {
          */
         function maintainCursorSelection() {
             var cursor = odtDocument.getCursor(inputMemberId),
-                selection = window.getSelection();
+                selection = window.getSelection(),
+                range;
 
+            // May have just processed our own remove cursor operation...
+            // Probably not a good idea to try and update our selected range in this case ;-)
             if (eventManager.hasFocus() && cursor) {
-                // May have just processed our own remove cursor operation...
-                // Probably not a good idea to try and update our selected range in this case ;-)
-                selection.removeAllRanges();
-                selection.addRange(cursor.getSelectedRange().cloneRange());
+                range = cursor.getSelectedRange();
+                if (cursor.hasForwardSelection()) {
+                    selection.collapse(range.startContainer, range.startOffset);
+                    selection.extend(range.endContainer, range.endOffset);
+                } else {
+                    selection.collapse(range.endContainer, range.endOffset);
+                    selection.extend(range.startContainer, range.startOffset);
+                }
             }
         }
 

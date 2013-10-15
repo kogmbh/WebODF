@@ -136,6 +136,14 @@ ops.OdtCursor = function OdtCursor(memberId, odtDocument) {
         return cursor.getSelectedRange();
     };
     /**
+     * Returns if the selection of this cursor has the
+     * same direction as the direction of the range
+     * @return {boolean}
+     */
+    this.hasForwardSelection = function() {
+        return cursor.hasForwardSelection();
+    };
+    /**
      * Obtain the odtDocument to which the cursor corresponds.
      * @return {!ops.OdtDocument}
      */
