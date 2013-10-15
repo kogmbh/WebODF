@@ -356,9 +356,8 @@ odf.OdfCanvas = (function () {
         /**@type{?Window}*/window = runtime.getWindow(),
         xpath = new xmldom.XPath(),
         odfUtils = new odf.OdfUtils(),
-        domUtils = new core.DomUtils(),
-        /* FIXME: shadowContent needs to be part of OdfCanvas instance, not class */
-        shadowContent;
+        domUtils = new core.DomUtils();
+
     /**
      * @param {!Element} element
      * @return {undefined}
@@ -401,25 +400,25 @@ odf.OdfCanvas = (function () {
     /**
      * @param {!odf.OdfContainer} odfContainer
      * @param {!string} masterPageName
-     * @return {Node}
+     * @return {?Element}
      */
-    function getMasterPage(odfContainer, masterPageName) {
+    function getMasterPageElement(odfContainer, masterPageName) {
         if (!masterPageName) {
             return null;
         }
 
         var masterStyles = odfContainer.rootElement.masterStyles,
-            masterPages = masterStyles.getElementsByTagNameNS(stylens, 'master-page'),
-            masterPage = null,
+            masterPageElements = masterStyles.getElementsByTagNameNS(stylens, 'master-page'),
+            masterPageElement = null,
             i;
 
-        for (i = 0; i < masterPages.length; i += 1) {
-            if (masterPages[i].getAttributeNS(stylens, 'name') === masterPageName) {
-                masterPage = masterPages[i];
+        for (i = 0; i < masterPageElements.length; i += 1) {
+            if (masterPageElements[i].getAttributeNS(stylens, 'name') === masterPageName) {
+                masterPageElement = masterPageElements[i];
                 break;
             }
         }
-        return masterPage;
+        return masterPageElement;
     }
 
     /**
@@ -483,14 +482,14 @@ odf.OdfCanvas = (function () {
     }
 
     /**
-     * @param {!odf.OdfContainer} odfContainer
-     * @param {!string} id
+     * @param {!string} styleid
      * @param {!Node} frame
      * @param {!StyleSheet} stylesheet
      * @return {undefined}
      **/
-    function setFramePosition(odfContainer, id, frame, stylesheet) {
-        frame.setAttribute('styleid', id);
+    function setDrawElementPosition(styleid, frame, stylesheet) {
+        // TODO: namespace with webodf ns
+        frame.setAttribute('styleid', styleid);
         var rule,
             anchor = frame.getAttributeNS(textns, 'anchor-type'),
             x = frame.getAttributeNS(svgns, 'x'),
@@ -498,56 +497,7 @@ odf.OdfCanvas = (function () {
             width = frame.getAttributeNS(svgns, 'width'),
             height = frame.getAttributeNS(svgns, 'height'),
             minheight = frame.getAttributeNS(fons, 'min-height'),
-            minwidth = frame.getAttributeNS(fons, 'min-width'),
-            masterPageName = frame.getAttributeNS(drawns, 'master-page-name'),
-            masterPage = null,
-            j,
-            clonedPage,
-            clonedNode,
-            pageNumber = 0,
-            node,
-            document = odfContainer.rootElement.ownerDocument;
-
-        // If there was a master-page-name attribute, then we are dealing with a page.
-        // Get the referenced master page element from the master styles
-        masterPage = getMasterPage(odfContainer, masterPageName);
-
-        // If the referenced master page exists, create a new page and copy over it's contents into the new page,
-        // except for the ones that are placeholders. Also, call setFramePosition on each of those child frames.
-        if (masterPage) {
-            clonedPage = document.createElementNS(drawns, 'draw:page');
-            node = masterPage.firstElementChild;
-            j = 0;
-            while (node) {
-                if (node.getAttributeNS(presentationns, 'placeholder') !== 'true') {
-                    clonedNode = node.cloneNode(true);
-                    clonedPage.appendChild(clonedNode);
-                    setFramePosition(odfContainer, id + '_' + j, /**@type{!Node}*/(clonedNode), stylesheet);
-                }
-                node = node.nextElementSibling;
-                j += 1;
-            }
-            // TODO: above already do not clone nodes which match the rule for being dropped
-            dropTemplateDrawFrames(clonedPage);
-
-            // Append the cloned master page to the "Shadow Content" element outside the main ODF dom
-            shadowContent.appendChild(clonedPage);
-
-            // Get the page number by counting the number of previous master pages in this shadowContent
-            pageNumber = shadowContent.getElementsByTagNameNS(drawns, 'page').length;
-            // Get the page-number tag in the cloned master page and set the text content to the calculated number
-            setContainerValue(clonedPage, textns, 'page-number', pageNumber);
-
-            // Care for header
-            setContainerValue(clonedPage, presentationns, 'header', getHeaderFooter(odfContainer, /**@type{!Element}*/(frame), 'header'));
-            // Care for footer
-            setContainerValue(clonedPage, presentationns, 'footer', getHeaderFooter(odfContainer, /**@type{!Element}*/(frame), 'footer'));
-
-            // Now call setFramePosition on this new page to set the proper dimensions
-            setFramePosition(odfContainer, id, clonedPage, stylesheet);
-            // And finally, add an attribute referring to the master page, so the CSS targeted for that master page will style this
-            clonedPage.setAttributeNS(drawns, 'draw:master-page-name', masterPage.getAttributeNS(stylens, 'name'));
-        }
+            minwidth = frame.getAttributeNS(fons, 'min-width');
 
         if (anchor === "as-char") {
             rule = 'display: inline-block;';
@@ -575,7 +525,7 @@ odf.OdfCanvas = (function () {
             rule += 'min-width: ' + minwidth + ';';
         }
         if (rule) {
-            rule = 'draw|' + frame.localName + '[styleid="' + id + '"] {' +
+            rule = 'draw|' + frame.localName + '[styleid="' + styleid + '"] {' +
                 rule + '}';
             stylesheet.insertRule(rule, stylesheet.cssRules.length);
         }
@@ -796,21 +746,20 @@ odf.OdfCanvas = (function () {
         });
     }
     /**
-     * @param {!odf.OdfContainer} container
      * @param {!Element} odfbody
      * @param {!StyleSheet} stylesheet
      * @return {undefined}
      **/
-    function modifyImages(container, odfbody, stylesheet) {
+    function modifyDrawElements(odfbody, stylesheet) {
         var node,
-            frames,
+            drawElements,
             i;
-        // find all the frame elements
-        frames = [];
+        // find all the draw:* elements
+        drawElements = [];
         node = odfbody.firstChild;
         while (node && node !== odfbody) {
             if (node.namespaceURI === drawns) {
-                frames[frames.length] = node;
+                drawElements[drawElements.length] = node;
             }
             if (node.firstChild) {
                 node = node.firstChild;
@@ -824,12 +773,89 @@ odf.OdfCanvas = (function () {
             }
         }
         // adjust all the frame positions
-        for (i = 0; i < frames.length; i += 1) {
-            node = frames[i];
-            setFramePosition(container, 'frame' + String(i), node, stylesheet);
+        for (i = 0; i < drawElements.length; i += 1) {
+            node = drawElements[i];
+            setDrawElementPosition('frame' + String(i), node, stylesheet);
         }
         formatParagraphAnchors(odfbody);
     }
+
+    /**
+     * @param {!odf.OdfContainer} odfContainer
+     * @param {!Element} shadowContent
+     * @param {!Element} odfbody
+     * @param {!StyleSheet} stylesheet
+     * @return {undefined}
+     **/
+    function cloneMasterPages(odfContainer, shadowContent, odfbody, stylesheet) {
+        var masterPageName,
+            masterPageElement,
+            styleId,
+            clonedPageElement,
+            clonedElement,
+            pageNumber = 0,
+            i,
+            element,
+            elementToClone,
+            document = odfContainer.rootElement.ownerDocument;
+
+        element = odfbody.firstElementChild;
+        // no master pages to expect?
+        if (!(element && element.namespaceURI === officens &&
+              (element.localName === "presentation" || element.localName === "drawing"))) {
+            return;
+        }
+
+        element = element.firstElementChild;
+        while (element) {
+            // If there was a master-page-name attribute, then we are dealing with a draw:page.
+            // Get the referenced master page element from the master styles
+            masterPageName = element.getAttributeNS(drawns, 'master-page-name');
+            masterPageElement = getMasterPageElement(odfContainer, masterPageName);
+
+            // If the referenced master page exists, create a new page and copy over it's contents into the new page,
+            // except for the ones that are placeholders. Also, call setDrawElementPosition on each of those child frames.
+            if (masterPageElement) {
+                styleId = element.getAttribute('styleid');
+                clonedPageElement = document.createElementNS(drawns, 'draw:page');
+
+                elementToClone = masterPageElement.firstElementChild;
+                i = 0;
+                while (elementToClone) {
+                    if (elementToClone.getAttributeNS(presentationns, 'placeholder') !== 'true') {
+                        clonedElement = elementToClone.cloneNode(true);
+                        clonedPageElement.appendChild(clonedElement);
+                        setDrawElementPosition(styleId + '_' + i, /**@type{!Node}*/(clonedElement), stylesheet);
+                    }
+                    elementToClone = elementToClone.nextElementSibling;
+                    i += 1;
+                }
+                // TODO: above already do not clone nodes which match the rule for being dropped
+                dropTemplateDrawFrames(clonedPageElement);
+
+                // Append the cloned master page to the "Shadow Content" element outside the main ODF dom
+                shadowContent.appendChild(clonedPageElement);
+
+                // Get the page number by counting the number of previous master pages in this shadowContent
+                pageNumber = String(shadowContent.getElementsByTagNameNS(drawns, 'page').length);
+                // Get the page-number tag in the cloned master page and set the text content to the calculated number
+                setContainerValue(clonedPageElement, textns, 'page-number', pageNumber);
+
+                // Care for header
+                setContainerValue(clonedPageElement, presentationns, 'header', getHeaderFooter(odfContainer, /**@type{!Element}*/(element), 'header'));
+                // Care for footer
+                setContainerValue(clonedPageElement, presentationns, 'footer', getHeaderFooter(odfContainer, /**@type{!Element}*/(element), 'footer'));
+
+                // Now call setDrawElementPosition on this new page to set the proper dimensions
+                setDrawElementPosition(styleId, clonedPageElement, stylesheet);
+                // And finally, add an attribute referring to the master page, so the CSS targeted for that master page will style this
+                clonedPageElement.setAttributeNS(drawns, 'draw:master-page-name', masterPageElement.getAttributeNS(stylens, 'name'));
+            }
+
+            element = element.nextElementSibling;
+        }
+    }
+
     /**
      * @param {!Object} container
      * @param {!Element} plugin
@@ -1099,6 +1125,7 @@ odf.OdfCanvas = (function () {
             fontcss,
             stylesxmlcss,
             positioncss,
+            shadowContent,
             zoomLevel = 1,
             /**@const@type{!Object.<!string,!Array.<!Function>>}*/
             eventHandlers = {},
@@ -1265,7 +1292,8 @@ odf.OdfCanvas = (function () {
             shadowContent.style.left = 0;
             container.getContentElement().appendChild(shadowContent);
 
-            modifyImages(container, odfnode.body, css);
+            modifyDrawElements(odfnode.body, css);
+            cloneMasterPages(container, shadowContent, odfnode.body, css);
             modifyTables(odfnode.body);
             modifyLinks(odfnode.body);
             expandSpaceElements(odfnode.body);
@@ -1650,7 +1678,7 @@ odf.OdfCanvas = (function () {
         this.addCssForFrameWithImage = function (frame) {
             // TODO: frameid and imageid generation here is better brought in sync with that for the images on loading of a odf file.
             var frameName = frame.getAttributeNS(drawns, 'name');
-            setFramePosition(odfcontainer, frameName, frame, positioncss.sheet);
+            setDrawElementPosition(frameName, frame, positioncss.sheet);
             setImage(frameName + 'img', odfcontainer, /**@type{!Element}*/(frame.firstChild), positioncss.sheet);
         };
         /**
