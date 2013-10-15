@@ -87,10 +87,11 @@ gui.SessionController = (function () {
             isMouseMoved = false,
             mouseDownRootFilter = null,
             undoManager = null,
-            textManipulator = new gui.TextManipulator(session, inputMemberId),
             eventManager = new gui.EventManager(odtDocument),
             directTextStyler = args && args.directStylingEnabled ? new gui.DirectTextStyler(session, inputMemberId) : null,
             directParagraphStyler = args && args.directStylingEnabled ? new gui.DirectParagraphStyler(session, inputMemberId, objectNameGenerator) : null,
+            createCursorStyleOp = /**@type {function (!number, !number):ops.Operation}*/ (directTextStyler && directTextStyler.createCursorStyleOp),
+            textManipulator = new gui.TextManipulator(session, inputMemberId, createCursorStyleOp),
             imageManager = new gui.ImageManager(session, inputMemberId, objectNameGenerator),
             imageSelector = new gui.ImageSelector(odtDocument.getOdfCanvas());
 

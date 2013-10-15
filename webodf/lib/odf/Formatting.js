@@ -469,7 +469,7 @@ odf.Formatting = function Formatting() {
     /**
      * Returns an array of all unique styles in the given text nodes
      * @param {!Array.<!CharacterData>} textNodes
-     * @returns {Array.<Object>}
+     * @returns {!Array.<Object>}
      */
     this.getAppliedStyles = function (textNodes) {
         var styleChains = {},

@@ -36,6 +36,7 @@
 /*global core, ops, gui, runtime*/
 
 runtime.loadClass("core.EventNotifier");
+runtime.loadClass("core.Utils");
 runtime.loadClass("ops.OpApplyDirectStyling");
 runtime.loadClass("gui.StyleHelper");
 
@@ -48,9 +49,11 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
     "use strict";
 
     var self = this,
+        utils = new core.Utils(),
         odtDocument = session.getOdtDocument(),
         styleHelper = new gui.StyleHelper(odtDocument.getFormatting()),
         eventNotifier = new core.EventNotifier([gui.DirectTextStyler.textStylingChanged]),
+        directCursorStyleProperties,
         // cached values
         isBoldValue = false,
         isItalicValue = false,
@@ -98,8 +101,14 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
     function updatedCachedValues() {
         var cursor = odtDocument.getCursor(inputMemberId),
             range = cursor && cursor.getSelectedRange(),
-            currentSelectionStyles = range && styleHelper.getAppliedStyles(range),
+            currentSelectionStyles = (range && styleHelper.getAppliedStyles(range)) || [],
             fontSize, diffMap;
+
+        if (currentSelectionStyles[0] && directCursorStyleProperties) {
+            // direct cursor styles add to the style of the existing range, overriding where defined
+            currentSelectionStyles[0] = utils.mergeObjects(currentSelectionStyles[0],
+                /**@type {!Object}*/(directCursorStyleProperties));
+        }
 
         function noteChange(oldValue, newValue, id) {
             if (oldValue !== newValue) {
@@ -110,10 +119,10 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
             }
             return newValue;
         }
-        isBoldValue = noteChange(isBoldValue, range ? styleHelper.isBold(range) : false, 'isBold');
-        isItalicValue = noteChange(isItalicValue, range ? styleHelper.isItalic(range) : false, 'isItalic');
-        hasUnderlineValue = noteChange(hasUnderlineValue, range ? styleHelper.hasUnderline(range) : false, 'hasUnderline');
-        hasStrikeThroughValue = noteChange(hasStrikeThroughValue, range ? styleHelper.hasStrikeThrough(range) : false, 'hasStrikeThrough');
+        isBoldValue = noteChange(isBoldValue, currentSelectionStyles ? styleHelper.isBold(currentSelectionStyles) : false, 'isBold');
+        isItalicValue = noteChange(isItalicValue, currentSelectionStyles ? styleHelper.isItalic(currentSelectionStyles) : false, 'isItalic');
+        hasUnderlineValue = noteChange(hasUnderlineValue, currentSelectionStyles ? styleHelper.hasUnderline(currentSelectionStyles) : false, 'hasUnderline');
+        hasStrikeThroughValue = noteChange(hasStrikeThroughValue, currentSelectionStyles ? styleHelper.hasStrikeThrough(currentSelectionStyles) : false, 'hasStrikeThrough');
 
         fontSize = currentSelectionStyles && getCommonValue(currentSelectionStyles, ['style:text-properties', 'fo:font-size']);
         fontSizeValue = noteChange(fontSizeValue, fontSize && parseFloat(fontSize), 'fontSize'); // TODO: support other units besides pt!
@@ -176,17 +185,19 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
     }
 
     /**
-     * @param {!function(!Range):boolean} predicate
+     * @param {!function(!Array.<Object>):boolean} predicate
      * @param {!function(!boolean):undefined} toggleMethod
      * @return {!boolean}
      */
     function toggle(predicate, toggleMethod) {
-        var cursor = odtDocument.getCursor(inputMemberId);
+        var cursor = odtDocument.getCursor(inputMemberId),
+            appliedStyles;
         // no own cursor yet/currently added?
         if (!cursor) {
             return false;
         }
-        toggleMethod(!predicate(cursor.getSelectedRange()));
+        appliedStyles = styleHelper.getAppliedStyles(cursor.getSelectedRange());
+        toggleMethod(!predicate(appliedStyles));
         return true;
     }
 
@@ -197,17 +208,67 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
      */
     function formatTextSelection(propertyName, propertyValue) {
         var selection = odtDocument.getCursorSelection(inputMemberId),
-            op = new ops.OpApplyDirectStyling(),
-            properties = {};
-        properties[propertyName] = propertyValue;
+            op,
+            textProperties = {},
+            properties = {'style:text-properties' : textProperties};
+        textProperties[propertyName] = propertyValue;
 
-        op.init({
-            memberid: inputMemberId,
-            position: selection.position,
-            length: selection.length,
-            setProperties: {'style:text-properties' : properties }
-        });
-        session.enqueue([op]);
+        if (selection.length !== 0) {
+            op = new ops.OpApplyDirectStyling();
+            op.init({
+                memberid: inputMemberId,
+                position: selection.position,
+                length: selection.length,
+                setProperties: properties
+            });
+            session.enqueue([op]);
+        } else {
+            // Direct styling is additive. E.g., if the user selects bold and then italic, the intent is to produce
+            // bold & italic text
+            directCursorStyleProperties = utils.mergeObjects(directCursorStyleProperties || {}, properties);
+            updatedCachedValues();
+        }
+    }
+
+    /**
+     * Generate an operation that would apply the current direct cursor styling to the specified
+     * position and length
+     * @param {!number} position
+     * @param {!number} length
+     * @return {ops.Operation}
+     */
+    this.createCursorStyleOp = function (position, length) {
+        var styleOp = null;
+        if (directCursorStyleProperties) {
+            styleOp = new ops.OpApplyDirectStyling();
+            styleOp.init({
+                memberid: inputMemberId,
+                position: position,
+                length: length,
+                setProperties: directCursorStyleProperties
+            });
+            directCursorStyleProperties = null;
+            updatedCachedValues();
+        }
+        return styleOp;
+    };
+
+    /**
+     * Listen for local operations and clear the local cursor styling if necessary
+     * @param {!ops.Operation} op
+     */
+    function clearCursorStyle(op) {
+        var spec = op.spec();
+        if (directCursorStyleProperties && spec.memberid === inputMemberId) {
+            if (spec.optype !== "SplitParagraph") {
+                // Most operations by the local user should clear the current cursor style
+                // SplitParagraph is an exception because at the time the split occurs, there has been no element
+                // added to apply the style to. Even after a split, the cursor should still style the next inserted
+                // character
+                directCursorStyleProperties = null;
+                updatedCachedValues();
+            }
+        }
     }
 
     /**
@@ -359,6 +420,7 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
         odtDocument.unsubscribe(ops.OdtDocument.signalCursorMoved, onCursorMoved);
         odtDocument.unsubscribe(ops.OdtDocument.signalParagraphStyleModified, onParagraphStyleModified);
         odtDocument.unsubscribe(ops.OdtDocument.signalParagraphChanged, onParagraphChanged);
+        odtDocument.unsubscribe(ops.OdtDocument.signalOperationExecuted, clearCursorStyle);
         callback();
     };
 
@@ -368,6 +430,7 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
         odtDocument.subscribe(ops.OdtDocument.signalCursorMoved, onCursorMoved);
         odtDocument.subscribe(ops.OdtDocument.signalParagraphStyleModified, onParagraphStyleModified);
         odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, onParagraphChanged);
+        odtDocument.subscribe(ops.OdtDocument.signalOperationExecuted, clearCursorStyle);
         updatedCachedValues();
     }
 

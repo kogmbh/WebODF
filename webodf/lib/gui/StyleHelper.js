@@ -67,7 +67,7 @@ gui.StyleHelper = function StyleHelper(formatting) {
     /**
      * Returns an array of all unique styles in a given range for each text node
      * @param {!Range} range
-     * @returns {Array.<Object>}
+     * @returns {!Array.<Object>}
      */
     this.getAppliedStyles = getAppliedStyles;
 
@@ -98,18 +98,17 @@ gui.StyleHelper = function StyleHelper(formatting) {
     /**
      * Returns true if all the node within given range have the same value for
      * the property; otherwise false.
-     * @param {!Range} range
+     * @param {!Array.<Object>} appliedStyles
      * @param {!string} propertyName
      * @param {!string} propertyValue
      * @return {!boolean}
      */
-    function hasTextPropertyValue(range, propertyName, propertyValue) {
+    function hasTextPropertyValue(appliedStyles, propertyName, propertyValue) {
         var hasOtherValue = true,
-            styles, properties, i;
+            properties, i;
 
-        styles = getAppliedStyles(range);
-        for (i = 0; i < styles.length; i += 1) {
-            properties = styles[i]['style:text-properties'];
+        for (i = 0; i < appliedStyles.length; i += 1) {
+            properties = appliedStyles[i]['style:text-properties'];
             hasOtherValue = !properties || properties[propertyName] !== propertyValue;
             if (hasOtherValue) {
                 break;
@@ -120,38 +119,38 @@ gui.StyleHelper = function StyleHelper(formatting) {
 
     /**
      * Returns true if all the text within the range are bold; otherwise false.
-     * @param {!Range} range
+     * @param {!Array.<Object>} appliedStyles
      * @return {!boolean}
      */
-    this.isBold = function (range) {
-        return hasTextPropertyValue(range, 'fo:font-weight', 'bold');
+    this.isBold = function (appliedStyles) {
+        return hasTextPropertyValue(appliedStyles, 'fo:font-weight', 'bold');
     };
 
     /**
      * Returns true if all the text within the range are italic; otherwise false.
-     * @param {!Range} range
+     * @param {!Array.<Object>} appliedStyles
      * @return {!boolean}
      */
-    this.isItalic = function (range) {
-        return hasTextPropertyValue(range, 'fo:font-style', 'italic');
+    this.isItalic = function (appliedStyles) {
+        return hasTextPropertyValue(appliedStyles, 'fo:font-style', 'italic');
     };
 
     /**
      * Returns true if all the text within the range have underline; otherwise false.
-     * @param {!Range} range
+     * @param {!Array.<Object>} appliedStyles
      * @return {!boolean}
      */
-    this.hasUnderline = function (range) {
-        return hasTextPropertyValue(range, 'style:text-underline-style', 'solid');
+    this.hasUnderline = function (appliedStyles) {
+        return hasTextPropertyValue(appliedStyles, 'style:text-underline-style', 'solid');
     };
 
     /**
      * Returns true if all the text within the range have strike through; otherwise false.
-     * @param {!Range} range
+     * @param {!Array.<Object>} appliedStyles
      * @return {!boolean}
      */
-    this.hasStrikeThrough = function (range) {
-        return hasTextPropertyValue(range, 'style:text-line-through-style', 'solid');
+    this.hasStrikeThrough = function (appliedStyles) {
+        return hasTextPropertyValue(appliedStyles, 'style:text-line-through-style', 'solid');
     };
 
     /**

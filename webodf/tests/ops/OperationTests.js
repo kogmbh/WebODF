@@ -41,7 +41,7 @@ runtime.loadClass("xmldom.LSSerializer");
  */
 ops.OperationTests = function OperationTests(runner) {
     "use strict";
-    var r = runner, t, tests;
+    var self = this, r = runner, t, tests;
 
     function serialize(element) {
         var serializer = new xmldom.LSSerializer();
@@ -115,11 +115,13 @@ ops.OperationTests = function OperationTests(runner) {
         return true;
     }
     function parseTest(name, node) {
-        var before = node.firstElementChild,
+        var hasSetup = node.getAttribute("hasSetup") === "true",
+            before = node.firstElementChild,
             opsElement = before.nextElementSibling,
             after = opsElement.nextElementSibling,
             ops = [],
-            op;
+            op,
+            setup;
         runtime.assert(before.localName === "before", "Expected <before/> in " + name + ".");
         runtime.assert(checkWhitespace(before, "s", " "), "Unexpanded text:s element or text:c attribute found in " + name + ".");
         runtime.assert(checkWhitespace(before, "tab", "\t"), "Unexpanded text:tab element found in " + name + ".");
@@ -133,7 +135,12 @@ ops.OperationTests = function OperationTests(runner) {
             ops.push(parseOperation(op));
             op = op.nextElementSibling;
         }
+        setup = self.setUps.hasOwnProperty(name) ? self.setUps[name]() : null;
+        if (hasSetup) {
+            runtime.assert(Boolean(setup), "Required setup for " + name + " was not found.");
+        }
         return {
+            setup : setup,
             before: before,
             ops: ops,
             after: after
@@ -197,6 +204,9 @@ ops.OperationTests = function OperationTests(runner) {
             copyChildNodes(autostylesbefore, autostyles);
         }
         copyChildNodes(textbefore, text);
+        if (test.setup) {
+            test.setup.setUp();
+        }
 
         // execute test ops
         for (i = 0; i < test.ops.length; i += 1) {
@@ -246,6 +256,9 @@ ops.OperationTests = function OperationTests(runner) {
             t.text = t.after = "OK";
         }
         r.shouldBe(t, "t.text", "t.after");
+        if (test.setup) {
+            test.setup.tearDown();
+        }
     }
 
     function makeTestIntoFunction(name, test) {
@@ -316,6 +329,21 @@ ops.OperationTests = function OperationTests(runner) {
     this.asyncTests = function () {
         return [
         ];
+    };
+
+    this.setUps = {
+        "ApplyDirectStyling_FixesCursorPositions" : function() {
+            // Test specifically requires the cursor node to have a child element of some sort to
+            // reproduce an issue where the cursor ends up in an invalid position after the operation
+            function appendToCursor(cursor) {
+                cursor.getNode().appendChild(t.odtDocument.getDOM().createElement("span"));
+            }
+
+            return {
+                setUp: function() {t.odtDocument.subscribe(ops.OdtDocument.signalCursorAdded, appendToCursor); },
+                tearDown: function() {t.odtDocument.unsubscribe(ops.OdtDocument.signalCursorAdded, appendToCursor); }
+            };
+        }
     };
 };
 ops.OperationTests.prototype.description = function () {

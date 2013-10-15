@@ -964,6 +964,25 @@
    <office:text><text:p>A<text:span text:style-name="auto63350368_0">BC</text:span>D</text:p></office:text>
   </after>
  </test>
+ <test name="ApplyDirectStyling_FixesCursorPositions" hasSetup="true">
+  <before>
+   <office:automatic-styles/>
+   <office:text><text:p>ABCD</text:p></office:text>
+  </before>
+  <ops>
+   <op optype="AddCursor" memberid="Alice" />
+   <op optype="MoveCursor" memberid="Alice" position="4" length="0" />
+   <op optype="AddCursor" memberid="Bob" />
+   <op optype="MoveCursor" memberid="Bob" position="4" length="0" />
+   <op optype="ApplyDirectStyling" memberid="Alice" position="1" length="3">
+    <setProperties><style:text-properties fo:font-weight="bold" /></setProperties>
+   </op>
+  </ops>
+  <after>
+   <office:automatic-styles><style:style style:name="auto63350368_0" wo:scope="document-content" style:family="text"><style:text-properties fo:font-weight="bold"/></style:style></office:automatic-styles>
+   <office:text><text:p>A<text:span text:style-name="auto63350368_0">BCD<c:cursor c:memberId="Alice"><html:span/></c:cursor><c:cursor c:memberId="Bob"><html:span/></c:cursor></text:span></text:p></office:text>
+  </after>
+ </test>
  <test name="ApplyDirectStyling_ExistingSpan">
   <before>
    <office:automatic-styles/>

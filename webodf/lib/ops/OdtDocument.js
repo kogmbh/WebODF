@@ -40,7 +40,6 @@ runtime.loadClass("core.DomUtils");
 runtime.loadClass("odf.OdfUtils");
 runtime.loadClass("odf.Namespaces");
 runtime.loadClass("gui.SelectionMover");
-runtime.loadClass("gui.StyleHelper");
 runtime.loadClass("core.PositionFilterChain");
 
 /**

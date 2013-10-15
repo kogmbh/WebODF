@@ -290,43 +290,49 @@ gui.StyleHelperTests = function StyleHelperTests(runner) {
         mover = new gui.SelectionMover(cursor, t.doc);
         mover.movePointForward(2);
         t.range = cursor.getSelectedRange();
+        t.appliedStyles = t.styleHelper.getAppliedStyles(t.range);
 
-        t.isBold = t.styleHelper.isBold(t.range);
+        t.isBold = t.styleHelper.isBold(t.appliedStyles);
         r.shouldBe(t, "t.isBold", "true");
     }
     function isBold_ReturnTrue () {
         t.doc = createDocument("<text:p text:style-name='P1'><text:span text:style-name='SBold'>A</text:span><text:span text:style-name='SBold'>B</text:span></text:p>");
         t.range.selectNode(t.doc);
+        t.appliedStyles = t.styleHelper.getAppliedStyles(t.range);
 
-        t.isBold = t.styleHelper.isBold(t.range);
+        t.isBold = t.styleHelper.isBold(t.appliedStyles);
         r.shouldBe(t, "t.isBold", "true");
     }
     function isBold_ReturnFalse() {
         t.doc = createDocument("<text:p text:style-name='P1'><text:span text:style-name='S1'>A</text:span><text:span text:style-name='SBold'>B</text:span></text:p>");
         t.range.selectNode(t.doc);
+        t.appliedStyles = t.styleHelper.getAppliedStyles(t.range);
 
-        t.isBold = t.styleHelper.isBold(t.range);
+        t.isBold = t.styleHelper.isBold(t.appliedStyles);
         r.shouldBe(t, "t.isBold", "false");
     }
     function isItalic_ReturnTrue () {
         t.doc = createDocument("<text:p text:style-name='P1'><text:span text:style-name='SItalic'>A</text:span><text:span text:style-name='SItalic'>B</text:span></text:p>");
         t.range.selectNode(t.doc);
+        t.appliedStyles = t.styleHelper.getAppliedStyles(t.range);
 
-        t.isItalic = t.styleHelper.isItalic(t.range);
+        t.isItalic = t.styleHelper.isItalic(t.appliedStyles);
         r.shouldBe(t, "t.isItalic", "true");
     }
     function hasUnderline_ReturnTrue () {
         t.doc = createDocument("<text:p text:style-name='P1'><text:span text:style-name='SUnderline'>A</text:span><text:span text:style-name='SUnderline'>B</text:span></text:p>");
         t.range.selectNode(t.doc);
+        t.appliedStyles = t.styleHelper.getAppliedStyles(t.range);
 
-        t.hasUnderline = t.styleHelper.hasUnderline(t.range);
+        t.hasUnderline = t.styleHelper.hasUnderline(t.appliedStyles);
         r.shouldBe(t, "t.hasUnderline", "true");
     }
     function hasStrikeThrough_ReturnTrue () {
         t.doc = createDocument("<text:p text:style-name='P1'><text:span text:style-name='SStrikeThrough'>A</text:span><text:span text:style-name='SStrikeThrough'>B</text:span></text:p>");
         t.range.selectNode(t.doc);
+        t.appliedStyles = t.styleHelper.getAppliedStyles(t.range);
 
-        t.hasStrikeThrough = t.styleHelper.hasStrikeThrough(t.range);
+        t.hasStrikeThrough = t.styleHelper.hasStrikeThrough(t.appliedStyles);
         r.shouldBe(t, "t.hasStrikeThrough", "true");
     }
     this.tests = function () {

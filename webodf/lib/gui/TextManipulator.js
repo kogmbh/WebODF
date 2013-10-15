@@ -39,8 +39,9 @@
  * @constructor
  * @param {!ops.Session} session
  * @param {!string} inputMemberId
+ * @param {function(!number, !number):ops.Operation} directStyleOp
  */
-gui.TextManipulator = function TextManipulator(session, inputMemberId) {
+gui.TextManipulator = function TextManipulator(session, inputMemberId, directStyleOp) {
     "use strict";
 
     var odtDocument = session.getOdtDocument();
@@ -190,7 +191,7 @@ gui.TextManipulator = function TextManipulator(session, inputMemberId) {
      */
     function insertText(text) {
         var selection = toForwardSelection(odtDocument.getCursorSelection(inputMemberId)),
-            op, operations = [];
+            op, stylingOp, operations = [];
 
         if (selection.length > 0) {
             op = createOpRemoveSelection(selection);
@@ -204,7 +205,12 @@ gui.TextManipulator = function TextManipulator(session, inputMemberId) {
             text: text
         });
         operations.push(op);
-
+        if (directStyleOp) {
+            stylingOp = directStyleOp(selection.position, text.length);
+            if (stylingOp) {
+                operations.push(stylingOp);
+            }
+        }
         session.enqueue(operations);
     }
     this.insertText = insertText;
