@@ -56,6 +56,7 @@ odf.OdfContainer = (function () {
         /**@const @type{!string}*/ officens = "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
         /**@const @type{!string}*/ manifestns = "urn:oasis:names:tc:opendocument:xmlns:manifest:1.0",
         /**@const @type{!string}*/ webodfns = "urn:webodf:names:scope",
+        /**@const @type{!string}*/ stylens = odf.Namespaces.stylens,
         /**@const @type{!Array.<!string>}*/ nodeorder = ['meta', 'settings', 'scripts', 'font-face-decls', 'styles',
             'automatic-styles', 'master-styles', 'body'],
         /**@const @type{!string}*/ automaticStylePrefix = (new Date()).getTime() + "_webodf_",
@@ -317,6 +318,100 @@ odf.OdfContainer = (function () {
                 n = n.nextSibling;
             }
         }
+
+        /**
+         * Merges all style:font-face elements from the source into the target.
+         * Skips elements equal to one already in the target.
+         * Elements with the same style:name but different properties get a new
+         * value for style:name. Any name changes are logged and returned as a map
+         * with the old names as keys.
+         * @param {!Element} targetFontFaceDeclsRootElement
+         * @param {!Element} sourceFontFaceDeclsRootElement
+         * @return {!Object.<!string,!string>}  mapping of old font-face name to new
+         */
+        function mergeFontFaceDecls(targetFontFaceDeclsRootElement, sourceFontFaceDeclsRootElement) {
+            var n, s, fontFaceName, newFontFaceName,
+                targetFontFaceDeclsMap, sourceFontFaceDeclsMap,
+                fontFaceNameChangeMap = {};
+
+            /**
+             * Returns key with a number postfix or none, as key unused both in map1 and map2.
+             * @param {!string} key
+             * @param {!Object} map1
+             * @param {!Object} map2
+             * @return {!string}
+             */
+            function unusedKey(key, map1, map2) {
+                var i = 0, postFixedKey;
+
+                // cut any current postfix number
+                key = key.replace(/\d+$/, '');
+                // start with no postfix, continue with i = 1, aiming for the simpelst unused number or key
+                postFixedKey = key;
+                while (map1.hasOwnProperty(postFixedKey) || map2.hasOwnProperty(postFixedKey)) {
+                    i += 1;
+                    postFixedKey = key + i;
+                }
+
+                return postFixedKey;
+            }
+
+            /**
+             * Returns a map with the fontface declaration elements, with font-face name as key.
+             * @param {!Element} fontFaceDecls
+             * @return {!Object.<!string,!Element>}
+              */
+            function mapByFontFaceName(fontFaceDecls) {
+                var fn, result = {};
+                // create map of current target decls
+                fn = fontFaceDecls.firstChild;
+                while (fn) {
+                    if (fn.nodeType === Node.ELEMENT_NODE && fn.namespaceURI === stylens && fn.localName === "font-face") {
+                        fontFaceName = fn.getAttributeNS(stylens, "name");
+                        // assuming existance and uniqueness of style:name here
+                        result[fontFaceName] = fn;
+                    }
+                    fn = fn.nextSibling;
+                }
+                return result;
+            }
+
+            targetFontFaceDeclsMap = mapByFontFaceName(targetFontFaceDeclsRootElement);
+            sourceFontFaceDeclsMap = mapByFontFaceName(sourceFontFaceDeclsRootElement);
+
+            // merge source decls into target
+            n = sourceFontFaceDeclsRootElement.firstChild;
+            while (n) {
+                s = n.nextSibling;
+                if (n.nodeType === Node.ELEMENT_NODE && n.namespaceURI === stylens && n.localName === "font-face") {
+                    fontFaceName = n.getAttributeNS(stylens, "name");
+                    // already such a name used in target?
+                    if (targetFontFaceDeclsMap.hasOwnProperty(fontFaceName)) {
+                        // skip it if the declarations are equal, otherwise insert with a new, unused name
+                        if (!n.isEqualNode(targetFontFaceDeclsMap[fontFaceName]) ){
+                            newFontFaceName = unusedKey(fontFaceName, targetFontFaceDeclsMap, sourceFontFaceDeclsMap);
+                            n.setAttributeNS(stylens, "style:name", newFontFaceName);
+                            // copy with a new name
+                            targetFontFaceDeclsRootElement.appendChild(n);
+                            targetFontFaceDeclsMap[newFontFaceName] = /**@type{!Element}*/(n);
+                            delete sourceFontFaceDeclsMap[fontFaceName];
+                            // note name change
+                            fontFaceNameChangeMap[fontFaceName] = newFontFaceName;
+                        }
+                    } else {
+                        // move over
+                        // perhaps one day it could also be checked if there is an equal declaration
+                        // with a different name, but that has yet to be seen in real life
+                        targetFontFaceDeclsRootElement.appendChild(n);
+                        targetFontFaceDeclsMap[fontFaceName] = /**@type{!Element}*/(n);
+                        delete sourceFontFaceDeclsMap[fontFaceName];
+                   }
+                }
+                n = s;
+            }
+            return fontFaceNameChangeMap;
+        }
+
         /**
          * Creates a clone of the styles tree containing only styles tagged
          * with the given scope, or with no specified scope.
@@ -340,6 +435,40 @@ odf.OdfContainer = (function () {
                         }
                     }
                     n = s;
+                }
+            }
+            return copy;
+        }
+        /**
+         * Creates a clone of the font face declaration tree containing only those declarations
+         * which are referenced in the passed styles.
+         * @param {?Element} fontFaceDeclsRootElement
+         * @param {!Array.<!Element>} stylesRootElementList
+         * @return {?Element}
+         */
+        function cloneFontFaceDeclsUsedInStyles(fontFaceDeclsRootElement, stylesRootElementList) {
+            var copy = null,
+                n, nextSibling, fontFaceName,
+                usedFontFaceDeclMap = {};
+
+            if (fontFaceDeclsRootElement) {
+                // first collect used font faces
+                stylesRootElementList.forEach(function(stylesRootElement) {
+                    styleInfo.collectUsedFontFaces(usedFontFaceDeclMap, stylesRootElement);
+                });
+
+                // then clone all font face declarations and drop those which are not in the list of used
+                copy = fontFaceDeclsRootElement.cloneNode(true);
+                n = copy.firstChild;
+                while (n) {
+                    nextSibling = n.nextSibling;
+                    if (n.nodeType === Node.ELEMENT_NODE) {
+                        fontFaceName = n.getAttributeNS(stylens, "name");
+                        if (!usedFontFaceDeclMap[fontFaceName]) {
+                            copy.removeChild(n);
+                        }
+                    }
+                    n = nextSibling;
                 }
             }
             return copy;
@@ -442,6 +571,7 @@ odf.OdfContainer = (function () {
                 root,
                 automaticStyles,
                 fontFaceDecls,
+                fontFaceNameChangeMap,
                 c;
             if (!node || node.localName !== 'document-content' ||
                     node.namespaceURI !== officens) {
@@ -449,20 +579,18 @@ odf.OdfContainer = (function () {
                 return;
             }
             root = self.rootElement;
-            // TODO: check for duplicated font face declarations
             fontFaceDecls = getDirectChild(node, officens, 'font-face-decls');
             if (root.fontFaceDecls && fontFaceDecls) {
-                c = fontFaceDecls.firstChild;
-                while (c) {
-                    root.fontFaceDecls.appendChild(c);
-                    c = fontFaceDecls.firstChild;
-                }
+                fontFaceNameChangeMap = mergeFontFaceDecls(root.fontFaceDecls, fontFaceDecls);
             } else if (fontFaceDecls) {
                 root.fontFaceDecls = fontFaceDecls;
                 setChild(root, fontFaceDecls);
             }
             automaticStyles = getDirectChild(node, officens, 'automatic-styles');
             setAutomaticStylesScope(automaticStyles, documentContentScope);
+            if (fontFaceNameChangeMap) {
+                styleInfo.changeFontFaceNames(automaticStyles, fontFaceNameChangeMap);
+            }
             if (root.automaticStyles && automaticStyles) {
                 c = automaticStyles.firstChild;
                 while (c) {
@@ -638,9 +766,14 @@ odf.OdfContainer = (function () {
         function serializeStylesXml() {
             var nsmap = odf.Namespaces.namespaceMap,
                 serializer = new xmldom.LSSerializer(),
-                automaticStyles = cloneStylesInScope(self.rootElement.automaticStyles, documentStylesScope),
-                masterStyles = self.rootElement.masterStyles && self.rootElement.masterStyles.cloneNode(true),
+                fontFaceDecls, automaticStyles, masterStyles,
                 /**@type{!string}*/ s = createDocumentElement("document-styles");
+
+            // special handling for merged toplevel nodes
+            automaticStyles = cloneStylesInScope(self.rootElement.automaticStyles, documentStylesScope);
+            masterStyles = self.rootElement.masterStyles && self.rootElement.masterStyles.cloneNode(true);
+            fontFaceDecls = cloneFontFaceDeclsUsedInStyles(self.rootElement.fontFaceDecls, [masterStyles, self.rootElement.styles, automaticStyles]);
+
             // automatic styles from styles.xml could shadow automatic styles from content.xml,
             // because they could have the same name
             // thus they were prefixed on loading with some almost unique string, which cam be removed
@@ -648,9 +781,7 @@ odf.OdfContainer = (function () {
             styleInfo.removePrefixFromStyleNames(automaticStyles, automaticStylePrefix, masterStyles);
             serializer.filter = new OdfStylesFilter(masterStyles, automaticStyles);
 
-            // TODO: only store font-face declarations which are used from styles.xml,
-            // and store others with content.xml
-            s += serializer.writeToString(self.rootElement.fontFaceDecls, nsmap);
+            s += serializer.writeToString(fontFaceDecls, nsmap);
             s += serializer.writeToString(self.rootElement.styles, nsmap);
             s += serializer.writeToString(automaticStyles, nsmap);
             s += serializer.writeToString(masterStyles, nsmap);
@@ -663,11 +794,16 @@ odf.OdfContainer = (function () {
         function serializeContentXml() {
             var nsmap = odf.Namespaces.namespaceMap,
                 serializer = new xmldom.LSSerializer(),
-                automaticStyles = cloneStylesInScope(self.rootElement.automaticStyles, documentContentScope),
+                fontFaceDecls, automaticStyles,
                 /**@type{!string}*/ s = createDocumentElement("document-content");
+
+            // special handling for merged toplevel nodes
+            automaticStyles = cloneStylesInScope(self.rootElement.automaticStyles, documentContentScope);
+            fontFaceDecls = cloneFontFaceDeclsUsedInStyles(self.rootElement.fontFaceDecls, [automaticStyles]);
+
             serializer.filter = new OdfContentFilter(self.rootElement.body, automaticStyles);
-            // Until there is code to  determine if a font is referenced only
-            // from all font declaratios will be stored in styles.xml
+
+            s += serializer.writeToString(fontFaceDecls, nsmap);
             s += serializer.writeToString(automaticStyles, nsmap);
             s += serializer.writeToString(self.rootElement.body, nsmap);
             s += "</office:document-content>";

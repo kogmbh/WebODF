@@ -33,9 +33,10 @@
  * @source: http://gitorious.org/webodf/webodf/
  */
 
-/*global runtime, core, odf*/
+/*global runtime, core, odf, xmldom*/
 
 runtime.loadClass("odf.OdfContainer");
+runtime.loadClass("xmldom.LSSerializer");
 
 /**
  * @constructor
@@ -51,6 +52,34 @@ odf.OdfContainerTests = function OdfContainerTests(runner) {
     this.tearDown = function () {
         t = {};
     };
+
+    function serialize(element) {
+        var serializer = new xmldom.LSSerializer();
+        return serializer.writeToString(element, odf.Namespaces.namespaceMap);
+    }
+
+    function appendXmlsToNode(node, xmlFragments) {
+        if (!xmlFragments) {
+            return;
+        }
+
+        xmlFragments.forEach(function(xmlFragment) {
+            var xml, doc, rootNode;
+
+            xml = "<?xml version='1.0' encoding='UTF-8'?><dummy";
+            Object.keys(odf.Namespaces.namespaceMap).forEach(function(key) {
+                xml += " xmlns:" + key + '="' + odf.Namespaces.namespaceMap[key] + '"';
+            });
+            xml += ">" + xmlFragment + "</dummy>";
+
+            doc = runtime.parseXML(xml);
+            rootNode = node.ownerDocument.importNode(doc.documentElement, true);
+            while (rootNode.firstChild) {
+                node.appendChild(rootNode.firstChild);
+            }
+        });
+    }
+
     function createNew() {
         t.odf = new odf.OdfContainer("", null);
         r.shouldBe(t, "t.odf.state", "odf.OdfContainer.DONE");
@@ -78,6 +107,109 @@ odf.OdfContainerTests = function OdfContainerTests(runner) {
             });
         });
     }
+
+    function doFontFaceDeclsSaveAsAndLoadRoundTrip(args, callback) {
+        t.odf = new odf.OdfContainer("", null);
+        appendXmlsToNode(t.odf.rootElement.fontFaceDecls,   args.keptFontFaceDecls);
+        appendXmlsToNode(t.odf.rootElement.fontFaceDecls,   args.droppedFontFaceDecls);
+        appendXmlsToNode(t.odf.rootElement.styles,          args.styles);
+        appendXmlsToNode(t.odf.rootElement.automaticStyles, args.automaticStyles);
+
+        t.odf.saveAs("fontFaceDeclsTest.odt", function (err) {
+            t.err = err;
+            r.shouldBeNull(t, "t.err");
+            t.odf = new odf.OdfContainer("fontFaceDeclsTest.odt", function (odf) {
+                t.odf = odf;
+                t.fontFaceDecls = "<office:font-face-decls>" + args.keptFontFaceDecls.join('') + "</office:font-face-decls>";
+                t.fontFaceDeclsAfter = serialize(odf.rootElement.fontFaceDecls);
+
+                r.shouldBe(t, "t.odf.state", "odf.OdfContainer.DONE");
+                r.shouldBeNonNull(t, "t.odf.rootElement.fontFaceDecls");
+                r.shouldBe(t, "t.fontFaceDecls", "t.fontFaceDeclsAfter");
+
+                callback();
+            });
+        });
+    }
+
+    function testStyleOnlyFontFaceDeclsSaveAsAndLoadRoundTrip(callback) {
+        doFontFaceDeclsSaveAsAndLoadRoundTrip({
+            keptFontFaceDecls: [
+                '<style:font-face style:name="OpenSymbol" svg:font-family="OpenSymbol"></style:font-face>'
+            ],
+            droppedFontFaceDecls: [
+                '<style:font-face style:name="Arial" svg:font-family="Arial" style:font-family-generic="swiss"></style:font-face>',
+                '<style:font-face style:name="Arial1" svg:font-family="Arial" style:font-family-generic="system" style:font-pitch="variable"></style:font-face>',
+                '<style:font-face style:name="Times New Roman" svg:font-family="&apos;Times New Roman&apos;" style:font-family-generic="roman" style:font-pitch="variable"></style:font-face>',
+                '<style:font-face style:name="Droid Sans Fallback" svg:font-family="&apos;Droid Sans Fallback&apos;" style:font-family-generic="system" style:font-pitch="variable"></style:font-face>'
+            ],
+            styles: [
+                '<style:style style:name="BulletSymbols" style:family="text"><style:text-properties style:font-name="OpenSymbol" style:font-name-asian="OpenSymbol" style:font-name-complex="OpenSymbol"/></style:style>'
+            ]},
+            callback
+        );
+    }
+
+    function testDefaultStyleOnlyFontFaceDeclsSaveAsAndLoadRoundTrip(callback) {
+        doFontFaceDeclsSaveAsAndLoadRoundTrip({
+            keptFontFaceDecls: [
+                '<style:font-face style:name="Arial1" svg:font-family="Arial" style:font-family-generic="system" style:font-pitch="variable"></style:font-face>',
+                '<style:font-face style:name="Times New Roman" svg:font-family="&apos;Times New Roman&apos;" style:font-family-generic="roman" style:font-pitch="variable"></style:font-face>',
+                '<style:font-face style:name="Droid Sans Fallback" svg:font-family="&apos;Droid Sans Fallback&apos;" style:font-family-generic="system" style:font-pitch="variable"></style:font-face>'
+            ],
+            droppedFontFaceDecls: [
+                '<style:font-face style:name="Arial" svg:font-family="Arial" style:font-family-generic="swiss"></style:font-face>',
+                '<style:font-face style:name="OpenSymbol" svg:font-family="OpenSymbol"></style:font-face>'
+            ],
+            styles: [
+                '<style:default-style style:family="paragraph"><style:text-properties style:font-name="Times New Roman" style:font-name-asian="Droid Sans Fallback" style:font-name-complex="Arial1"/></style:default-style>'
+            ]},
+            callback
+        );
+    }
+
+    function testAutomaticStyleOnlyFontFaceDeclsSaveAsAndLoadRoundTrip(callback) {
+        doFontFaceDeclsSaveAsAndLoadRoundTrip({
+            keptFontFaceDecls: [
+                '<style:font-face style:name="Arial" svg:font-family="Arial" style:font-family-generic="swiss"></style:font-face>',
+                '<style:font-face style:name="Arial1" svg:font-family="Arial" style:font-family-generic="system" style:font-pitch="variable"></style:font-face>'
+            ],
+            droppedFontFaceDecls: [
+                '<style:font-face style:name="Times New Roman" svg:font-family="&apos;Times New Roman&apos;" style:font-family-generic="roman" style:font-pitch="variable"></style:font-face>',
+                '<style:font-face style:name="OpenSymbol" svg:font-family="OpenSymbol"></style:font-face>',
+                '<style:font-face style:name="Droid Sans Fallback" svg:font-family="&apos;Droid Sans Fallback&apos;" style:font-family-generic="system" style:font-pitch="variable"></style:font-face>'
+            ],
+            automaticStyles: [
+                '<style:style style:name="T1" style:family="text"><style:text-properties style:font-name="Arial" style:font-name-complex="Arial1"/></style:style>'
+            ]},
+            callback
+        );
+    }
+
+    function testMultiStylesFontFaceDeclsSaveAsAndLoadRoundTrip(callback) {
+        doFontFaceDeclsSaveAsAndLoadRoundTrip({
+            keptFontFaceDecls: [
+                '<style:font-face style:name="Arial" svg:font-family="Arial" style:font-family-generic="swiss"></style:font-face>',
+                '<style:font-face style:name="Arial1" svg:font-family="Arial" style:font-family-generic="system" style:font-pitch="variable"></style:font-face>',
+                '<style:font-face style:name="Times New Roman" svg:font-family="&apos;Times New Roman&apos;" style:font-family-generic="roman" style:font-pitch="variable"></style:font-face>',
+                '<style:font-face style:name="OpenSymbol" svg:font-family="OpenSymbol"></style:font-face>',
+                '<style:font-face style:name="Droid Sans Fallback" svg:font-family="&apos;Droid Sans Fallback&apos;" style:font-family-generic="system" style:font-pitch="variable"></style:font-face>'
+            ],
+            droppedFontFaceDecls: [
+                '<style:font-face style:name="Unused" svg:font-family="Arial" style:font-family-generic="swiss" style:font-pitch="variable"></style:font-face>'
+            ],
+            styles: [
+                '<style:default-style style:family="paragraph"><style:text-properties style:font-name="Times New Roman" style:font-name-asian="Droid Sans Fallback" style:font-name-complex="Arial1"/></style:default-style>',
+                '<style:style style:name="BulletSymbols" style:family="text"><style:text-properties style:font-name="OpenSymbol" style:font-name-asian="OpenSymbol" style:font-name-complex="OpenSymbol"/></style:style>'
+            ],
+            automaticStyles: [
+                '<style:style style:name="T1" style:family="text"><style:text-properties style:font-name="Arial" style:font-name-complex="Arial1"/></style:style>'
+            ]},
+            callback
+        );
+    }
+
+
 /*
     function compareZipEntryList(odf1path, odf2path, callback) {
         var z1 = new core.Zip(odf1path, function (err, z1) {
@@ -144,7 +276,11 @@ odf.OdfContainerTests = function OdfContainerTests(runner) {
     };
     this.asyncTests = function () {
         return [
-            createNewSaveAsAndLoad
+            createNewSaveAsAndLoad,
+            testDefaultStyleOnlyFontFaceDeclsSaveAsAndLoadRoundTrip,
+            testStyleOnlyFontFaceDeclsSaveAsAndLoadRoundTrip,
+            testAutomaticStyleOnlyFontFaceDeclsSaveAsAndLoadRoundTrip,
+            testMultiStylesFontFaceDeclsSaveAsAndLoadRoundTrip
             //loadAndSave
         ];
     };

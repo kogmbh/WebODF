@@ -707,6 +707,70 @@ odf.StyleInfo = function StyleInfo() {
     }
 
     /**
+     * Collects all names of font-face declarations which are referenced in the
+     * children elements of the given root element.
+     * @param {!Object.<!string,!boolean>} usedFontFaceDeclMap
+     * @param {?Element} styleElementsRoot  root element with style elements as childs
+     * @return {undefined}
+     */
+    function collectUsedFontFaces(usedFontFaceDeclMap, styleElementsRoot) {
+        var localNames = ["font-name", "font-name-asian", "font-name-complex"],
+            currentNode;
+
+        function collectByAttribute(localName) {
+            var fontFaceName = currentNode.getAttributeNS(stylens, localName);
+            if (fontFaceName) {
+                usedFontFaceDeclMap[fontFaceName] = true;
+            }
+        }
+
+        if (styleElementsRoot) {
+            currentNode = styleElementsRoot.firstChild;
+            while (currentNode) {
+                if (currentNode.nodeType === Node.ELEMENT_NODE) {
+                    // TODO: only check elements which have those attributes defined
+                    localNames.forEach(collectByAttribute);
+                    collectUsedFontFaces(usedFontFaceDeclMap, /**@type{!Element}*/(currentNode));
+                }
+                currentNode = currentNode.nextSibling;
+            }
+        }
+    }
+    this.collectUsedFontFaces = collectUsedFontFaces;
+
+    /**
+     * Changes all names of font-face declarations which are referenced in the
+     * children elements of the given root element.
+     * @param {?Element} styleElementsRoot  root element with style elements as childs
+     * @param {!Object.<!string,!string>} fontFaceNameChangeMap
+     * @return {undefined}
+     */
+    function changeFontFaceNames(styleElementsRoot, fontFaceNameChangeMap) {
+        var localNames = ["font-name", "font-name-asian", "font-name-complex"],
+            currentNode;
+
+        function changeFontFaceNameByAttribute(localName) {
+            var fontFaceName = currentNode.getAttributeNS(stylens, localName);
+            if (fontFaceName && fontFaceNameChangeMap.hasOwnProperty(fontFaceName)) {
+                currentNode.setAttributeNS(stylens, "style:" + localName, fontFaceNameChangeMap[fontFaceName]);
+            }
+        }
+
+        if (styleElementsRoot) {
+            currentNode = styleElementsRoot.firstChild;
+            while (currentNode) {
+                if (currentNode.nodeType === Node.ELEMENT_NODE) {
+                    // TODO: only check elements which have those attributes defined
+                    localNames.forEach(changeFontFaceNameByAttribute);
+                    changeFontFaceNames(/**@type{!Element}*/(currentNode), fontFaceNameChangeMap);
+                }
+                currentNode = currentNode.nextSibling;
+            }
+        }
+    }
+    this.changeFontFaceNames = changeFontFaceNames;
+
+    /**
      * Object which collects all style names that are used in the passed element tree
      * @constructor
      * @param {!Element} styleUsingElementsRoot  root element of tree of elements using styles
