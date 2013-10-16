@@ -6,7 +6,7 @@
 @namespace svg url(urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0);
 @namespace table url(urn:oasis:names:tc:opendocument:xmlns:table:1.0);
 @namespace text url(urn:oasis:names:tc:opendocument:xmlns:text:1.0);
-@namespace runtimens url(urn:webodf); /* namespace for runtime only */
+@namespace webodfhelper url(urn:webodf:names:helper);
 @namespace cursor url(urn:webodf:names:cursor);
 @namespace editinfo url(urn:webodf:names:editinfo);
 @namespace annotation url(urn:webodf:names:annotation);
@@ -28,7 +28,7 @@ text|p, text|h {
   position: relative;
   min-height: 1.3em; /* prevent empty paragraphs and headings from collapsing if they are empty */
 }
-*[runtimens|containsparagraphanchor] {
+*[webodfhelper|containsparagraphanchor] {
   position: relative;
 }
 text|s {

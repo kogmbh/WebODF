@@ -8,6 +8,7 @@
     xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
     xmlns:c="urn:webodf:names:cursor"
     xmlns:e="urn:webodf:names:editinfo"
+    xmlns:h="urn:webodf:names:helper"
     xmlns:wo="urn:webodf:names:scope"
     xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
     xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -1214,7 +1215,7 @@
    <op optype="InsertImage" position="5" filename="Pictures/helloworld.jpg" base64string='HELLOWORLD' frameWidth="5cm" frameHeight="6cm" frameStyleName="fr1" frameName="graphics2" />
   </ops>
   <after>
-   <office:text><text:p><text:span>Hello<draw:frame draw:name="graphics2" draw:style-name="fr1" text:anchor-type="as-char" svg:width="5cm" svg:height="6cm" styleid="graphics2"><draw:image xlink:href="Pictures/helloworld.jpg" xlink:type="simple" xlink:actuate="onLoad" xlink:show="embed" styleid="graphics2img"/></draw:frame>World</text:span><draw:frame draw:name="graphics1"><draw:image/></draw:frame></text:p></office:text>
+   <office:text><text:p><text:span>Hello<draw:frame draw:name="graphics2" draw:style-name="fr1" text:anchor-type="as-char" svg:width="5cm" svg:height="6cm" h:styleid="graphics2"><draw:image xlink:href="Pictures/helloworld.jpg" xlink:type="simple" xlink:actuate="onLoad" xlink:show="embed" h:styleid="graphics2img"/></draw:frame>World</text:span><draw:frame draw:name="graphics1"><draw:image/></draw:frame></text:p></office:text>
   </after>
  </test>
 </tests>

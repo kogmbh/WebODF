@@ -353,6 +353,7 @@ odf.OdfCanvas = (function () {
         /**@const@type {!string}*/xlinkns = odf.Namespaces.xlinkns,
         /**@const@type {!string}*/xmlns = odf.Namespaces.xmlns,
         /**@const@type {!string}*/presentationns = odf.Namespaces.presentationns,
+        /**@const@type {!string}*/webodfhelperns = "urn:webodf:names:helper",
         /**@type{?Window}*/window = runtime.getWindow(),
         xpath = new xmldom.XPath(),
         odfUtils = new odf.OdfUtils(),
@@ -488,8 +489,7 @@ odf.OdfCanvas = (function () {
      * @return {undefined}
      **/
     function setDrawElementPosition(styleid, frame, stylesheet) {
-        // TODO: namespace with webodf ns
-        frame.setAttribute('styleid', styleid);
+        frame.setAttributeNS(webodfhelperns, 'styleid', styleid);
         var rule,
             anchor = frame.getAttributeNS(textns, 'anchor-type'),
             x = frame.getAttributeNS(svgns, 'x'),
@@ -525,7 +525,7 @@ odf.OdfCanvas = (function () {
             rule += 'min-width: ' + minwidth + ';';
         }
         if (rule) {
-            rule = 'draw|' + frame.localName + '[styleid="' + styleid + '"] {' +
+            rule = 'draw|' + frame.localName + '[webodfhelper|styleid="' + styleid + '"] {' +
                 rule + '}';
             stylesheet.insertRule(rule, stylesheet.cssRules.length);
         }
@@ -555,14 +555,14 @@ odf.OdfCanvas = (function () {
      * @return {undefined}
      **/
     function setImage(id, container, image, stylesheet) {
-        image.setAttribute('styleid', id);
+        image.setAttributeNS(webodfhelperns, 'styleid', id);
         var url = image.getAttributeNS(xlinkns, 'href'),
             part;
         function callback(url) {
             var rule;
             if (url) { // if part cannot be loaded, url is null
                 rule = "background-image: url(" + url + ");";
-                rule = 'draw|image[styleid="' + id + '"] {' + rule + '}';
+                rule = 'draw|image[webodfhelper|styleid="' + id + '"] {' + rule + '}';
                 stylesheet.insertRule(rule, stylesheet.cssRules.length);
             }
         }
@@ -587,8 +587,7 @@ odf.OdfCanvas = (function () {
      * @return {undefined}
      */
     function formatParagraphAnchors(odfbody) {
-        var runtimens = "urn:webodf",
-            n,
+        var n,
             i,
             nodes = xpath.getODFElementsWithXPath(odfbody,
                 ".//*[*[@text:anchor-type='paragraph']]",
@@ -596,7 +595,7 @@ odf.OdfCanvas = (function () {
         for (i = 0; i < nodes.length; i += 1) {
             n = nodes[i];
             if (n.setAttributeNS) {
-                n.setAttributeNS(runtimens, "containsparagraphanchor", true);
+                n.setAttributeNS(webodfhelperns, "containsparagraphanchor", true);
             }
         }
     }
@@ -816,7 +815,7 @@ odf.OdfCanvas = (function () {
             // If the referenced master page exists, create a new page and copy over it's contents into the new page,
             // except for the ones that are placeholders. Also, call setDrawElementPosition on each of those child frames.
             if (masterPageElement) {
-                styleId = element.getAttribute('styleid');
+                styleId = element.getAttributeNS(webodfhelperns, 'styleid');
                 clonedPageElement = document.createElementNS(drawns, 'draw:page');
 
                 elementToClone = masterPageElement.firstElementChild;
@@ -1095,6 +1094,7 @@ odf.OdfCanvas = (function () {
         odf.Namespaces.forEachPrefix(function(prefix, ns) {
             text += "@namespace " + prefix + " url(" + ns + ");\n";
         });
+        text += "@namespace webodfhelper url(" + webodfhelperns + ");\n";
         style.appendChild(document.createTextNode(text));
         head.appendChild(style);
         return /**@type {!HTMLStyleElement}*/(style);
