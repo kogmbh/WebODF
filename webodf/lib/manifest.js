@@ -63,6 +63,7 @@
         "gui/ImageManager.js",
         "gui/ImageSelector.js",
         "gui/TextManipulator.js",
+        "gui/AnnotationManager.js",
         "gui/EventManager.js",
         "gui/SessionController.js",
         "gui/CaretManager.js",

@@ -40,7 +40,6 @@ runtime.loadClass("odf.ObjectNameGenerator");
 runtime.loadClass("ops.OdtCursor");
 runtime.loadClass("ops.OpAddCursor");
 runtime.loadClass("ops.OpRemoveCursor");
-runtime.loadClass("ops.OpRemoveAnnotation");
 runtime.loadClass("gui.Clipboard");
 runtime.loadClass("gui.DirectTextStyler");
 runtime.loadClass("gui.DirectParagraphStyler");
@@ -48,6 +47,7 @@ runtime.loadClass("gui.KeyboardHandler");
 runtime.loadClass("gui.ImageManager");
 runtime.loadClass("gui.ImageSelector");
 runtime.loadClass("gui.TextManipulator");
+runtime.loadClass("gui.AnnotationManager");
 runtime.loadClass("gui.EventManager");
 
 /**
@@ -88,6 +88,7 @@ gui.SessionController = (function () {
             mouseDownRootFilter = null,
             undoManager = null,
             eventManager = new gui.EventManager(odtDocument),
+            annotationManager = new gui.AnnotationManager(session, inputMemberId),
             directTextStyler = args && args.directStylingEnabled ? new gui.DirectTextStyler(session, inputMemberId) : null,
             directParagraphStyler = args && args.directStylingEnabled ? new gui.DirectParagraphStyler(session, inputMemberId, objectNameGenerator) : null,
             createCursorStyleOp = /**@type {function (!number, !number):ops.Operation}*/ (directTextStyler && directTextStyler.createCursorStyleOp),
@@ -381,83 +382,6 @@ gui.SessionController = (function () {
             return selection;
         }
 
-        /**
-         * Returns the first filtered walkable position in the node
-         * @param {!Node} node
-         * @return {!number}
-         */
-        function getFirstWalkablePositionInNode(node) {
-            var position = 0,
-                iterator = gui.SelectionMover.createPositionIterator(odtDocument.getRootNode()),
-                watch = new core.LoopWatchDog(1000),
-                inside = false;
-
-            while (iterator.nextPosition()) {
-                watch.check();
-
-                /*jslint bitwise: true*/
-                inside = Boolean(node.compareDocumentPosition(iterator.container()) & Node.DOCUMENT_POSITION_CONTAINED_BY);
-
-                if (baseFilter.acceptPosition(iterator) === FILTER_ACCEPT) {
-                    if (inside) {
-                        break;
-                    }
-                    position += 1;
-                }
-            }
-
-            return position;
-        }
-
-        /**
-         * Returns the walkable length of the node
-         * @param {!Node} node
-         * @return {!number}
-         */
-        function getWalkableNodeLength(node) {
-            var length = 0,
-                iterator = gui.SelectionMover.createPositionIterator(odtDocument.getRootNode()),
-                inside = false;
-
-            iterator.setUnfilteredPosition(node, 0);
-            do {
-                /*jslint bitwise: true*/
-                inside = Boolean(node.compareDocumentPosition(iterator.container()) & Node.DOCUMENT_POSITION_CONTAINED_BY);
-                if (!inside && node !== iterator.container()) {
-                    break;
-                }
-                if (baseFilter.acceptPosition(iterator) === FILTER_ACCEPT) {
-                    length += 1;
-                }
-            } while (iterator.nextPosition());
-
-            return length;
-        }
-
-        /**
-         * @param {!Node} annotationNode
-         * @return {undefined}
-         */
-        function removeAnnotation(annotationNode) {
-            var position, length, op, moveCursor;
-
-            position = getFirstWalkablePositionInNode(annotationNode);
-            length = getWalkableNodeLength(annotationNode);
-
-            op = new ops.OpRemoveAnnotation();
-            op.init({
-                memberid: inputMemberId,
-                position: position,
-                length: length
-            });
-            moveCursor = new ops.OpMoveCursor();
-            moveCursor.init({
-                memberid: inputMemberId,
-                position: position-1, // Last position just before the annotation starts
-                length: 0
-            });
-            session.enqueue([op, moveCursor]);
-        }
 
         /**
          * @param {!UIEvent} e
@@ -1036,7 +960,7 @@ gui.SessionController = (function () {
                 annotationNode = null;
             if (target.className === "annotationRemoveButton") {
                 annotationNode = domUtils.getElementsByTagNameNS(target.parentNode, odf.Namespaces.officens, 'annotation')[0];
-                removeAnnotation(annotationNode);
+                annotationManager.removeAnnotation(annotationNode);
             } else if (clickStartedWithinContainer) {
                 // If a selection was being drawn, then call maintainShadowSelection
                 // to save the state of the shadow cursor's selection into the actual
@@ -1185,6 +1109,13 @@ gui.SessionController = (function () {
             return undoManager;
         };
 
+
+        /**
+         * @returns {?gui.AnnotationManager}
+         */
+        this.getAnnotationManager = function () {
+            return annotationManager;
+        };
 
         /**
          * @returns {?gui.DirectTextStyler}
@@ -1336,6 +1267,9 @@ gui.SessionController = (function () {
                     keyDownHandler.bind(keyCode.R, modifier.MetaShift, rangeSelectionOnly(directParagraphStyler.alignParagraphRight));
                     keyDownHandler.bind(keyCode.J, modifier.MetaShift, rangeSelectionOnly(directParagraphStyler.alignParagraphJustified));
                 }
+                if (annotationManager) {
+                    keyDownHandler.bind(keyCode.C, modifier.MetaShift, annotationManager.addAnnotation);
+                }
                 keyDownHandler.bind(keyCode.Z, modifier.Meta, undo);
                 keyDownHandler.bind(keyCode.Z, modifier.MetaShift, redo);
             } else {
@@ -1350,6 +1284,9 @@ gui.SessionController = (function () {
                     keyDownHandler.bind(keyCode.E, modifier.CtrlShift, rangeSelectionOnly(directParagraphStyler.alignParagraphCenter));
                     keyDownHandler.bind(keyCode.R, modifier.CtrlShift, rangeSelectionOnly(directParagraphStyler.alignParagraphRight));
                     keyDownHandler.bind(keyCode.J, modifier.CtrlShift, rangeSelectionOnly(directParagraphStyler.alignParagraphJustified));
+                }
+                if (annotationManager) {
+                    keyDownHandler.bind(keyCode.C, modifier.CtrlAlt, annotationManager.addAnnotation);
                 }
                 keyDownHandler.bind(keyCode.Z, modifier.Ctrl, undo);
                 keyDownHandler.bind(keyCode.Z, modifier.CtrlShift, redo);

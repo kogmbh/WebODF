@@ -45,11 +45,12 @@ define("webodf/editor/Tools", [
     "webodf/editor/widgets/simpleStyles",
     "webodf/editor/widgets/undoRedoMenu",
     "webodf/editor/widgets/toolbarWidgets/currentStyle",
+    "webodf/editor/widgets/annotation",
     "webodf/editor/widgets/paragraphStylesDialog",
     "webodf/editor/widgets/imageInserter",
     "webodf/editor/widgets/zoomSlider",
     "webodf/editor/EditorSession"],
-    function (ready, MenuItem, DropDownMenu, Button, DropDownButton, Toolbar, ParagraphAlignment, SimpleStyles, UndoRedoMenu, CurrentStyle, ParagraphStylesDialog, ImageInserter, ZoomSlider, EditorSession) {
+    function (ready, MenuItem, DropDownMenu, Button, DropDownButton, Toolbar, ParagraphAlignment, SimpleStyles, UndoRedoMenu, CurrentStyle, AnnotationControl, ParagraphStylesDialog, ImageInserter, ZoomSlider, EditorSession) {
         "use strict";
 
         return function Tools(args) {
@@ -59,7 +60,7 @@ define("webodf/editor/Tools", [
                 saveOdtFile = args.saveOdtFile,
                 close = args.close,
                 toolbar,
-                loadButton, saveButton, annotateButton, closeButton,
+                loadButton, saveButton, closeButton,
                 formatDropDownMenu, formatMenuButton,
                 paragraphStylesMenuItem, paragraphStylesDialog, simpleStyles, currentStyle,
                 zoomSlider,
@@ -67,6 +68,7 @@ define("webodf/editor/Tools", [
                 editorSession,
                 paragraphAlignment,
                 imageInserter,
+                annotationControl,
                 sessionSubscribers = [];
 
             function handleCursorMoved(cursor) {
@@ -117,18 +119,12 @@ define("webodf/editor/Tools", [
 
                 // Add annotation
                 if (args.annotationsEnabled) {
-                    annotateButton = new Button({
-                        label: translator('annotate'),
-                        showLabel: false,
-                        iconClass: 'dijitIconBookmark',
-                        onClick: function () {
-                            if (editorSession) {
-                                editorSession.addAnnotation();
-                                onToolDone();
-                            }
-                        }
+                    annotationControl = new AnnotationControl(function (widget) {
+                        widget.placeAt(toolbar);
+                        widget.startup();
                     });
-                    annotateButton.placeAt(toolbar);
+                    sessionSubscribers.push(annotationControl);
+                    annotationControl.onToolDone = onToolDone;
                 }
 
                 // Simple Style Selector [B, I, U, S]

@@ -134,6 +134,7 @@ gui.KeyboardHandler.Modifier = {
     Meta: 1,
     Ctrl: 2,
     Alt: 4,
+    CtrlAlt: 6,
     Shift: 8,
     MetaShift: 9,
     CtrlShift: 10,
