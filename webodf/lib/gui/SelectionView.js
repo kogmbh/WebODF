@@ -528,7 +528,7 @@ gui.SelectionView = function SelectionView(cursor) {
     this.destroy = function (callback) {
         root.removeChild(overlayTop);
         root.removeChild(overlayMiddle);
-        root.appendChild(overlayBottom);
+        root.removeChild(overlayBottom);
         cursor.getOdtDocument().unsubscribe(ops.OdtDocument.signalCursorMoved, handleCursorMove);
 
         callback();

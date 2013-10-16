@@ -1082,6 +1082,7 @@ gui.SessionController = (function () {
         this.startEditing = function () {
             var op;
 
+            odtDocument.getOdfCanvas().getElement().classList.add("virtualSelections");
             eventManager.subscribe("keydown", keyDownHandler.handleEvent);
             eventManager.subscribe("keypress", keyPressHandler.handleEvent);
             eventManager.subscribe("keyup", dummyHandler);
@@ -1116,6 +1117,7 @@ gui.SessionController = (function () {
         this.endEditing = function () {
             var op;
 
+            odtDocument.getOdfCanvas().getElement().classList.remove("virtualSelections");
             odtDocument.unsubscribe(ops.OdtDocument.signalOperationExecuted, updateUndoStack);
             odtDocument.unsubscribe(ops.OdtDocument.signalOperationExecuted, maintainCursorSelection);
 

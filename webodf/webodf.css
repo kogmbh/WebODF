@@ -56,15 +56,22 @@ office|text {
   word-wrap: break-word;
 }
 
-office|document *::selection {
-    background: transparent;
+office|text::selection {
+  /** Let's not draw selection highlight that overflows into the office|text
+   * node when selecting content across several paragraphs
+   */
+  background: transparent;
 }
-office|document *::-moz-selection {
-    background: transparent;
+
+.virtualSelections office|document *::selection {
+  background: transparent;
+}
+.virtualSelections office|document *::-moz-selection {
+  background: transparent;
 }
 
 office|text * draw|text-box {
-    /** only for text documents */
+/** only for text documents */
     display: block;
     border: 1px solid #d3d3d3;
 }

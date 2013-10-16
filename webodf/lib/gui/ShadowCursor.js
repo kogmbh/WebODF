@@ -41,10 +41,9 @@ runtime.loadClass("gui.SelectionMover");
  * simulating a Cursor when you cannot/should not use a real cursor.
  * 
  * @constructor
- * @param {!string} memberId
  * @param {!ops.OdtDocument} odtDocument
  */
-gui.ShadowCursor = function ShadowCursor(memberId, odtDocument) {
+gui.ShadowCursor = function ShadowCursor(odtDocument) {
     "use strict";
     var selectedRange = odtDocument.getDOM().createRange(),
         forwardSelection = true;
@@ -54,11 +53,12 @@ gui.ShadowCursor = function ShadowCursor(memberId, odtDocument) {
     /*jslint emptyblock: false*/
 
     /**
-     * Obtain the memberid the cursor is assigned to.
+     * Obtain the memberid the cursor is assigned to. For a shadow cursor,
+     * this value is always gui.ShadowCursor.ShadowCursorMemberId
      * @return {string}
      */
     this.getMemberId = function () {
-        return memberId;
+        return gui.ShadowCursor.ShadowCursorMemberId;
     };
 
     /**
@@ -102,3 +102,10 @@ gui.ShadowCursor = function ShadowCursor(memberId, odtDocument) {
     }
     init();
 };
+
+/** @const @type {!string} */gui.ShadowCursor.ShadowCursorMemberId = "";
+
+(function () {
+    "use strict";
+    return gui.ShadowCursor;
+}());

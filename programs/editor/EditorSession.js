@@ -86,7 +86,7 @@ define("webodf/editor/EditorSession", [
                 EditorSession.signalCommonStyleDeleted,
                 EditorSession.signalParagraphStyleModified,
                 EditorSession.signalUndoStackChanged]),
-            shadowCursor = new gui.ShadowCursor("", odtDocument); // Shadow cursor has an empty memberid
+            shadowCursor = new gui.ShadowCursor(odtDocument);
 
         /**
          * @return {Array.<!string>}

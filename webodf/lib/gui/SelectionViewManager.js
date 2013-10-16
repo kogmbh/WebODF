@@ -69,6 +69,9 @@ gui.SelectionViewManager = function SelectionViewManager() {
      */
     function removeSelectionView(memberId) {
         if (selectionViews.hasOwnProperty(memberId)) {
+            /*jslint emptyblock: true*/
+            selectionViews[memberId].destroy(function() { });
+            /*jslint emptyblock: false*/
             delete selectionViews[memberId];
         }
     }
