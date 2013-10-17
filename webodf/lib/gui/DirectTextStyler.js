@@ -55,6 +55,7 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
         eventNotifier = new core.EventNotifier([gui.DirectTextStyler.textStylingChanged]),
         directCursorStyleProperties,
         // cached values
+        currentSelectionStyles = [],
         isBoldValue = false,
         isItalicValue = false,
         hasUnderlineValue = false,
@@ -96,19 +97,29 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
     }
 
     /**
+     * Get all styles currently applied to the selected range. If the range is collapsed,
+     * this will return the style the next inserted character will have
+     * @returns {!Array.<Object>}
+     */
+    function getAppliedStyles() {
+        var cursor = odtDocument.getCursor(inputMemberId),
+            range = cursor && cursor.getSelectedRange(),
+            selectionStyles = (range && styleHelper.getAppliedStyles(range)) || [];
+
+        if (selectionStyles[0] && directCursorStyleProperties) {
+            // direct cursor styles add to the style of the existing range, overriding where defined
+            selectionStyles[0] = utils.mergeObjects(selectionStyles[0],
+                /**@type {!Object}*/(directCursorStyleProperties));
+        }
+        return selectionStyles;
+    }
+
+    /**
      * @return {undefined}
      */
     function updatedCachedValues() {
-        var cursor = odtDocument.getCursor(inputMemberId),
-            range = cursor && cursor.getSelectedRange(),
-            currentSelectionStyles = (range && styleHelper.getAppliedStyles(range)) || [],
-            fontSize, diffMap;
-
-        if (currentSelectionStyles[0] && directCursorStyleProperties) {
-            // direct cursor styles add to the style of the existing range, overriding where defined
-            currentSelectionStyles[0] = utils.mergeObjects(currentSelectionStyles[0],
-                /**@type {!Object}*/(directCursorStyleProperties));
-        }
+        var fontSize, diffMap;
+        currentSelectionStyles = getAppliedStyles();
 
         function noteChange(oldValue, newValue, id) {
             if (oldValue !== newValue) {
@@ -202,16 +213,15 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
     }
 
     /**
-     * @param {!string} propertyName
-     * @param {!string} propertyValue
+     * Apply the supplied text properties to the current range. If no range is selected,
+     * this styling will be applied to the next character entered.
+     * @param {!Object} textProperties
      * @return {undefined}
      */
-    function formatTextSelection(propertyName, propertyValue) {
+    function formatTextSelection(textProperties) {
         var selection = odtDocument.getCursorSelection(inputMemberId),
             op,
-            textProperties = {},
             properties = {'style:text-properties' : textProperties};
-        textProperties[propertyName] = propertyValue;
 
         if (selection.length !== 0) {
             op = new ops.OpApplyDirectStyling();
@@ -228,6 +238,19 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
             directCursorStyleProperties = utils.mergeObjects(directCursorStyleProperties || {}, properties);
             updatedCachedValues();
         }
+    }
+    this.formatTextSelection = formatTextSelection;
+
+    /**
+     * @param {!string} propertyName
+     * @param {!string} propertyValue
+     * @return {undefined}
+     */
+    function applyTextPropertyToSelection(propertyName, propertyValue) {
+        var textProperties = {};
+        textProperties[propertyName] = propertyValue;
+
+        formatTextSelection(textProperties);
     }
 
     /**
@@ -277,7 +300,7 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
      */
     function setBold(checked) {
         var value = checked ? 'bold' : 'normal';
-        formatTextSelection('fo:font-weight', value);
+        applyTextPropertyToSelection('fo:font-weight', value);
     }
     this.setBold = setBold;
 
@@ -287,7 +310,7 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
      */
     function setItalic(checked) {
         var value = checked ? 'italic' : 'normal';
-        formatTextSelection('fo:font-style', value);
+        applyTextPropertyToSelection('fo:font-style', value);
     }
     this.setItalic = setItalic;
 
@@ -297,7 +320,7 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
      */
     function setHasUnderline(checked) {
         var value = checked ? 'solid' : 'none';
-        formatTextSelection('style:text-underline-style', value);
+        applyTextPropertyToSelection('style:text-underline-style', value);
     }
     this.setHasUnderline = setHasUnderline;
 
@@ -307,7 +330,7 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
      */
     function setHasStrikethrough(checked) {
         var value = checked ? 'solid' : 'none';
-        formatTextSelection('style:text-line-through-style', value);
+        applyTextPropertyToSelection('style:text-line-through-style', value);
     }
     this.setHasStrikethrough = setHasStrikethrough;
 
@@ -316,7 +339,7 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
      * @return {undefined}
      */
     function setFontSize(value) {
-        formatTextSelection('fo:font-size', value + "pt");
+        applyTextPropertyToSelection('fo:font-size', value + "pt");
     }
     this.setFontSize = setFontSize;
 
@@ -325,10 +348,18 @@ gui.DirectTextStyler = function DirectTextStyler(session, inputMemberId) {
      * @return {undefined}
      */
     function setFontName(value) {
-        formatTextSelection('style:font-name', value);
+        applyTextPropertyToSelection('style:font-name', value);
     }
     this.setFontName = setFontName;
 
+    /**
+     * Get all styles currently applied to the selected range. If the range is collapsed,
+     * this will return the style the next inserted character will have
+     * @returns {!Array.<Object>}
+     */
+    this.getAppliedStyles = function() {
+        return currentSelectionStyles;
+    };
 
     /**
      * @return {!boolean}
