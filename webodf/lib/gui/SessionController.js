@@ -752,18 +752,18 @@ gui.SessionController = (function () {
                 imageElement,
                 range;
 
-            // May have just processed our own remove cursor operation...
-            // Probably not a good idea to try and update our selected range in this case ;-)
-            if (eventManager.hasFocus() && cursor) {
+            if (cursor) {
+                // Always redraw the image selection as this doesn't affect the browser's selection
                 imageSelector.clearSelection();
-                selection.removeAllRanges();
-
                 if (cursor.getSelectionType() === ops.OdtCursor.RegionSelection) {
                     imageElement = odfUtils.getImageElements(cursor.getSelectedRange())[0];
                     if (imageElement) {
                         imageSelector.select(/** @type {!Element}*/(imageElement.parentNode));
                     }
-                } else {
+                }
+
+                if (eventManager.hasFocus()) {
+                    // Only recapture the browser selection if focus is currently on the canvas
                     range = cursor.getSelectedRange();
                     if (cursor.hasForwardSelection()) {
                         selection.collapse(range.startContainer, range.startOffset);
@@ -773,6 +773,10 @@ gui.SessionController = (function () {
                         selection.extend(range.startContainer, range.startOffset);
                     }
                 }
+            } else {
+                // May have just processed our own remove cursor operation...
+                // In this case, clear any image selection chrome to prevent user confusion
+                imageSelector.clearSelection();
             }
         }
 
@@ -1041,7 +1045,14 @@ gui.SessionController = (function () {
         this.endEditing = function () {
             var op;
 
-            odtDocument.getOdfCanvas().getElement().classList.remove("virtualSelections");
+            op = new ops.OpRemoveCursor();
+            op.init({memberid: inputMemberId});
+            session.enqueue([op]);
+
+            if (undoManager) {
+                undoManager.resetInitialState();
+            }
+
             odtDocument.unsubscribe(ops.OdtDocument.signalOperationExecuted, updateUndoStack);
             odtDocument.unsubscribe(ops.OdtDocument.signalOperationExecuted, maintainCursorSelection);
 
@@ -1057,14 +1068,7 @@ gui.SessionController = (function () {
             eventManager.unsubscribe("mouseup", handleMouseUp);
             eventManager.unsubscribe("contextmenu", handleContextMenu);
             eventManager.unsubscribe("focus", delayedMaintainCursor);
-
-            op = new ops.OpRemoveCursor();
-            op.init({memberid: inputMemberId});
-            session.enqueue([op]);
-
-            if (undoManager) {
-                undoManager.resetInitialState();
-            }
+            odtDocument.getOdfCanvas().getElement().classList.remove("virtualSelections");
         };
 
         /**
