@@ -594,6 +594,8 @@ runtime.loadClass("odf.MetadataManager");
             root.masterStyles = getDirectChild(root, officens, 'master-styles');
             root.body = getDirectChild(root, officens, 'body');
             root.meta = getDirectChild(root, officens, 'meta');
+            runtime.assert(Boolean(root.meta), "Document has no top level meta element defined");
+            initializeMetadataManager(/**@type{!Element}*/(root.meta));
         }
         /**
          * @param {Document|undefined} xmldoc
