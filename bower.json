@@ -1,0 +1,13 @@
+{
+  "name": "webodf",
+  "version": "0.4.2",
+  "description": "webodf",
+  "keywords": [
+    "webodf",
+  ],
+  "ignore": [
+    "**/.*",
+    "*.json"
+  ],
+  "license": "AGPL"
+}
