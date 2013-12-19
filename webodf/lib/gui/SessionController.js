@@ -97,7 +97,6 @@ gui.SessionController = (function () {
             objectNameGenerator = new odf.ObjectNameGenerator(odtDocument.getOdfCanvas().odfContainer(), inputMemberId),
             isMouseMoved = false,
             mouseDownRootFilter = null,
-            handleMouseClickTimeoutId,
             undoManager = null,
             eventManager = new gui.EventManager(odtDocument),
             annotationController = new gui.AnnotationController(session, inputMemberId),
@@ -419,25 +418,11 @@ gui.SessionController = (function () {
             }
         }
 
-        /**
-         * Return a mutable version of a selection-type object.
-         * @param {?Selection} selection
-         * @returns {?{anchorNode: ?Node, anchorOffset: !number, focusNode: ?Node, focusOffset: !number}}
-         */
-        function mutableSelection(selection) {
-            if (selection) {
-                return {
-                    anchorNode: selection.anchorNode,
-                    anchorOffset: selection.anchorOffset,
-                    focusNode: selection.focusNode,
-                    focusOffset: selection.focusOffset
-                };
-            }
-            return null;
-        }
-
         function handleMouseClickEvent(event) {
             var target = getTarget(event),
+                selection,
+                selectionRange,
+                caretPos,
                 eventDetails = {
                     detail: event.detail,
                     clientX: event.clientX,
@@ -454,32 +439,29 @@ gui.SessionController = (function () {
                         shadowCursor.hasForwardSelection(), event.detail);
                     eventManager.focus(); // Mouse clicks often cause focus to shift. Recapture this straight away
                 } else {
-                    // Clicking in already selected text won't update window.getSelection() until just after
-                    // the click is processed. Set 0 timeout here so the newly clicked position can be updated
-                    // by the browser. Unfortunately this is only working in Firefox. For other browsers, we have to work
-                    // out the caret position from two coordinates.
-                    handleMouseClickTimeoutId = runtime.setTimeout(function() {
-                        var selection = mutableSelection(window.getSelection()),
-                            selectionRange,
-                            caretPos;
-                        if (!selection.anchorNode && !selection.focusNode) {
-                            // chrome & safari will report null for focus and anchor nodes after a right-click in text selection
-                            caretPos = caretPositionFromPoint(eventDetails.clientX, eventDetails.clientY);
-                            if (caretPos) {
-                                selection.anchorNode = /**@type{!Node}*/(caretPos.container);
-                                selection.anchorOffset = caretPos.offset;
-                                selection.focusNode = selection.anchorNode;
-                                selection.focusOffset = selection.anchorOffset;
-                            }
-                        }
+                    // Not using window.getSelection() here, because:
+                    // * clicking in already selected text won't update window.getSelection() until just after
+                    //   the click is processed. Could be solved by continueing with handler after 0 timeout,
+                    //   but unfortunately this is only working in Firefox.
+                    // * chrome in some undefined conditions ignores whitespace-only-content text:p elements and
+                    //   sets the selection to some neighbouring element
+                    // * chrome & safari will report null for focus and anchor nodes after a right-click in text selection
+                    // So we have to work out the caret position from two coordinates ourselves.
+                    caretPos = caretPositionFromPoint(eventDetails.clientX, eventDetails.clientY);
+                    if (caretPos && caretPos.container) {
+                        selection = {
+                            anchorNode: /**@type{!Node}*/(caretPos.container),
+                            anchorOffset: caretPos.offset,
+                            focusNode: /**@type{!Node}*/(caretPos.container),
+                            focusOffset: caretPos.offset
+                        };
+
                         // Need to check the selection again in case the caret position didn't return any result
-                        if (selection.anchorNode && selection.focusNode) {
-                            selectionRange = selectionController.selectionToRange(selection);
-                            selectionController.selectRange(selectionRange.range,
-                                selectionRange.hasForwardSelection, eventDetails.detail);
-                        }
-                        eventManager.focus(); // Mouse clicks often cause focus to shift. Recapture this straight away
-                    }, 0);
+                        selectionRange = selectionController.selectionToRange(selection);
+                        selectionController.selectRange(selectionRange.range,
+                            selectionRange.hasForwardSelection, eventDetails.detail);
+                    }
+                    eventManager.focus(); // Mouse clicks often cause focus to shift. Recapture this straight away
                 }
             }
             clickCount = 0;
@@ -745,7 +727,6 @@ gui.SessionController = (function () {
          */
         this.destroy = function(callback) {
             var destroyCallbacks = [drawShadowCursorTask.destroy, directTextStyler.destroy, inputMethodEditor.destroy];
-            runtime.clearTimeout(handleMouseClickTimeoutId);
             if (directParagraphStyler) {
                 destroyCallbacks.push(directParagraphStyler.destroy);
             }
