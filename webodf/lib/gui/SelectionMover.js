@@ -370,29 +370,44 @@ gui.SelectionMover = function SelectionMover(cursor, rootNode) {
     }
 
     /**
-     * Finds the most appropriate valid position to move the cursor to. Attempts to keep
-     * the cursor within the same paragraph, so that cursors near the front or end of a paragraph do not
-     * incorrectly jump to the next or previous paragraph.
-     * @param {!Node} container
-     * @param {!number} offset
-     * @param {!core.PositionFilter} filter
-     * @returns {!number} positions Number of positions to the nearest step
+     * Find the closest walkable step just before, or just after the supplied container and offset.
+     * If no step is available, returns undefined
+     * @param {!Node} container  Container to start search from
+     * @param {!number} offset  Offset to start search from
+     * @param {!core.PositionFilter} filter Filter to apply to the iterator positions
+     * @param {!Node} subTree Substree to search for step within. Generally a paragraph or document root
+     *
+     * @returns {?{container: !Node, offset: !number}}
      */
-    function countPositionsToClosestStep(container, offset, filter) {
-        var iterator = getIteratorAtCursor(),
-            paragraphNode = odfUtils.getParagraphElement(iterator.getCurrentNode()),
-            count = 0;
-
+    function getClosestStep(container, offset, filter, subTree) {
+        var iterator = gui.SelectionMover.createPositionIterator(subTree);
         iterator.setUnfilteredPosition(container, offset);
-        if (filter.acceptPosition(iterator) !== FILTER_ACCEPT) {
-            count = countSteps(iterator, -1, filter);
-            if (count === 0 || (paragraphNode && paragraphNode !== odfUtils.getParagraphElement(iterator.getCurrentNode()))) {
-                iterator.setUnfilteredPosition(container, offset);
-                count = countSteps(iterator, 1, filter);
+        do {
+            // Default rule is to always round a position DOWN to the closest step equal or prior
+            // This produces the easiest behaviour to understand (e.g., put the cursor just AFTER the step it represents)
+            if (filter.acceptPosition(iterator) === FILTER_ACCEPT) {
+                return {
+                    container: iterator.container(),
+                    offset: iterator.unfilteredDomOffset()
+                };
+            }
+        } while (iterator.previousPosition());
+
+        // Didn't find a valid step prior to the unfiltered position, so try looking for the step just after
+        // This can happen if the cursor is between a paragraph start and the first walkable position in the paragraph
+        iterator.setUnfilteredPosition(container, offset);
+        while (iterator.nextPosition()) { // Current position has already been checked
+            if (filter.acceptPosition(iterator) === FILTER_ACCEPT) {
+                return {
+                    container: iterator.container(),
+                    offset: iterator.unfilteredDomOffset()
+                };
             }
         }
-        return count;
+        runtime.assert(false, "No walkable step found for position");
+        return null;
     }
+
     /**
      * Return the number of steps needed to move across one line in the specified direction.
      * If it is not possible to move across one line, then 0 is returned.
@@ -624,7 +639,7 @@ gui.SelectionMover = function SelectionMover(cursor, rootNode) {
             countStepsToLineBoundary: countStepsToLineBoundary,
             countStepsToPosition: countStepsToPosition,
             isPositionWalkable: isPositionWalkable,
-            countPositionsToNearestStep: countPositionsToClosestStep
+            getClosestStep: getClosestStep
         };
     };
     function init() {

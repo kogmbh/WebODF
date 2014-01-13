@@ -40,6 +40,7 @@ runtime.loadClass("core.PositionFilter");
  * A structure that acts like a filter for all purposes,
  * and also can be combined with other instances of it's own kind or other filters.
  * @constructor
+ * @implements {core.PositionFilter}
  */
 core.PositionFilterChain = function PositionFilterChain() {
     "use strict";

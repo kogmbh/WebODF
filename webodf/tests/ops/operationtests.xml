@@ -540,7 +540,7 @@
    <op optype="MoveCursor" memberid="Bob" position="1"/>
    <op optype="RemoveText" position="1" length="1"/>
   </ops>
-  <after><office:text><text:p>a<e:editinfo e:id="A"/><c:cursor c:memberId="Bob"/>c</text:p></office:text></after>
+  <after><office:text><text:p>a<c:cursor c:memberId="Bob"/><e:editinfo e:id="A"/>c</text:p></office:text></after>
  </test>
  <test name="Remove_DeleteTabs">
   <before><office:text><text:p><text:span><text:tab>&#09;</text:tab><text:tab>&#09;</text:tab></text:span></text:p></office:text></before>
@@ -1211,7 +1211,7 @@
    <office:text><text:p><html:span class="annotationHighlight">A<text:span text:style-name="auto63350368_0">BC</text:span>D</html:span></text:p></office:text>
   </after>
  </test>
- <test name="SelectionWithDirectsStyling" isFailing="true">
+ <test name="SelectionWithDirectsStyling">
   <before><office:text><text:p>ABC</text:p></office:text></before>
   <ops>
    <op optype="AddCursor" memberid="Joe"/>
