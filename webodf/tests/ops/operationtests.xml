@@ -1220,7 +1220,7 @@
     <setProperties><style:text-properties fo:font-weight="bold" /></setProperties>
    </op>
   </ops>
-  <after><office:text><text:p><c:anchor memberId="Joe"/><text:span text:style-name="auto63350368_0">AB<c:cursor c:memberId="Joe"/></text:span>C</text:p></office:text></after>
+  <after><office:text><text:p><text:span text:style-name="auto63350368_0"><c:anchor c:memberId="Joe"/>AB<c:cursor c:memberId="Joe"/></text:span>C</text:p></office:text></after>
  </test>
 
  <test name="AddAnnotation_simple">
