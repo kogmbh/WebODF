@@ -190,7 +190,8 @@ core.UnitTestRunner = function UnitTestRunner(resourcePrefix, logger) {
         failedTests = 0,
         /**@type{number}*/
         failedTestsOnBeginExpectFail,
-        areObjectsEqual;
+        areObjectsEqual,
+        expectFail = false;
     /**
      * @return {string}
      */
@@ -202,12 +203,14 @@ core.UnitTestRunner = function UnitTestRunner(resourcePrefix, logger) {
      */
     this.beginExpectFail = function () {
         failedTestsOnBeginExpectFail = failedTests;
+        expectFail = true;
     };
     /**
      * @return {undefined}
      */
     this.endExpectFail = function () {
         var hasNoFailedTests = (failedTestsOnBeginExpectFail === failedTests);
+        expectFail = false;
 
         failedTests = failedTestsOnBeginExpectFail;
         if (hasNoFailedTests) {
@@ -228,7 +231,11 @@ core.UnitTestRunner = function UnitTestRunner(resourcePrefix, logger) {
      */
     function testFailed(msg) {
         failedTests += 1;
-        logger.fail(msg);
+        if (!expectFail) {
+            logger.fail(msg);
+        } else {
+            logger.debug(msg);
+        }
     }
     /**
      * @param {string} msg
