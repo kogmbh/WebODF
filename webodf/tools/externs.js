@@ -33,7 +33,7 @@
  * @source: http://www.webodf.org/
  * @source: https://github.com/kogmbh/WebODF/
  */
-/*global Packages, HTMLStyleElement, window, XMLHttpRequest, HTMLStyleElement, Document, NodeFilter, Range*/
+/*global Packages, HTMLStyleElement, window, XMLHttpRequest, HTMLStyleElement, Document, Range*/
 /*jslint nomen: false, emptyblock: true, unparam: true */
 /**
  * @constructor
@@ -150,10 +150,6 @@ function NodeJSConsole() {"use strict"; }
  * @return {undefined}
  */
 NodeJSConsole.prototype.log = function (msg) {"use strict"; };
-/**
- * @type {!NodeJSConsole}
- */
-var console;
 /**
  * @constructor
  */
@@ -417,90 +413,6 @@ VBArray.prototype.toArray = function () {"use strict"; };
 function IEElement() {"use strict"; };
 IEElement.prototype.setActive = function () {"use strict"; };
 /**
- * @interface
- */
-function TreeWalker() {"use strict"; }
-/**
- * @const@type{!Node}
- */
-TreeWalker.prototype.root;
-/**
- * @const@type{number}
- */
-TreeWalker.prototype.whatToShow;
-/**
- * @const@type{NodeFilter}
- */
-TreeWalker.prototype.filter;
-/**
- * @const@type{boolean}
- */
-TreeWalker.prototype.expandEntityReferences;
-/**
- * @type{!Node}
- */
-TreeWalker.prototype.currentNode;
-/**
- * @return {Node}
- */
-TreeWalker.prototype.parentNode = function () {"use strict"; };
-/**
- * @return {Node}
- */
-TreeWalker.prototype.firstChild = function () {"use strict"; };
-/**
- * @return {Node}
- */
-TreeWalker.prototype.lastChild = function () {"use strict"; };
-/**
- * @return {Node}
- */
-TreeWalker.prototype.previousSibling = function () {"use strict"; };
-/**
- * @return {Node}
- */
-TreeWalker.prototype.nextSibling = function () {"use strict"; };
-/**
- * @return {Node}
- */
-TreeWalker.prototype.previousNode = function () {"use strict"; };
-/**
- * @return {Node}
- */
-TreeWalker.prototype.nextNode = function () {"use strict"; };
-/**
- * @interface
- */
-function NodeIterator() {"use strict"; }
-/**
- * @return {Node}
- */
-NodeIterator.prototype.previousNode = function () {"use strict"; };
-/**
- * @return {Node}
- */
-NodeIterator.prototype.nextNode = function () {"use strict"; };
-/**
- * @return {undefined}
- */
-NodeIterator.prototype.detach = function () {"use strict"; };
-/**
- * @param {!Node} root
- * @param {!number} whatToShow
- * @param {function(!Node):number=} filter
- * @param {boolean=} entityReferenceExpansion
- * @return {!TreeWalker}
- */
-Document.prototype.createTreeWalker = function (root, whatToShow, filter, entityReferenceExpansion) {"use strict"; };
-/**
- * @param {!Node} root
- * @param {!number} whatToShow
- * @param {?function(!Node):number} filter
- * @param {boolean} entityReferenceExpansion
- * @return {!NodeIterator}
- */
-Document.prototype.createNodeIterator = function (root, whatToShow, filter, entityReferenceExpansion) {"use strict"; };
-/**
  * @param {string} xpathExpression
  * @param {!Node} contextNode
  * @param {!function(string):?string} namespaceResolver
@@ -509,88 +421,6 @@ Document.prototype.createNodeIterator = function (root, whatToShow, filter, enti
  * @return {XPathResult}
  */
 Document.prototype.evaluate = function (xpathExpression, contextNode, namespaceResolver, resultType, result) {"use strict"; };
-
-/**
- * http://www.w3.org/TR/DOM-Level-2-Traversal-Range/traversal.html#Traversal-NodeFilter
- * @interface
- */
-// Already defined as a deprecated class...
-//function NodeFilter() {"use strict"; }
-
-// Constants returned by acceptNode
-/**
- * @type {!number}
- */
-NodeFilter.FILTER_ACCEPT                  = 1;
-/**
- * @type {!number}
- */
-NodeFilter.FILTER_REJECT                  = 2;
-/**
- * @type {!number}
- */
-NodeFilter.FILTER_SKIP                    = 3;
-
-
-// Constants for whatToShow
-/**
- * @type {!number}
- */
-NodeFilter.SHOW_ALL                       = 0xFFFFFFFF;
-/**
- * @type {!number}
- */
-NodeFilter.SHOW_ELEMENT                   = 0x00000001;
-/**
- * @type {!number}
- */
-NodeFilter.SHOW_ATTRIBUTE                 = 0x00000002;
-/**
- * @const @type {!number}
- */
-NodeFilter.SHOW_TEXT                      = 0x00000004;
-/**
- * @type {!number}
- */
-NodeFilter.SHOW_CDATA_SECTION             = 0x00000008;
-/**
- * @type {!number}
- */
-NodeFilter.SHOW_ENTITY_REFERENCE          = 0x00000010;
-/**
- * @type {!number}
- */
-NodeFilter.SHOW_ENTITY                    = 0x00000020;
-/**
- * @type {!number}
- */
-NodeFilter.SHOW_PROCESSING_INSTRUCTION    = 0x00000040;
-/**
- * @type {!number}
- */
-NodeFilter.SHOW_COMMENT                   = 0x00000080;
-/**
- * @type {!number}
- */
-NodeFilter.SHOW_DOCUMENT                  = 0x00000100;
-/**
- * @type {!number}
- */
-NodeFilter.SHOW_DOCUMENT_TYPE             = 0x00000200;
-/**
- * @type {!number}
- */
-NodeFilter.SHOW_DOCUMENT_FRAGMENT         = 0x00000400;
-/**
- * @type {!number}
- */
-NodeFilter.SHOW_NOTATION                  = 0x00000800;
-
-/**
- * @param {!Node} node
- * @return {!number}
- */
-NodeFilter.prototype.acceptNode = function (node) {"use strict"; };
 
 /**
  * http://dom.spec.whatwg.org/#interface-range

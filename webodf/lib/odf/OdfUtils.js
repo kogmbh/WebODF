@@ -727,7 +727,7 @@ odf.OdfUtils = function OdfUtils() {
             textNodes;
 
         /**
-         * @param {!Node} node
+         * @param {Node} node
          * @return {number}
          */
         function nodeFilter(node) {
@@ -780,7 +780,7 @@ odf.OdfUtils = function OdfUtils() {
             elements;
 
         /**
-         * @param {!Node} node
+         * @param {Node} node
          * @return {number}
          */
         function nodeFilter(node) {
@@ -838,7 +838,7 @@ odf.OdfUtils = function OdfUtils() {
             elements;
 
         /**
-         * @param {!Node} node
+         * @param {Node} node
          * @return {number}
          */
         function nodeFilter(node) {
@@ -847,7 +847,8 @@ odf.OdfUtils = function OdfUtils() {
                 if (domUtils.rangesIntersect(range, nodeRange)) {
                     return NodeFilter.FILTER_ACCEPT;
                 }
-            } else if (isTextContentContainingNode(node) || isGroupingElement(node)) {
+            } else if ((node && isTextContentContainingNode(node))
+                    || isGroupingElement(node)) {
                 return NodeFilter.FILTER_SKIP;
             }
             return NodeFilter.FILTER_REJECT;
@@ -871,7 +872,7 @@ odf.OdfUtils = function OdfUtils() {
             elements;
 
         /**
-         * @param {!Node} node
+         * @param {Node} node
          * @return {number}
          */
         function nodeFilter(node) {

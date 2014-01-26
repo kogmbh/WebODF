@@ -97,7 +97,7 @@ core.PositionIterator = function PositionIterator(root, whatToShow, filter,
      * Empty text nodes are not considered to be a valid position for the
      * positioniterator. They should be filtered out in all cases.
      * @constructor
-     * @extends NodeFilter
+     * @implements NodeFilter
      */
     function EmptyTextNodeFilter() {
         /**
@@ -114,7 +114,7 @@ core.PositionIterator = function PositionIterator(root, whatToShow, filter,
     }
     /**
      * @constructor
-     * @extends NodeFilter
+     * @implements NodeFilter
      * @param {!NodeFilter} filter
      */
     function FilteredEmptyTextNodeFilter(filter) {
@@ -443,8 +443,12 @@ core.PositionIterator = function PositionIterator(root, whatToShow, filter,
         nodeFilter.acceptNode = nodeFilter;
         whatToShow = whatToShow || NodeFilter.SHOW_ALL;
         runtime.assert(root.nodeType !== Node.TEXT_NODE, "Internet Explorer doesn't allow tree walker roots to be text nodes");
-        walker = root.ownerDocument.createTreeWalker(root, whatToShow,
-                nodeFilter, expandEntityReferences);
+        walker = /**@type{!HTMLDocument}*/(root.ownerDocument).createTreeWalker(
+            root,
+            whatToShow,
+            /**@type{!NodeFilter}*/(nodeFilter),
+            expandEntityReferences
+        );
 
         currentPos = 0;
         if (walker.firstChild() === null) {

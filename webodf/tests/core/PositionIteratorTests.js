@@ -46,7 +46,7 @@ core.PositionIteratorTests = function PositionIteratorTests(runner) {
     "use strict";
     /**
      * @constructor
-     * @extends NodeFilter
+     * @implements NodeFilter
      */
     function TestFilter() {
         this.acceptNode = function (node) {

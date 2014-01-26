@@ -285,19 +285,29 @@
         this.rangesIntersect = rangesIntersect;
 
         /**
+         * @constructor
+         * @implements {NodeFilter}
+         * @param {function(Node):number} f
+         */
+        function NodeFilterWrapper(f) {
+            this.acceptNode = f;
+        }
+
+        /**
          * Fetches all nodes within a supplied range that pass the required filter
          * @param {!Range} range
-         * @param {!function(!Node) : number} nodeFilter
+         * @param {!function(Node):number} nodeFilter
          * @returns {!Array.<Node>}
          */
         function getNodesInRange(range, nodeFilter) {
-            var document = range.startContainer.ownerDocument,
+            var document = /**@type{!HTMLDocument}*/(range.startContainer.ownerDocument),
                 elements = [],
                 rangeRoot = range.commonAncestorContainer,
                 root = /**@type{!Node}*/(rangeRoot.nodeType === Node.TEXT_NODE ? rangeRoot.parentNode : rangeRoot),
                 n,
                 filterResult,
-                treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_ALL, nodeFilter, false);
+                filter = new NodeFilterWrapper(nodeFilter),
+                treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_ALL, filter, false);
 
             treeWalker.currentNode = range.startContainer;
             n = range.startContainer;
