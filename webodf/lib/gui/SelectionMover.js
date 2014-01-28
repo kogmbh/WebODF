@@ -619,7 +619,7 @@ gui.SelectionMover.createPositionIterator = function (rootNode) {
     "use strict";
     /**
      * @constructor
-     * @extends NodeFilter
+     * @implements NodeFilter
       */
     function CursorFilter() {
         /**
