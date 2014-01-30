@@ -121,9 +121,7 @@ define([
         benchmark.actions.push(new RemovePositions(100, true));
         benchmark.actions.push(new SelectEntireDocument());
         benchmark.actions.push(new BoldCurrentSelection());
-        if (config.includeSlow) {
-            benchmark.actions.push(new AlignCurrentSelectionJustified());
-        }
+        benchmark.actions.push(new AlignCurrentSelectionJustified());
         benchmark.actions.push(new RemoveCurrentSelection());
 
         this.start = benchmark.start;

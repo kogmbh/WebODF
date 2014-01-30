@@ -39,7 +39,9 @@
 /*jslint sub: true*/
 /*global runtime, odf, xmldom, webodf_css, core, gui */
 
+runtime.loadClass("core.Async");
 runtime.loadClass("core.DomUtils");
+runtime.loadClass("core.ScheduledTask");
 runtime.loadClass("odf.OdfContainer");
 runtime.loadClass("odf.Formatting");
 runtime.loadClass("xmldom.XPath");
@@ -944,6 +946,7 @@ runtime.loadClass("gui.AnnotationViewManager");
             "odf.OdfCanvas constructor needs DOM");
         var self = this,
             doc = /**@type{!Document}*/(element.ownerDocument),
+            async = new core.Async(),
             /**@type{!odf.OdfContainer}*/
             odfcontainer,
             /**@type{!odf.Formatting}*/
@@ -969,6 +972,9 @@ runtime.loadClass("gui.AnnotationViewManager");
             /**@type{!Object.<string,!Array.<!Function>>}*/
             eventHandlers = {},
             waitingForDoneTimeoutId,
+            /**@type{!core.ScheduledTask}*/redrawContainerTask,
+            shouldRefreshCss = false,
+            shouldRerenderAnnotations = false,
             loadingQueue = new LoadingQueue();
 
         /**
@@ -1112,6 +1118,25 @@ runtime.loadClass("gui.AnnotationViewManager");
             element.style.width = Math.round(zoomLevel * sizer.offsetWidth) + "px";
             element.style.height = Math.round(zoomLevel * sizer.offsetHeight) + "px";
         }
+
+        /**
+         * @return {undefined}
+         */
+        function redrawContainer() {
+            if (shouldRefreshCss) {
+                handleStyles(odfcontainer, formatting, stylesxmlcss);
+                shouldRefreshCss = false;
+                // different styles means different layout, thus different sizes
+            }
+            if (shouldRerenderAnnotations) {
+                if (annotationViewManager) {
+                    annotationViewManager.rerenderAnnotations();
+                }
+                shouldRerenderAnnotations = false;
+            }
+            fixContainerSize();
+        }
+
         /**
          * A new content.xml has been loaded. Update the live document with it.
          * @param {!odf.OdfContainer} container
@@ -1266,9 +1291,8 @@ runtime.loadClass("gui.AnnotationViewManager");
          * @return {undefined}
          */
         this.refreshCSS = function () {
-            handleStyles(odfcontainer, formatting, stylesxmlcss);
-            // different styles means different layout, thus different sizes:
-            fixContainerSize();
+            shouldRefreshCss = true;
+            redrawContainerTask.trigger();
         };
 
         /**
@@ -1277,7 +1301,7 @@ runtime.loadClass("gui.AnnotationViewManager");
          * @return {undefined}
          */
         this.refreshSize = function () {
-            fixContainerSize();
+            redrawContainerTask.trigger();
         };
         /**
          * @return {!odf.OdfContainer}
@@ -1368,8 +1392,8 @@ runtime.loadClass("gui.AnnotationViewManager");
          */
         this.rerenderAnnotations = function () {
             if (annotationViewManager) {
-                annotationViewManager.rerenderAnnotations();
-                fixContainerSize();
+                shouldRerenderAnnotations = true;
+                redrawContainerTask.trigger();
             }
         };
 
@@ -1543,7 +1567,9 @@ runtime.loadClass("gui.AnnotationViewManager");
          * @return {undefined}
          */
         this.destroy = function(callback) {
-            var head = /**@type{!HTMLHeadElement}*/(doc.getElementsByTagName('head')[0]);
+            var head = /**@type{!HTMLHeadElement}*/(doc.getElementsByTagName('head')[0]),
+                cleanup = [pageSwitcher.destroy, redrawContainerTask.destroy];
+
             runtime.clearTimeout(waitingForDoneTimeoutId);
             // TODO: anything to clean with annotationViewManager?
             if (annotationsPane && annotationsPane.parentNode) {
@@ -1560,7 +1586,7 @@ runtime.loadClass("gui.AnnotationViewManager");
             head.removeChild(positioncss);
 
             // TODO: loadingQueue, make sure it is empty
-            pageSwitcher.destroy(callback);
+            async.destroyAll(cleanup, callback);
         };
 
         function init() {
@@ -1569,6 +1595,7 @@ runtime.loadClass("gui.AnnotationViewManager");
             fontcss = addStyleSheet(doc);
             stylesxmlcss = addStyleSheet(doc);
             positioncss = addStyleSheet(doc);
+            redrawContainerTask = new core.ScheduledTask(redrawContainer, 0);
         }
 
         init();
