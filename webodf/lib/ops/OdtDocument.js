@@ -79,6 +79,8 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
             ops.OdtDocument.signalTableAdded,
             ops.OdtDocument.signalOperationStart,
             ops.OdtDocument.signalOperationEnd,
+            ops.OdtDocument.signalProcessingBatchStart,
+            ops.OdtDocument.signalProcessingBatchEnd,
             ops.OdtDocument.signalUndoStackChanged,
             ops.OdtDocument.signalStepsInserted,
             ops.OdtDocument.signalStepsRemoved
@@ -908,6 +910,8 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
 /**@const*/ops.OdtDocument.signalParagraphStyleModified = "paragraphstyle/modified";
 /**@const*/ops.OdtDocument.signalOperationStart = "operation/start";
 /**@const*/ops.OdtDocument.signalOperationEnd = "operation/end";
+/**@const*/ops.OdtDocument.signalProcessingBatchStart = "router/batchstart";
+/**@const*/ops.OdtDocument.signalProcessingBatchEnd = "router/batchend";
 /**@const*/ops.OdtDocument.signalUndoStackChanged = "undo/changed";
 /**@const*/ops.OdtDocument.signalStepsInserted = "steps/inserted";
 /**@const*/ops.OdtDocument.signalStepsRemoved = "steps/removed";

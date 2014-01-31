@@ -924,9 +924,9 @@ gui.SessionController = (function () {
             odtDocument.subscribe(ops.OdtDocument.signalOperationEnd, redrawRegionSelectionTask.trigger);
             odtDocument.subscribe(ops.OdtDocument.signalCursorAdded, inputMethodEditor.registerCursor);
             odtDocument.subscribe(ops.OdtDocument.signalCursorRemoved, inputMethodEditor.removeCursor);
-            odtDocument.subscribe(ops.OdtDocument.signalOperationStart, saveFocus);
-            odtDocument.subscribe(ops.OdtDocument.signalOperationEnd, restoreFocus);
             odtDocument.subscribe(ops.OdtDocument.signalOperationEnd, updateUndoStack);
+            odtDocument.subscribe(ops.OdtDocument.signalProcessingBatchStart, saveFocus);
+            odtDocument.subscribe(ops.OdtDocument.signalProcessingBatchEnd, restoreFocus);
         }
 
         init();

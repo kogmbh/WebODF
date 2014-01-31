@@ -576,6 +576,7 @@
         "odf/OdfUtils.js"
     ],
     "ops/TrivialOperationRouter.js": [
+        "core/EventNotifier.js",
         "ops/Operation.js",
         "ops/OperationFactory.js",
         "ops/OperationRouter.js"

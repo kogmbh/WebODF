@@ -115,3 +115,17 @@ ops.OperationRouter.prototype.hasLocalUnsyncedOps = function () {"use strict"; }
  * @return {!boolean}
  */
 ops.OperationRouter.prototype.hasSessionHostConnection = function () {"use strict"; };
+
+/**
+ * Signal that the operation router is about to process a batch of operations.
+ * @const
+ * @type {string}
+ */
+ops.OperationRouter.signalProcessingBatchStart = "router/batchstart";
+
+/**
+ * Signal that the operation router has just completed processing a batch of operations.
+ * @const
+ * @type {string}
+ */
+ops.OperationRouter.signalProcessingBatchEnd = "router/batchend";

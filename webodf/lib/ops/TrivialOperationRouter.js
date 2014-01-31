@@ -35,7 +35,9 @@
  * @source: http://www.webodf.org/
  * @source: https://github.com/kogmbh/WebODF/
  */
-/*global ops*/
+/*global ops, runtime, core*/
+
+runtime.loadClass("core.EventNotifier");
 
 /*
  * route the operations.
@@ -52,7 +54,11 @@
 ops.TrivialOperationRouter = function TrivialOperationRouter() {
     "use strict";
 
-    var operationFactory,
+    var events = new core.EventNotifier([
+            ops.OperationRouter.signalProcessingBatchStart,
+            ops.OperationRouter.signalProcessingBatchEnd
+        ]),
+        operationFactory,
         playbackFunction,
         groupIdentifier = 0;
 
@@ -89,6 +95,7 @@ ops.TrivialOperationRouter = function TrivialOperationRouter() {
         // The current implementation is only designed for a localeditor instance & the TrivialUndoManager.
         // TODO redesign this concept to work with collaborative editing
         groupIdentifier += 1;
+        events.emit(ops.OperationRouter.signalProcessingBatchStart, {});
         operations.forEach(function(op) {
             var timedOp,
                 opspec = op.spec();
@@ -100,6 +107,7 @@ ops.TrivialOperationRouter = function TrivialOperationRouter() {
             // TODO: handle return flag in error case
             playbackFunction(timedOp);
         });
+        events.emit(ops.OperationRouter.signalProcessingBatchEnd, {});
     };
 
     this.close = function (cb) {
@@ -111,20 +119,18 @@ ops.TrivialOperationRouter = function TrivialOperationRouter() {
      * @param {!Function} cb
      * @return {undefined}
      */
-    /*jslint emptyblock: true, unparam: true*/
-    this.subscribe = function (eventId, cb) {
+    this.subscribe = function(eventId, cb) {
+        events.subscribe(eventId, cb);
     };
-    /*jslint emptyblock: false, unparam: false*/
 
     /**
      * @param {!string} eventId
      * @param {!Function} cb
      * @return {undefined}
      */
-    /*jslint emptyblock: true, unparam: true*/
-    this.unsubscribe = function (eventId, cb) {
+    this.unsubscribe = function(eventId, cb) {
+        events.unsubscribe(eventId, cb);
     };
-    /*jslint emptyblock: false, unparam: false*/
 
     /**
      * @return {!boolean}

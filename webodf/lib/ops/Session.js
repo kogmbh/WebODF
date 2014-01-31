@@ -58,6 +58,24 @@ ops.Session = function Session(odfCanvas) {
         operationRouter = null;
 
     /**
+     * Forward the router's batch start signal on to the document
+     * @param {*} args
+     * @return {undefined}
+     */
+    function forwardBatchStart(args) {
+        odtDocument.emit(ops.OdtDocument.signalProcessingBatchStart, args);
+    }
+
+    /**
+     * Forward the router's batch end signal on to the document
+     * @param {*} args
+     * @return {undefined}
+     */
+    function forwardBatchEnd(args) {
+        odtDocument.emit(ops.OdtDocument.signalProcessingBatchEnd, args);
+    }
+
+    /**
      * @param {!ops.OperationFactory} opFactory
      */
     this.setOperationFactory = function (opFactory) {
@@ -72,7 +90,13 @@ ops.Session = function Session(odfCanvas) {
      * @return {undefined}
      */
     this.setOperationRouter = function (opRouter) {
+        if (operationRouter) {
+            operationRouter.unsubscribe(ops.OperationRouter.signalProcessingBatchStart, forwardBatchStart);
+            operationRouter.unsubscribe(ops.OperationRouter.signalProcessingBatchEnd, forwardBatchEnd);
+        }
         operationRouter = opRouter;
+        operationRouter.subscribe(ops.OperationRouter.signalProcessingBatchStart, forwardBatchStart);
+        operationRouter.subscribe(ops.OperationRouter.signalProcessingBatchEnd, forwardBatchEnd);
         opRouter.setPlaybackFunction(function (op) {
             odtDocument.emit(ops.OdtDocument.signalOperationStart, op);
             if (op.execute(odtDocument)) {
