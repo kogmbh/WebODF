@@ -461,6 +461,15 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
     }
 
     /**
+     * @param {!Object.<!string, *>} obj
+     * @param {!string} key
+     * @return {*}
+     */
+    function getOwnProperty(obj, key) {
+        return obj.hasOwnProperty(key) ? obj[key] : undefined;
+    }
+
+    /**
      * @param {!function(!Object) : !Object} applyDirectStyling
      * @return {undefined}
      */
@@ -468,29 +477,49 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
         var range = odtDocument.getCursor(inputMemberId).getSelectedRange(),
             paragraphs = odfUtils.getParagraphElements(range),
             formatting = odtDocument.getFormatting(),
-            operations = [];
+            operations = [],
+            derivedStyleNames = {},
+            defaultStyleName;
 
         paragraphs.forEach(function(paragraph) {
             var paragraphStartPoint = odtDocument.convertDomPointToCursorStep(paragraph, 0, roundUp),
                 paragraphStyleName = paragraph.getAttributeNS(odf.Namespaces.textns, "style-name"),
-                newParagraphStyleName = objectNameGenerator.generateStyleName(),
+                newParagraphStyleName,
                 opAddStyle,
                 opSetParagraphStyle,
                 paragraphProperties;
 
+            // Try and reuse an existing paragraph style if possible
             if (paragraphStyleName) {
-                paragraphProperties = formatting.createDerivedStyleObject(paragraphStyleName, "paragraph", {});
+                newParagraphStyleName = getOwnProperty(derivedStyleNames, paragraphStyleName);
+            } else {
+                newParagraphStyleName = defaultStyleName;
             }
-            paragraphProperties = applyDirectStyling(paragraphProperties || {});
-            opAddStyle = new ops.OpAddStyle();
-            opAddStyle.init({
-                memberid: inputMemberId,
-                styleName: newParagraphStyleName,
-                styleFamily: 'paragraph',
-                isAutomaticStyle: true,
-                setProperties: paragraphProperties
-            });
-            operations.push(opAddStyle);
+
+            if (!newParagraphStyleName) {
+                newParagraphStyleName = objectNameGenerator.generateStyleName();
+                if (paragraphStyleName) {
+                    derivedStyleNames[paragraphStyleName] = newParagraphStyleName;
+                    paragraphProperties = formatting.createDerivedStyleObject(paragraphStyleName, "paragraph", {});
+                } else {
+                    defaultStyleName = newParagraphStyleName;
+                    paragraphProperties = {};
+                }
+
+                // The assumption is that applyDirectStyling will return the same transform given the same
+                // paragraph properties (e.g., there is nothing dependent on whether this is the 10th paragraph)
+                paragraphProperties = applyDirectStyling(paragraphProperties);
+                opAddStyle = new ops.OpAddStyle();
+                opAddStyle.init({
+                    memberid: inputMemberId,
+                    styleName: newParagraphStyleName,
+                    styleFamily: 'paragraph',
+                    isAutomaticStyle: true,
+                    setProperties: paragraphProperties
+                });
+                operations.push(opAddStyle);
+            }
+
 
             opSetParagraphStyle = new ops.OpSetParagraphStyle();
             opSetParagraphStyle.init({
