@@ -59,7 +59,7 @@ gui.UndoManager.prototype.subscribe = function(signal, callback) {"use strict"; 
 gui.UndoManager.prototype.unsubscribe = function(signal, callback) {"use strict"; };
 
 /**
- * Set the OdtDocument to operate on
+ * Set the Document to operate on
  * @param {!ops.Document} newDocument
  */
 gui.UndoManager.prototype.setDocument = function (newDocument) {"use strict"; };

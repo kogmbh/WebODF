@@ -44,13 +44,17 @@ runtime.loadClass("odf.Namespaces");
  */
 gui.ImageSelector = function ImageSelector(odfCanvas) {
     "use strict";
-    var /** @const@type {!string} */
+    var /**@const
+           @type {!string}*/
         svgns = odf.Namespaces.svgns,
-        /** @const@type {!string} */
+        /**@const
+           @type {!string}*/
         imageSelectorId = "imageSelector",
-        /** @const@type {!number} */
+        /**@const
+           @type {!number}*/
         selectorBorderWidth = 1, // in px
-        /** @const@type {!Array.<!string>} */
+        /**@const
+           @type {!Array.<!string>}*/
         squareClassNames = [
             "topLeft", "topRight", "bottomRight", "bottomLeft", "topMiddle", "rightMiddle", "bottomMiddle", "leftMiddle"
         ],
@@ -62,18 +66,21 @@ gui.ImageSelector = function ImageSelector(odfCanvas) {
      */
     function createSelectorElement() {
         var sizerElement = odfCanvas.getSizer(),
-            selectorElement, squareElement;
+            selectorElement = /**@type{!HTMLElement}*/(document.createElement("div"));
 
-        selectorElement = document.createElement("div");
         selectorElement.id = "imageSelector";
         selectorElement.style.borderWidth = selectorBorderWidth + "px";
         sizerElement.appendChild(selectorElement);
 
-        squareClassNames.forEach(function (className) {
-            squareElement = document.createElement("div");
+        /**
+         * @param {string} className
+         */
+        function createDiv(className) {
+            var squareElement = document.createElement("div");
             squareElement.className = className;
             selectorElement.appendChild(squareElement);
-        });
+        }
+        squareClassNames.forEach(createDiv);
 
         return selectorElement;
     }

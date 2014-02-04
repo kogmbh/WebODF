@@ -67,11 +67,12 @@ function Main(cmakeListPath) {
             "core/Zip.js",
             "gui/AnnotationViewManager.js",
             "gui/Avatar.js",
-            "gui/MimeDataExporter.js",
             "gui/Clipboard.js",
             "gui/EditInfoHandle.js",
             "gui/HyperlinkClickHandler.js",
+            "gui/ImageSelector.js",
             "gui/KeyboardHandler.js",
+            "gui/MimeDataExporter.js",
             "gui/SelectionMover.js",
             "gui/StyleSummary.js",
             "odf/FontLoader.js",
@@ -328,11 +329,11 @@ function Main(cmakeListPath) {
             }
         }
         if (sorted.length === lastLength) {
-            console.log("Unresolvable circular dependency. Check relations between ");
+            console.log("Unresolvable circular dependency:");
             for (i = 0; i < l; i += 1) {
                 p = pathModule.normalize(list[i]);
                 if (!defined.hasOwnProperty(p)) {
-                    console.log(p);
+                    console.log(p + " misses " + deps[p].filter(isUndefined));
                 }
             }
             process.exit(1);
