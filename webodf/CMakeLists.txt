@@ -36,16 +36,11 @@ set(TESTJSFILES tests/core/ZipTests.js
     tests/tests.js
 )
 
-add_custom_command(
-    OUTPUT manifest.json
+add_custom_target(manifest.json-target
     COMMAND ${NODE}
-    ARGS lib/runtime.js tools/updateJS.js ${CMAKE_BINARY_DIR}/jsfileslist.txt
-    COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/lib/manifest.json ${CMAKE_CURRENT_BINARY_DIR}/manifest.json
-    DEPENDS NodeJS tools/updateJS.js ${LIBJSFILES} ${TESTJSFILES}
+    lib/runtime.js tools/updateJS.js ${CMAKE_BINARY_DIR}/jsfileslist.txt
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
-
-add_custom_target(manifest.json-target DEPENDS manifest.json)
 
 add_custom_command(
     OUTPUT webodf.css.js
@@ -219,7 +214,7 @@ if (NOT APPLE)
              ${CMAKE_CURRENT_BINARY_DIR}/instrumented
         DEPENDS ${LIBJSFILES} JSCoverage
     )
-    add_custom_target(instrumented ALL DEPENDS instrumented/index.html)
+    add_custom_target(instrumented DEPENDS instrumented/index.html)
 endif(NOT APPLE)
 
 add_subdirectory(tests)

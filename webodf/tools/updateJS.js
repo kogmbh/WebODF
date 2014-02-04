@@ -38,6 +38,8 @@
 function Main(cmakeListPath) {
     "use strict";
     var pathModule = require("path"),
+        fs = require("fs"),
+        buildDir = pathModule.dirname(cmakeListPath),
         /**
          * List of files that are 100% typed. When working on making WebODF more
          * typed, choose a file from CMakeLists.txt that is listed as only
@@ -273,7 +275,6 @@ function Main(cmakeListPath) {
      * If the file is written anew, saveCallback is called.
      */
     function saveIfDifferent(path, content, saveCallback) {
-        var fs = require("fs");
         fs.readFile(path, "utf8", function (err, data) {
             if (err || data !== content) {
                 if (!err && data.length !== content.length) {
@@ -353,7 +354,7 @@ function Main(cmakeListPath) {
                 "\n    lib/" +
                 remaining.join("\n    lib/") + "\n)";
         saveIfDifferent(path, content, function () {
-            console.log("JS file dependencies were updated. Rerun the build.");
+            console.log("JS file dependencies were updated.");
             process.exit(1);
         });
     }
@@ -498,9 +499,7 @@ function Main(cmakeListPath) {
      * @return {undefined}
      */
     this.readFiles = function (dirs, filter, callback) {
-        var fs = require("fs"),
-            path = require("path"),
-            contents = {},
+        var contents = {},
             read;
         function readMore() {
             var done = true,
@@ -539,7 +538,7 @@ function Main(cmakeListPath) {
                 var i;
                 files.sort();
                 for (i = 0; i < files.length; i += 1) {
-                    contents[path.join(dirpath, files[i])] = undefined;
+                    contents[pathModule.join(dirpath, files[i])] = undefined;
                 }
                 contents[dirpath] = files;
                 readMore();
@@ -601,13 +600,42 @@ function Main(cmakeListPath) {
         white:      true   // if sloppy whitespace is tolerated
     };
 
+    function mkdir(path) {
+        if (fs.existsSync(path)) {
+            return;
+        }
+        var parent = pathModule.dirname(path);
+        mkdir(parent);
+        fs.mkdirSync(path);
+    }
+
+    function runJSLint(jslint, path, contents) {
+        var lpath = pathModule.join(buildDir, "jslint", path);
+        fs.readFile(lpath, "utf8", function (err, data) {
+            if (data === contents) {
+                return;
+            }
+            var result, i, errors;
+            result = jslint(contents, jslintconfig);
+            if (result) {
+                mkdir(pathModule.dirname(lpath));
+                fs.writeFile(lpath, contents);
+            } else {
+                errors = jslint.errors;
+                for (i = 0; i < errors.length && errors[i]; i += 1) {
+                    err = errors[i];
+                    console.log(path + ":" + err.line + ":" + err.character +
+                          ": error: " + err.reason);
+                }
+                process.exit(1);
+            }
+        });
+    }
+
     this.runJSLint = function (contents) {
         var core = {},
             jslint,
-            result,
-            path,
-            i,
-            err;
+            path;
         // load JSLint
         /*jslint evil: true*/
         eval(contents[pathModule.normalize("lib/core/JSLint.js")]);
@@ -616,15 +644,7 @@ function Main(cmakeListPath) {
         for (path in contents) {
             if (contents.hasOwnProperty(path)
                     && typeof contents[path] === "string") {
-                result = jslint(contents[path], jslintconfig);
-                if (!result) {
-                    for (i = 0; i < jslint.errors.length && jslint.errors[i]; i += 1) {
-                        err = jslint.errors[i];
-                        console.log(path + ":" + err.line + ":" + err.character +
-                            ": error: " + err.reason);
-                    }
-                    process.exit(1);
-                }
+                runJSLint(jslint, path, contents[path]);
             }
         }
     };
