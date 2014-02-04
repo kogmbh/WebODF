@@ -290,7 +290,8 @@ cursor|cursor > #eventTrap {
     right: 0;
     color: rgba(255, 255, 255, 0); /* hide the blinking caret by setting the colour to fully transparent */
     overflow: hidden; /* The overflow visibility is used to hide and show characters being entered */
-    height: auto;
+    min-height: 1px; /* trap must be visible in order to receive focus */
+    height: auto; /* but ideally is the same height as the surrounding cursor */
     width: 1px; /* trap must be visible in order to receive focus */
 }
 
