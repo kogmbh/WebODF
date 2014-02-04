@@ -547,6 +547,8 @@ html[dir='rtl'] .dropdownToolbarButton {
 
 #canvasContainer {
     overflow: auto;
+    -webkit-overflow-scrolling: touch;
+
     padding-top: 6px;
     padding-bottom: 6px;
     position: absolute;

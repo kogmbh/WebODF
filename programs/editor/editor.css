@@ -31,7 +31,7 @@ html, body, #mainContainer {
     text-align: center;
     background-color: #ddd;
     overflow: auto;
-
+    -webkit-overflow-scrolling: touch;
     position: absolute;
     top: 30px;
     bottom: 0;
