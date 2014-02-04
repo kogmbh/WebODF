@@ -1190,27 +1190,9 @@ runtime.loadClass("gui.AnnotationViewManager");
         * @return {undefined}
         */
         function modifyAnnotations(odffragment) {
-            var annotationNodes = domUtils.getElementsByTagNameNS(odffragment, officens, 'annotation'),
-                annotationEnds = domUtils.getElementsByTagNameNS(odffragment, officens, 'annotation-end'),
-                currentAnnotationName,
-                i;
+            var annotationNodes = /**@type{!Array.<!odf.AnnotationElement>}*/(domUtils.getElementsByTagNameNS(odffragment, officens, 'annotation'));
 
-            /**
-            * @param {!Element} element
-            * @return {boolean}
-            */
-            function matchAnnotationEnd(element) {
-                return currentAnnotationName === element.getAttributeNS(officens, 'name');
-            }
-
-            for (i = 0; i < annotationNodes.length; i += 1) {
-                currentAnnotationName = annotationNodes[i].getAttributeNS(officens, 'name');
-                annotationViewManager.addAnnotation({
-                    node: annotationNodes[i],
-                    end: annotationEnds.filter(matchAnnotationEnd)[0] || null
-                });
-            }
-
+            annotationNodes.forEach(annotationViewManager.addAnnotation);
             annotationViewManager.rerenderAnnotations();
         }
 
@@ -1425,7 +1407,7 @@ runtime.loadClass("gui.AnnotationViewManager");
         /**
          * Adds an annotation for the annotaiton manager to track
          * and wraps and highlights it
-         * @param {!{node:!Element,end:Node}} annotation
+         * @param {!odf.AnnotationElement} annotation
          * @return {undefined}
          */
         this.addAnnotation = function (annotation) {

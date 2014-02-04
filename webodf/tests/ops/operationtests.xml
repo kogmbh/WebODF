@@ -1302,7 +1302,7 @@
    <office:text><text:p>ABC<office:annotation office:name="alice_2"><dc:creator e:memberid="Alice">Alice</dc:creator><dc:date>2013-08-05T12:34:07.061Z</dc:date><text:list><text:list-item><text:p></text:p></text:list-item></text:list></office:annotation><office:annotation office:name="alice_1"><dc:creator e:memberid="Alice">Alice</dc:creator><dc:date>2013-08-05T12:34:07.061Z</dc:date><text:list><text:list-item><text:p></text:p></text:list-item></text:list></office:annotation>D</text:p><text:p>EFG<text:span>H<office:annotation-end office:name="alice_1"/>IJ</text:span></text:p></office:text>
   </after>
  </test>
- <test name="RemoveAnnotation_ranged">
+ <test name="RemoveAnnotation_ranged" hasSetup="true">
   <before>
    <office:text><text:p>ABC<office:annotation office:name="alice_2"><dc:creator e:memberid="Alice">Alice</dc:creator><dc:date>2013-08-05T12:34:07.061Z</dc:date><text:list><text:list-item><text:p>xyz</text:p></text:list-item></text:list></office:annotation>D</text:p><text:p>EFG<text:span>H<office:annotation-end office:name="alice_2"/>IJ</text:span></text:p></office:text>
   </before>

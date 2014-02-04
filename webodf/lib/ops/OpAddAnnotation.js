@@ -66,7 +66,7 @@ ops.OpAddAnnotation = function OpAddAnnotation() {
      * a list, inside it; and with the given annotation name
      * @param {!ops.OdtDocument} odtDocument
      * @param {!Date} date
-     * @return {!Element}
+     * @return {!odf.AnnotationElement}
      */
     function createAnnotationNode(odtDocument, date) {
         var annotationNode, creatorNode, dateNode,
@@ -74,7 +74,7 @@ ops.OpAddAnnotation = function OpAddAnnotation() {
 
         // Create an office:annotation node with the calculated name, and an attribute with the memberid
         // for SessionView styling
-        annotationNode = doc.createElementNS(odf.Namespaces.officens, 'office:annotation');
+        annotationNode = /**@type{!odf.AnnotationElement}*/(doc.createElementNS(odf.Namespaces.officens, 'office:annotation'));
         annotationNode.setAttributeNS(odf.Namespaces.officens, 'office:name', name);
 
         creatorNode = doc.createElementNS(odf.Namespaces.dcns, 'dc:creator');
@@ -142,7 +142,7 @@ ops.OpAddAnnotation = function OpAddAnnotation() {
     }
 
     this.execute = function (odtDocument) {
-        var annotation = {},
+        var annotation, annotationEnd,
             cursor = odtDocument.getCursor(memberid),
             selectedRange,
             paragraphElement,
@@ -150,27 +150,24 @@ ops.OpAddAnnotation = function OpAddAnnotation() {
 
         doc = odtDocument.getDOMDocument();
 
-        annotation.node = createAnnotationNode(odtDocument, new Date(timestamp));
-        if (!annotation.node) {
-            return false;
-        }
+        annotation = createAnnotationNode(odtDocument, new Date(timestamp));
+
         if (length) {
-            annotation.end = createAnnotationEnd();
-            if (!annotation.end) {
-                return false;
-            }
+            annotationEnd = createAnnotationEnd();
+            // link annotation end to start
+            annotation.annotationEndElement = annotationEnd;
             // Insert the end node before inserting the annotation node, so we don't
             // affect the addressing, and length is always positive
-            insertNodeAtPosition(odtDocument, annotation.end, position + length);
+            insertNodeAtPosition(odtDocument, annotationEnd, position + length);
         }
-        insertNodeAtPosition(odtDocument, annotation.node, position);
+        insertNodeAtPosition(odtDocument, annotation, position);
         odtDocument.emit(ops.OdtDocument.signalStepsInserted, {position: position, length: length});
 
         // Move the cursor inside the new annotation,
         // by selecting the paragraph's range.
         if (cursor) {
             selectedRange = doc.createRange();
-            paragraphElement = domUtils.getElementsByTagNameNS(annotation.node, odf.Namespaces.textns, "p")[0];
+            paragraphElement = domUtils.getElementsByTagNameNS(annotation, odf.Namespaces.textns, "p")[0];
             selectedRange.selectNodeContents(paragraphElement);
             cursor.setSelectedRange(selectedRange);
             odtDocument.emit(ops.OdtDocument.signalCursorMoved, cursor);

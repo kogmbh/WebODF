@@ -254,6 +254,22 @@ runtime.loadClass("odf.OdfNodeFilter");
     odf.ODFDocumentElement.prototype.styles;
     odf.ODFDocumentElement.namespaceURI = officens;
     odf.ODFDocumentElement.localName = 'document';
+
+    /*jslint emptyblock: true*/
+    /**
+     * An element that also has a pointer to the optional annotation end
+     * @constructor
+     * @extends {odf.ODFElement}
+     */
+    odf.AnnotationElement = function AnnotationElement() {
+    };
+    /*jslint emptyblock: false*/
+
+    /**
+    * @type {?Element}
+    */
+    odf.AnnotationElement.prototype.annotationEndElement;
+
     // private constructor
     /**
      * @constructor
@@ -367,6 +383,57 @@ runtime.loadClass("odf.OdfNodeFilter");
         }
 
         // private functions
+        /**
+         * Iterates through the subtree of rootElement and adds annotation-end
+         * elements as direct properties of the corresponding annotation elements.
+         * Expects properly used annotation elements, does not try
+         * to do heuristic fixes or drop broken elements.
+         * @param {!Element} rootElement
+         * @return {undefined}
+         */
+        function linkAnnotationStartAndEndElements(rootElement) {
+            var document = rootElement.ownerDocument,
+                /** @type {!Object.<!string,!Element>} */
+                annotationStarts = {},
+                n, name, annotationStart,
+                // TODO: optimize by using a filter rejecting subtrees without annotations possible
+                nodeIterator = document.createNodeIterator(rootElement, NodeFilter.SHOW_ELEMENT, null, false);
+
+            n = /**@type{?Element}*/(nodeIterator.nextNode());
+            while (n) {
+                if (n.namespaceURI === officens) {
+                    if (n.localName === "annotation") {
+                        name = n.getAttributeNS(officens, 'name');
+                        if (name) {
+                            if (annotationStarts.hasOwnProperty(name)) {
+                                runtime.log("Warning: annotation name used more than once with <office:annotation/>: '" + name + "'");
+                            } else {
+                                annotationStarts[name] = n;
+                            }
+                        }
+                    } else if (n.localName === "annotation-end") {
+                        name = n.getAttributeNS(officens, 'name');
+                        if (name) {
+                            if (annotationStarts.hasOwnProperty(name)) {
+                                annotationStart = /** @type {!odf.AnnotationElement}*/(annotationStarts[name]);
+                                if (!annotationStart.annotationEndElement) {
+                                    // Linking annotation start & end
+                                    annotationStart.annotationEndElement = n;
+                                } else {
+                                    runtime.log("Warning: annotation name used more than once with <office:annotation-end/>: '" + name + "'");
+                                }
+                            } else {
+                                runtime.log("Warning: annotation end without an annotation start, name: '" + name + "'");
+                            }
+                        } else {
+                            runtime.log("Warning: annotation end without a name found");
+                        }
+                    }
+                }
+                n = /**@type{?Element}*/(nodeIterator.nextNode());
+            }
+        }
+
         /**
          * Tags all styles with an attribute noting their scope.
          * Helper function for the primitive complete backwriting of
@@ -624,6 +691,7 @@ runtime.loadClass("odf.OdfNodeFilter");
             root.masterStyles = getDirectChild(root, officens, 'master-styles');
             root.body = getDirectChild(root, officens, 'body');
             root.meta = getDirectChild(root, officens, 'meta');
+            linkAnnotationStartAndEndElements(root);
         }
         /**
          * @param {Document|undefined} xmldoc
@@ -786,6 +854,7 @@ runtime.loadClass("odf.OdfNodeFilter");
                     loadNextComponent(remainingComponents);
                 });
             } else {
+                linkAnnotationStartAndEndElements(self.rootElement);
                 setState(OdfContainer.DONE);
             }
         }

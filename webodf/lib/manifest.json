@@ -61,6 +61,7 @@
     ],
     "gui/AnnotationViewManager.js": [
         "odf/Namespaces.js",
+        "odf/OdfContainer.js",
         "odf/OdfUtils.js"
     ],
     "gui/Avatar.js": [
@@ -395,6 +396,7 @@
     "ops/OpAddAnnotation.js": [
         "core/DomUtils.js",
         "odf/Namespaces.js",
+        "odf/OdfContainer.js",
         "ops/OdtDocument.js",
         "ops/Operation.js"
     ],
@@ -450,6 +452,7 @@
     "ops/OpRemoveAnnotation.js": [
         "core/DomUtils.js",
         "odf/Namespaces.js",
+        "odf/OdfContainer.js",
         "ops/OdtDocument.js",
         "ops/Operation.js"
     ],

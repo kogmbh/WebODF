@@ -63,7 +63,6 @@ ops.OpRemoveAnnotation = function OpRemoveAnnotation() {
     this.execute = function (odtDocument) {
         var iterator = odtDocument.getIteratorAtPosition(position),
             container = iterator.container(),
-            annotationName,
             annotationNode,
             annotationEnd;
 
@@ -75,13 +74,8 @@ ops.OpRemoveAnnotation = function OpRemoveAnnotation() {
             return false;
         }
 
-        annotationNode = container;
-        annotationName = annotationNode.getAttributeNS(odf.Namespaces.officens, 'name');
-        if (annotationName) {
-            annotationEnd = domUtils.getElementsByTagNameNS(odtDocument.getRootNode(), odf.Namespaces.officens, 'annotation-end').filter(function (element) {
-                return annotationName === element.getAttributeNS(odf.Namespaces.officens, 'name');
-            })[0] || null;
-        }
+        annotationNode = /**@type{!odf.AnnotationElement}*/(container);
+        annotationEnd = annotationNode.annotationEndElement;
 
         // Untrack and unwrap annotation
         odtDocument.getOdfCanvas().forgetAnnotations();

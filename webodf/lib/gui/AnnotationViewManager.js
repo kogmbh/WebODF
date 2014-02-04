@@ -72,7 +72,7 @@ gui.AnnotatableCanvas.prototype.getSizer = function () {"use strict"; };
  */
 gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, annotationsPane, showAnnotationRemoveButton) {
     "use strict";
-    var /**@type{!Array.<!{node:!Element,end:Node}>}*/
+    var /**@type{!Array.<!odf.AnnotationElement>}*/
         annotations = [],
         doc = odfFragment.ownerDocument,
         odfUtils = new odf.OdfUtils(),
@@ -86,7 +86,7 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
                    "Expected to be run in an environment which has a global window, like a browser.");
     /**
      * Wraps an annotation with various HTML elements for styling, including connectors
-     * @param {!{node:!Element,end:Node}} annotation
+     * @param {!odf.AnnotationElement} annotation
      * @return {undefined}
      */
     function wrapAnnotation(annotation) {
@@ -94,14 +94,13 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
             annotationNote = doc.createElement('div'),
             connectorHorizontal = doc.createElement('div'),
             connectorAngular = doc.createElement('div'),
-            removeButton,
-            annotationNode = annotation.node;
+            removeButton;
 
         annotationWrapper.className = 'annotationWrapper';
-        annotationNode.parentNode.insertBefore(annotationWrapper, annotationNode);
+        annotation.parentNode.insertBefore(annotationWrapper, annotation);
 
         annotationNote.className = 'annotationNote';
-        annotationNote.appendChild(annotationNode);
+        annotationNote.appendChild(annotation);
         if (showAnnotationRemoveButton) {
             removeButton = doc.createElement('div');
             removeButton.className = 'annotationRemoveButton';
@@ -118,41 +117,39 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
 
     /**
      * Unwraps an annotation
-     * @param {!{node:!Element,end:Node}} annotation
+     * @param {!odf.AnnotationElement} annotation
      * @return {undefined}
      */
     function unwrapAnnotation(annotation) {
-        var annotationNode = annotation.node,
-            annotationWrapper = annotationNode.parentNode.parentNode;
+        var annotationWrapper = annotation.parentNode.parentNode;
 
         if (annotationWrapper.localName === 'div') {
-            annotationWrapper.parentNode.insertBefore(annotationNode, annotationWrapper);
+            annotationWrapper.parentNode.insertBefore(annotation, annotationWrapper);
             annotationWrapper.parentNode.removeChild(annotationWrapper);
         }
     }
 
     /**
      * Highlights the text between the annotation node and it's end
-     * @param {!{node:!Element,end:Node}} annotation
+     * @param {!odf.AnnotationElement} annotation
      * @return {undefined}
      */
     function highlightAnnotation(annotation) {
-        var annotationNode = annotation.node,
-            annotationEnd = annotation.end,
+        var annotationEnd = annotation.annotationEndElement,
             range = doc.createRange(),
+            annotationName = annotation.getAttributeNS(odf.Namespaces.officens, 'name'),
             textNodes;
 
         if (annotationEnd) {
-            range.setStart(annotationNode, annotationNode.childNodes.length);
+            range.setStart(annotation, annotation.childNodes.length);
             range.setEnd(annotationEnd, 0);
 
             textNodes = odfUtils.getTextNodes(range, false);
 
             textNodes.forEach(function (n) {
-                var container = doc.createElement('span'),
-                    v = annotationNode.getAttributeNS(odf.Namespaces.officens, 'name');
+                var container = doc.createElement('span');
                 container.className = 'annotationHighlight';
-                container.setAttribute('annotation', v);
+                container.setAttribute('annotation', annotationName);
 
                 n.parentNode.insertBefore(container, n);
                 container.appendChild(n);
@@ -164,11 +161,11 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
 
     /**
      * Unhighlights the text between the annotation node and it's end
-     * @param {!{node:!Element,end:Node}} annotation
+     * @param {!odf.AnnotationElement} annotation
      * @return {undefined}
      */
     function unhighlightAnnotation(annotation) {
-        var annotationName = annotation.node.getAttributeNS(odf.Namespaces.officens, 'name'),
+        var annotationName = annotation.getAttributeNS(odf.Namespaces.officens, 'name'),
             highlightSpans = doc.querySelectorAll('span.annotationHighlight[annotation="' + annotationName + '"]'),
             i,
             container;
@@ -203,11 +200,11 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
     /**
      * Recalculates the positions, widths, and rotation angles of things like the annotation note and it's
      * connectors. Can and should be called frequently to update the UI
-     * @param {!{node:!Element,end:Node}} annotation
+     * @param {!odf.AnnotationElement} annotation
      * @return {undefined}
      */
     function renderAnnotation(annotation) {
-        var annotationNote = /**@type{!Element}*/(annotation.node.parentNode),
+        var annotationNote = /**@type{!Element}*/(annotation.parentNode),
             connectorHorizontal = annotationNote.nextElementSibling,
             connectorAngular = connectorHorizontal.nextElementSibling,
             annotationWrapper = /**@type{!Element}*/(annotationNote.parentNode),
@@ -226,7 +223,7 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
                                           - CONNECTOR_MARGIN + 'px';
 
         if (previousAnnotation) {
-            previousRect = /**@type{!Element}*/(previousAnnotation.node.parentNode).getBoundingClientRect();
+            previousRect = /**@type{!Element}*/(previousAnnotation.parentNode).getBoundingClientRect();
             if ((annotationWrapper.getBoundingClientRect().top - previousRect.bottom) / zoomLevel <= NOTE_MARGIN) {
                 annotationNote.style.top = Math.abs(annotationWrapper.getBoundingClientRect().top - previousRect.bottom) / zoomLevel + NOTE_MARGIN + 'px';
             } else {
@@ -280,7 +277,7 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
      */
     function sortAnnotations() {
         annotations.sort(function (a, b) {
-            if (a.node.compareDocumentPosition(b.node) === Node.DOCUMENT_POSITION_FOLLOWING) {
+            if (a.compareDocumentPosition(b) === Node.DOCUMENT_POSITION_FOLLOWING) {
                 return -1;
             }
             return 1;
@@ -309,7 +306,7 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
      */
     function getMinimumHeightForAnnotationPane() {
         if (annotationsPane.style.display !== 'none' && annotations.length > 0) {
-            return (/**@type{!Element}*/(annotations[annotations.length-1].node.parentNode).getBoundingClientRect().bottom - annotationsPane.getBoundingClientRect().top) / canvas.getZoomLevel() + 'px';
+            return (/**@type{!Element}*/(annotations[annotations.length-1].parentNode).getBoundingClientRect().bottom - annotationsPane.getBoundingClientRect().top) / canvas.getZoomLevel() + 'px';
         }
         return null;
     }
@@ -317,21 +314,20 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
 
     /**
      * Adds an annotation to track, and wraps and highlights it
-     * @param {!{node:!Element,end:Node}} annotation
+     * @param {!odf.AnnotationElement} annotation
      * @return {undefined}
      */
     function addAnnotation(annotation) {
         showAnnotationsPane(true);
 
-        annotations.push({
-            node: annotation.node,
-            end: annotation.end
-        });
+        // TODO: make use of the fact that current list is already sorted
+        // instead just iterate over the list until the right index to insert is found
+        annotations.push(annotation);
 
         sortAnnotations();
 
         wrapAnnotation(annotation);
-        if (annotation.end) {
+        if (annotation.annotationEndElement) {
             highlightAnnotation(annotation);
         }
         rerenderAnnotations();
@@ -340,7 +336,7 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
 
     /**
      * Unhighlights, unwraps, and ejects an annotation from the tracking
-     * @param {!{node:!Element,end:Node}} annotation
+     * @param {!odf.AnnotationElement} annotation
      * @return {undefined}
      */
     function forgetAnnotation(annotation) {
