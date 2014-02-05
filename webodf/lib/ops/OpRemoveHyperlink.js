@@ -55,6 +55,7 @@ ops.OpRemoveHyperlink = function OpRemoveHyperlink() {
     };
 
     this.isEdit = true;
+    this.group = undefined;
 
     this.execute = function (odtDocument) {
         var range = odtDocument.convertCursorToDomRange(position, length),

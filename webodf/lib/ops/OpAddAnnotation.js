@@ -59,6 +59,7 @@ ops.OpAddAnnotation = function OpAddAnnotation() {
     };
 
     this.isEdit = true;
+    this.group = undefined;
 
     /**
      * Creates an office:annotation node with a dc:creator, dc:date, and a paragraph wrapped within

@@ -79,6 +79,7 @@ ops.OpUpdateParagraphStyle = function OpUpdateParagraphStyle() {
     };
 
     this.isEdit = true;
+    this.group = undefined;
 
     this.execute = function (odtDocument) {
         var formatting = odtDocument.getFormatting(),

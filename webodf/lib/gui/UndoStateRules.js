@@ -67,7 +67,7 @@ gui.UndoStateRules = function UndoStateRules() {
          * Return the previous element in the array that matches the predicate
          * @return {?ops.Operation} Returns null when no more elements in the array match the predicate
          */
-        this.previous = function() {
+        this.previous = function () {
             for (index = index - 1; index >= 0; index -= 1) {
                 if (predicate(array[index])) {
                     return array[index];
@@ -77,10 +77,18 @@ gui.UndoStateRules = function UndoStateRules() {
         };
     }
 
+    /**
+     * @param {!ops.Operation} op
+     * @return {string}
+     */
     function getOpType(op) {
         return op.spec().optype;
     }
 
+    /**
+     * @param {!ops.Operation} op
+     * @return {number}
+     */
     function getOpPosition(op) {
         return op.spec().position;
     }
@@ -104,11 +112,11 @@ gui.UndoStateRules = function UndoStateRules() {
      */
     function canAggregateOperation(op) {
         switch (getOpType(op)) {
-            case "RemoveText":
-            case "InsertText":
-                return true;
-            default:
-                return false;
+        case "RemoveText":
+        case "InsertText":
+            return true;
+        default:
+            return false;
         }
     }
 
@@ -192,7 +200,7 @@ gui.UndoStateRules = function UndoStateRules() {
             lastEditOp = editOpsFinder.previous();
 
         runtime.assert(Boolean(lastEditOp), "No edit operations found in state");
-        if (thisOpType === getOpType(lastEditOp)) {
+        if (thisOpType === getOpType(/**@type{!ops.Operation}*/(lastEditOp))) {
             // Operation type is identical, so check if these operations are continuous
             return continuesOperations(thisOp, /**@type{!ops.Operation}*/(lastEditOp), editOpsFinder.previous());
         }

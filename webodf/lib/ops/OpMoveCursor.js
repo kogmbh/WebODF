@@ -56,6 +56,7 @@ ops.OpMoveCursor = function OpMoveCursor() {
     };
 
     this.isEdit = false;
+    this.group = undefined;
 
     this.execute = function (odtDocument) {
         var cursor = odtDocument.getCursor(memberid),

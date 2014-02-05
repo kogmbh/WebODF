@@ -65,6 +65,7 @@ ops.OpInsertText = function OpInsertText() {
     };
 
     this.isEdit = true;
+    this.group = undefined;
 
     /**
      * This is a workaround for a bug where webkit forgets to relayout

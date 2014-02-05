@@ -52,14 +52,19 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
     var self = this,
         cursorns = 'urn:webodf:names:cursor',
         domUtils = new core.DomUtils(),
+        /**@type{?Element}*/
         initialDoc,
+        /**@type{!Array.<!ops.Operation>}*/
         initialState = [],
         playFunc,
         /**@type{!ops.Document}*/
         document,
+        /**@type{!Array.<!ops.Operation>}*/
         currentUndoState = [],
-        /**@type {!Array.<!Array.<!ops.Operation>>}*/undoStates = [],
-        /**@type {!Array.<!Array.<!ops.Operation>>}*/redoStates = [],
+        /**@type{!Array.<!Array.<!ops.Operation>>}*/
+        undoStates = [],
+        /**@type{!Array.<!Array.<!ops.Operation>>}*/
+        redoStates = [],
         eventNotifier = new core.EventNotifier([
             gui.UndoManager.signalUndoStackChanged,
             gui.UndoManager.signalUndoStateCreated,
@@ -89,6 +94,9 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
         });
     }
 
+    /**
+     * @return {!Array.<!ops.Operation>}
+     */
     function mostRecentUndoState() {
         return undoStates[undoStates.length - 1];
     }
@@ -98,19 +106,25 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
      */
     function completeCurrentUndoState() {
         if (currentUndoState !== initialState // Initial state should never be in the undo stack
-            && currentUndoState !== mostRecentUndoState()) {
+                && currentUndoState !== mostRecentUndoState()) {
             // undoStates may already contain the current undo state if the user
             // has moved backwards and then forwards in the undo stack
             undoStates.push(currentUndoState);
         }
     }
 
+    /**
+     * @param {!Node} node
+     */
     function removeNode(node) {
         var sibling = node.previousSibling || node.nextSibling;
         node.parentNode.removeChild(node);
         domUtils.normalizeTextNodes(sibling);
     }
 
+    /**
+     * @param {!Element} root
+     */
     function removeCursors(root) {
         domUtils.getElementsByTagNameNS(root, cursorns, "cursor").forEach(removeNode);
         domUtils.getElementsByTagNameNS(root, cursorns, "anchor").forEach(removeNode);
@@ -122,7 +136,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
      * @return {!Array.<Object>}
      */
     function values(obj) {
-        return Object.keys(obj).map(function(key) { return obj[key]; });
+        return Object.keys(obj).map(function (key) { return obj[key]; });
     }
 
     /**
@@ -147,6 +161,9 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
         // Every cursor that is visible on the document will need to be restored
         // Only need the *last* move or add operation for each visible cursor, as the length & position
         // are absolute
+        /**
+         * @param {!ops.Operation} op
+         */
         function processOp(op) {
             var spec = op.spec();
             if (!requiredAddOps[spec.memberid]) {
@@ -182,7 +199,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
      * @param {!string} signal
      * @param {!Function} callback
      */
-    this.subscribe = function(signal, callback) {
+    this.subscribe = function (signal, callback) {
         eventNotifier.subscribe(signal, callback);
     };
 
@@ -191,7 +208,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
      * @param {!string} signal
      * @param {!Function} callback
      */
-    this.unsubscribe = function(signal, callback) {
+    this.unsubscribe = function (signal, callback) {
         eventNotifier.unsubscribe(signal, callback);
     };
 
@@ -199,7 +216,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
      * Returns true if there are one or more undo states available
      * @return {boolean}
      */
-    this.hasUndoStates = function() {
+    this.hasUndoStates = function () {
         return undoStates.length > 0;
     };
 
@@ -207,7 +224,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
      * Returns true if there are one or more redo states available
      * @return {boolean}
      */
-    this.hasRedoStates = function() {
+    this.hasRedoStates = function () {
         return redoStates.length > 0;
     };
 
@@ -215,14 +232,14 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
      * Set the OdtDocument to operate on
      * @param {!ops.Document} newDocument
      */
-    this.setDocument = function(newDocument) {
+    this.setDocument = function (newDocument) {
         document = newDocument;
     };
 
     /**
      * @inheritDoc
      */
-    this.purgeInitialState = function() {
+    this.purgeInitialState = function () {
         undoStates.length = 0;
         redoStates.length = 0;
         initialState.length = 0;
@@ -253,7 +270,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
     /**
      * @inheritDoc
      */
-    this.initialize = function() {
+    this.initialize = function () {
         if (!initialDoc) {
             setInitialState();
         }
@@ -263,7 +280,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
      * Sets the playback function to use to re-execute operations from the undo stack.
      * @param {!function(!Array.<!ops.Operation>)} playback_func
      */
-    this.setPlaybackFunction = function(playback_func) {
+    this.setPlaybackFunction = function (playback_func) {
         playFunc = playback_func;
     };
 
@@ -272,7 +289,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
      * @param {!ops.Operation} op
      * @return {undefined}
      */
-    this.onOperationExecuted = function(op) {
+    this.onOperationExecuted = function (op) {
         if (isExecutingOps) {
             return; // Ignore new operations generated whilst performing an undo/redo
         }
@@ -302,7 +319,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
      * @param {!number} states
      * @return {!number} Returns the number of states actually moved
      */
-    this.moveForward = function(states) {
+    this.moveForward = function (states) {
         var moved = 0,
             redoOperations;
 
@@ -330,7 +347,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
      * @param {!number} states
      * @return {!number} Returns the number of states actually moved
      */
-    this.moveBackward = function(states) {
+    this.moveBackward = function (states) {
         var moved = 0;
 
         while (states && undoStates.length) {
@@ -341,7 +358,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
 
         if (moved) {
             // Only do actual work if moveBackward does something to the undo stacks
-            document.setDocumentElement(initialDoc.cloneNode(true));
+            document.setDocumentElement(/**@type{!Element}*/(initialDoc.cloneNode(true)));
             eventNotifier.emit(gui.TrivialUndoManager.signalDocumentRootReplaced, { });
             // Need to reset the odt document cursor list back to nil so new cursors are correctly re-registered
             document.getMemberIds().forEach(function (memberid) {

@@ -56,6 +56,7 @@ ops.OpSetBlob = function OpSetBlob() {
     };
 
     this.isEdit = true;
+    this.group = undefined;
 
     this.execute = function (odtDocument) {
         odtDocument.getOdfCanvas().odfContainer().setBlob(filename, mimetype, content);

@@ -58,6 +58,7 @@ ops.OpRemoveAnnotation = function OpRemoveAnnotation() {
     };
 
     this.isEdit = true;
+    this.group = undefined;
 
     this.execute = function (odtDocument) {
         var iterator = odtDocument.getIteratorAtPosition(position),

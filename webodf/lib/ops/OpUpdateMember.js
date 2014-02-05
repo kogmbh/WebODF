@@ -53,6 +53,7 @@ ops.OpUpdateMember = function OpUpdateMember() {
     };
 
     this.isEdit = false;
+    this.group = undefined;
 
     function updateCreators() {
         var xpath = xmldom.XPath,

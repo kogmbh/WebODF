@@ -87,6 +87,7 @@ ops.OpRemoveText = function OpRemoveText() {
     };
 
     this.isEdit = true;
+    this.group = undefined;
 
     /**
      * Defines a set of rules for how elements can be collapsed based on whether they contain ODT content (e.g.,

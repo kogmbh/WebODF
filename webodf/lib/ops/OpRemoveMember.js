@@ -42,6 +42,7 @@ ops.OpRemoveMember = function OpRemoveMember() {
     };
 
     this.isEdit = false;
+    this.group = undefined;
 
     this.execute = function (odtDocument) {
         if (!odtDocument.getMember(memberid)) {

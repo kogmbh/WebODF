@@ -56,6 +56,7 @@ ops.OpApplyHyperlink = function OpApplyHyperlink() {
     };
 
     this.isEdit = true;
+    this.group = undefined;
 
     function createHyperlink(document, hyperlink) {
         var node = document.createElementNS(odf.Namespaces.textns, 'text:a');

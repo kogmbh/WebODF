@@ -50,6 +50,7 @@ ops.OpUpdateMetadata = function OpUpdateMetadata() {
     };
 
     this.isEdit = true;
+    this.group = undefined;
 
     this.execute = function (odtDocument) {
         var odfContainer = odtDocument.getOdfCanvas().odfContainer(),
@@ -83,7 +84,7 @@ ops.OpUpdateMetadata = function OpUpdateMetadata() {
             memberid: memberid,
             timestamp: timestamp,
             setProperties: setProperties,
-            removedProperties: removedProperties 
+            removedProperties: removedProperties
         };
     };
 };

@@ -63,6 +63,7 @@ ops.OpInsertImage = function OpInsertImage() {
     };
 
     this.isEdit = true;
+    this.group = undefined;
 
     /**
      * @param document

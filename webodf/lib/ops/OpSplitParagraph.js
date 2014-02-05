@@ -63,6 +63,7 @@ ops.OpSplitParagraph = function OpSplitParagraph() {
     };
 
     this.isEdit = true;
+    this.group = undefined;
 
     this.execute = function (odtDocument) {
         var domPosition, paragraphNode, targetNode,

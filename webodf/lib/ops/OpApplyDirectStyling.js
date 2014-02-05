@@ -67,6 +67,7 @@ ops.OpApplyDirectStyling = function OpApplyDirectStyling() {
     };
 
     this.isEdit = true;
+    this.group = undefined;
 
     /**
      * Apply the specified style properties to all elements within the given range.

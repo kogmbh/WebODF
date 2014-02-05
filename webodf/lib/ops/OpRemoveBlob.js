@@ -54,6 +54,7 @@ ops.OpRemoveBlob = function OpRemoveBlob() {
     };
 
     this.isEdit = true;
+    this.group = undefined;
 
     this.execute = function (odtDocument) {
         odtDocument.getOdfCanvas().odfContainer().removeBlob(filename);

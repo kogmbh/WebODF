@@ -63,6 +63,7 @@ ops.OpInsertTable = function OpInsertTable() {
     };
 
     this.isEdit = true;
+    this.group = undefined;
 
     /**
      * @param {!number} row

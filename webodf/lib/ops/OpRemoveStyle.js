@@ -55,6 +55,7 @@ ops.OpRemoveStyle = function OpRemoveStyle() {
     };
 
     this.isEdit = true;
+    this.group = undefined;
 
     this.execute = function (odtDocument) {
         var styleNode = odtDocument.getStyleElement(styleName, styleFamily);
