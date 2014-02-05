@@ -233,8 +233,8 @@
     ],
     "gui/ShadowCursor.js": [
         "gui/SelectionMover.js",
-        "ops/OdtCursor.js",
-        "ops/OdtDocument.js"
+        "ops/Document.js",
+        "ops/OdtCursor.js"
     ],
     "gui/StyleSummary.js": [
     ],

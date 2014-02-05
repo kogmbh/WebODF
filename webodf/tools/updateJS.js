@@ -74,6 +74,7 @@ function Main(cmakeListPath) {
             "gui/KeyboardHandler.js",
             "gui/MimeDataExporter.js",
             "gui/SelectionMover.js",
+            "gui/ShadowCursor.js",
             "gui/StyleSummary.js",
             "odf/FontLoader.js",
             "odf/Formatting.js",
