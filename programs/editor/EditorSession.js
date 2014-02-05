@@ -210,7 +210,7 @@ define("webodf/editor/EditorSession", [
         function trackCurrentParagraph(info) {
             var cursor = odtDocument.getCursor(localMemberId),
                 range = cursor && cursor.getSelectedRange(),
-                paragraphRange = odtDocument.getDOM().createRange();
+                paragraphRange = odtDocument.getDOMDocument().createRange();
             paragraphRange.selectNode(info.paragraphElement);
             if ((range && domUtils.rangesIntersect(range, paragraphRange)) || info.paragraphElement === currentParagraphNode) {
                 self.emit(EditorSession.signalParagraphChanged, info);
