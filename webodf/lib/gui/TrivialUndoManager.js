@@ -139,7 +139,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
             remainingAddOps,
             operations = undoStates.pop();
 
-        document.getCursors().forEach(function (memberid) {
+        document.getMemberIds().forEach(function (memberid) {
             requiredAddOps[memberid] = true;
         });
         remainingAddOps = Object.keys(requiredAddOps).length;
@@ -344,7 +344,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
             document.setDocumentElement(initialDoc.cloneNode(true));
             eventNotifier.emit(gui.TrivialUndoManager.signalDocumentRootReplaced, { });
             // Need to reset the odt document cursor list back to nil so new cursors are correctly re-registered
-            document.getCursors().forEach(function (memberid) {
+            document.getMemberIds().forEach(function (memberid) {
                 document.removeCursor(memberid);
             });
             executeOperations(initialState);

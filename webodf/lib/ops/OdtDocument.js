@@ -776,7 +776,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     /**
      * @return {!Array.<string>}
      */
-    this.getCursors = function () {
+    this.getMemberIds = function () {
         var list = [], i;
         for (i in cursors) {
             if (cursors.hasOwnProperty(i)) {

@@ -61,7 +61,7 @@ ops.SessionTests = function SessionTests(runner) {
     function newSession() {
         r.shouldBe(t, "t.odf.state", "odf.OdfContainer.DONE");
         t.session = new ops.Session(odfcanvas);
-        r.shouldBe(t, "t.session.getOdtDocument().getCursors().length", "0");
+        r.shouldBe(t, "t.session.getOdtDocument().getMemberIds().length", "0");
     }
     this.tests = function () {
         return r.name([

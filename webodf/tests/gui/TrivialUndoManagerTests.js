@@ -76,7 +76,7 @@ gui.TrivialUndoManagerTests = function TrivialUndoManagerTests(runner) {
         this.setRootElement = noOp;
         this.setOdfContainer = noOp;
         this.cursors = [cursor("1")];
-        this.getCursors = function () {
+        this.getMemberIds = function () {
             return self.cursors.map(function (cursor) {
                 return cursor.getMemberId();
             });

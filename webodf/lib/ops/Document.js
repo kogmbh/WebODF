@@ -47,7 +47,7 @@ ops.Document = function Document() { "use strict"; };
 /**
  * @return {!Array.<string>}
  */
-ops.Document.prototype.getCursors = function () { "use strict"; };
+ops.Document.prototype.getMemberIds = function () { "use strict"; };
 /**
  * @param {!string} memberid
  * @return {!boolean}
@@ -59,7 +59,9 @@ ops.Document.prototype.removeCursor = function (memberid) { "use strict"; };
 ops.Document.prototype.getDocumentElement = function () { "use strict"; };
 /**
  * Return the element where the document content begins.
- * This may be different from the document element.
+ * Document content means the body of the document. In the case of ODF this is
+ * office:text, office:spreadsheet, office:presentation. For most XML documents
+ * getRootNode() will return the same node as getDocumentElement().
  * @return {!Element}
  */
 ops.Document.prototype.getRootNode = function () { "use strict"; };
