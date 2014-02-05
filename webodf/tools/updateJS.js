@@ -611,6 +611,8 @@ function Main(cmakeListPath) {
 
     function runJSLint(jslint, path, contents) {
         var lpath = pathModule.join(buildDir, "jslint", path);
+        // checking jslint is quite slow, so only do it if the file content is
+        // different from the file content at the previous successful run.
         fs.readFile(lpath, "utf8", function (err, data) {
             if (data === contents) {
                 return;
@@ -618,6 +620,8 @@ function Main(cmakeListPath) {
             var result, i, errors;
             result = jslint(contents, jslintconfig);
             if (result) {
+                // The file has no errors, save it so it will be skipped at the
+                // next run.
                 mkdir(pathModule.dirname(lpath));
                 fs.writeFile(lpath, contents);
             } else {
