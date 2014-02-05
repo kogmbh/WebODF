@@ -591,6 +591,9 @@ gui.SelectionMover = function SelectionMover(cursor, rootNode) {
         return steps;
     }
 
+    /**
+     * @return {!Object}
+     */
     this.getStepCounter = function () {
         return {
             countSteps: countStepsPublic,

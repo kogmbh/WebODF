@@ -52,11 +52,11 @@ runtime.loadClass("gui.SelectionMover");
 gui.SvgSelectionView = function SvgSelectionView(cursor) {
     "use strict";
 
-    var odtDocument = cursor.getOdtDocument(),
+    var document = cursor.getDocument(),
         documentRoot, // initialized by addOverlay
         /**@type{!Element}*/
         root, // initialized by addOverlays
-        doc = odtDocument.getDOM(),
+        doc = document.getDOMDocument(),
         async = new core.Async(),
         svgns = "http://www.w3.org/2000/svg",
         overlay = doc.createElementNS(svgns, 'svg'),
@@ -64,7 +64,7 @@ gui.SvgSelectionView = function SvgSelectionView(cursor) {
         odfUtils = new odf.OdfUtils(),
         domUtils = new core.DomUtils(),
         isVisible = true,
-        positionIterator = gui.SelectionMover.createPositionIterator(odtDocument.getRootNode()),
+        positionIterator = gui.SelectionMover.createPositionIterator(document.getRootNode()),
         /**@const*/
         FILTER_ACCEPT = NodeFilter.FILTER_ACCEPT,
         /**@const*/
@@ -80,7 +80,7 @@ gui.SvgSelectionView = function SvgSelectionView(cursor) {
      * to cope with it for now.
      */
     function addOverlay() {
-        var newDocumentRoot = odtDocument.getRootNode();
+        var newDocumentRoot = document.getRootNode();
         if (documentRoot !== newDocumentRoot) {
             documentRoot = newDocumentRoot;
             root = /**@type{!Element}*/(documentRoot.parentNode.parentNode.parentNode);
@@ -99,7 +99,7 @@ gui.SvgSelectionView = function SvgSelectionView(cursor) {
      */
     function translateRect(rect) {
         var rootRect = domUtils.getBoundingClientRect(root),
-            zoomLevel = odtDocument.getOdfCanvas().getZoomLevel(),
+            zoomLevel = document.getCanvas().getZoomLevel(),
             resultRect = {};
 
         resultRect.top = domUtils.adaptRangeDifferenceToZoomLevel(rect.top - rootRect.top, zoomLevel);
@@ -366,7 +366,7 @@ gui.SvgSelectionView = function SvgSelectionView(cursor) {
         // We use a root filter to avoid taking any rects of nodes in other roots
         // into the bounding rect, should it happen that the selection contains
         // nodes from more than one root. Example: Paragraphs containing annotations
-        rootFilter = odtDocument.createRootFilter(firstNode);
+        rootFilter = document.createRootFilter(firstNode);
 
         // Now since this function is called a lot of times,
         // we need to iterate between and not including the
@@ -629,7 +629,7 @@ gui.SvgSelectionView = function SvgSelectionView(cursor) {
 
     function destroy(callback) {
         root.removeChild(overlay);
-        cursor.getOdtDocument().unsubscribe(ops.OdtDocument.signalCursorMoved, handleCursorMove);
+        cursor.getDocument().unsubscribe(ops.OdtDocument.signalCursorMoved, handleCursorMove);
         callback();
     }
 
@@ -647,7 +647,7 @@ gui.SvgSelectionView = function SvgSelectionView(cursor) {
         renderTask = new core.ScheduledTask(rerender, 0);
         addOverlay();
         overlay.setAttributeNS(editinfons, 'editinfo:memberid', memberid);
-        cursor.getOdtDocument().subscribe(ops.OdtDocument.signalCursorMoved, handleCursorMove);
+        cursor.getDocument().subscribe(ops.OdtDocument.signalCursorMoved, handleCursorMove);
     }
 
     init();

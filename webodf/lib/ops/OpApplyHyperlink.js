@@ -76,7 +76,7 @@ ops.OpApplyHyperlink = function OpApplyHyperlink() {
 
     // TODO: support adding image link
     this.execute = function (odtDocument) {
-        var ownerDocument = odtDocument.getDOM(),
+        var ownerDocument = odtDocument.getDOMDocument(),
             range = odtDocument.convertCursorToDomRange(position, length),
             boundaryNodes = domUtils.splitBoundaries(range),
             modifiedParagraphs = [],

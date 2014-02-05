@@ -95,6 +95,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         unsupportedMetadataRemoved = false;
 
     /**
+     * Return the office:text element of this document.
      * @return {!Element}
      */
     function getRootNode() {
@@ -103,8 +104,15 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         runtime.assert(localName === "text", "Unsupported content element type '" + localName + "' for OdtDocument");
         return element;
     }
+    /**
+     * Return the office:document element of this document.
+     * @return {!Element}
+     */
     this.getDocumentElement = function () {
         return odfCanvas.odfContainer().rootElement;
+    };
+    this.getDOMDocument = function () {
+        return /**@type{!Document}*/(this.getDocumentElement().ownerDocument);
     };
 
     this.cloneDocumentElement = function () {
@@ -133,10 +141,10 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     /**
      * @return {!Document}
      */
-    function getDOM() {
-        return /**@type{!Document}*/(getRootNode().ownerDocument);
+    function getDOMDocument() {
+        return /**@type{!Document}*/(self.getDocumentElement().ownerDocument);
     }
-    this.getDOM = getDOM;
+    this.getDOMDocument = getDOMDocument;
     
     /**
      * @param {!Node} node
@@ -287,7 +295,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      * @return {Range}
      */
     this.convertCursorToDomRange = function (position, length) {
-        var range = getDOM().createRange(),
+        var range = getDOMDocument().createRange(),
             point1,
             point2;
 
@@ -338,13 +346,13 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
                     // In this case, after the split, the right of the requested step is just after the new node
                     lastTextNode = lastTextNode.splitText(nodeOffset);
                 }
-                lastTextNode.parentNode.insertBefore(getDOM().createTextNode(""), lastTextNode);
+                lastTextNode.parentNode.insertBefore(getDOMDocument().createTextNode(""), lastTextNode);
                 lastTextNode = /**@type{!Text}*/(lastTextNode.previousSibling);
                 nodeOffset = 0;
             }
         } else {
             // There is no text node at the current position, so insert a new one at the current position
-            lastTextNode = getDOM().createTextNode("");
+            lastTextNode = getDOMDocument().createTextNode("");
             nodeOffset = 0;
             node.insertBefore(lastTextNode, iterator.rightNode());
         }
@@ -366,7 +374,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
                     // The last text node contains content but is not adjacent to the cursor
                     // This can't be moved, as moving it would move the text content around as well. Yikes!
                     // So, create a new text node to insert data into
-                    lastTextNode = getDOM().createTextNode('');
+                    lastTextNode = getDOMDocument().createTextNode('');
                     nodeOffset = 0;
                 }
                 // Keep the destination text node right next to the member's cursor, so inserted text pushes the cursor over
@@ -721,6 +729,13 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     };
 
     /**
+     * @return {!ops.Canvas}
+     */
+    this.getCanvas = function () {
+        return odfCanvas;
+    };
+
+    /**
      * @return {!Element}
      */
     this.getRootNode = getRootNode;
@@ -759,13 +774,13 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     };
 
     /**
-     * @return {!Array.<!ops.OdtCursor>}
+     * @return {!Array.<string>}
      */
     this.getCursors = function () {
         var list = [], i;
         for (i in cursors) {
             if (cursors.hasOwnProperty(i)) {
-                list.push(cursors[i]);
+                list.push(cursors[i].getMemberId());
             }
         }
         return list;
@@ -794,7 +809,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     this.removeCursor = function (memberid) {
         var cursor = cursors[memberid];
         if (cursor) {
-            cursor.removeFromOdtDocument();
+            cursor.removeFromDocument();
             delete cursors[memberid];
             self.emit(ops.OdtDocument.signalCursorRemoved, memberid);
             return true;

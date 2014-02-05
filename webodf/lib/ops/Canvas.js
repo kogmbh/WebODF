@@ -40,56 +40,14 @@
 /*jslint emptyblock: true, unparam: true */
 
 /**
- * A document that keeps all data related to the mapped document.
  * @interface
  */
-ops.Document = function Document() { "use strict"; };
+ops.Canvas = function Canvas() { "use strict"; };
 /**
- * @return {!Array.<string>}
+ * @return {number}
  */
-ops.Document.prototype.getCursors = function () { "use strict"; };
-/**
- * @param {!string} memberid
- * @return {!boolean}
- */
-ops.Document.prototype.removeCursor = function (memberid) { "use strict"; };
+ops.Canvas.prototype.getZoomLevel = function () { "use strict"; };
 /**
  * @return {!Element}
  */
-ops.Document.prototype.getDocumentElement = function () { "use strict"; };
-/**
- * Return the element where the document content begins.
- * This may be different from the document element.
- * @return {!Element}
- */
-ops.Document.prototype.getRootNode = function () { "use strict"; };
-/**
- * @return {!Document}
- */
-ops.Document.prototype.getDOMDocument = function () { "use strict"; };
-/**
- * @return {!Element}
- */
-ops.Document.prototype.cloneDocumentElement = function () { "use strict"; };
-/**
- * @param {!Element} element
- * @return {undefined}
- */
-ops.Document.prototype.setDocumentElement = function (element) { "use strict"; };
-/**
- * @param {!string} eventid
- * @param {!Function} cb
- * @return {undefined}
- */
-ops.Document.prototype.subscribe = function (eventid, cb) { "use strict"; };
-/**
- * @param {!string} eventid
- * @param {!Function} cb
- * @return {undefined}
- */
-ops.Document.prototype.unsubscribe = function (eventid, cb) { "use strict"; };
-// vim:expandtab
-/**
- * @return {!ops.Canvas}
- */
-ops.Document.prototype.getCanvas = function () { "use strict"; };
+ops.Canvas.prototype.getElement = function () { "use strict"; };

@@ -48,7 +48,7 @@ runtime.loadClass("gui.SelectionMover");
  */
 gui.ShadowCursor = function ShadowCursor(odtDocument) {
     "use strict";
-    var selectedRange = /**@type{!Range}*/(odtDocument.getDOM().createRange()),
+    var selectedRange = /**@type{!Range}*/(odtDocument.getDOMDocument().createRange()),
         forwardSelection = true;
 
     /*jslint emptyblock: true*/

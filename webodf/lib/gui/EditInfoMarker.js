@@ -170,7 +170,7 @@ gui.EditInfoMarker = function EditInfoMarker(editInfo, initialVisibility) {
     };
 
     function init() {
-        var dom = editInfo.getOdtDocument().getDOM(),
+        var dom = editInfo.getOdtDocument().getDOMDocument(),
             htmlns = dom.documentElement.namespaceURI;
 
         marker = dom.createElementNS(htmlns, "div");

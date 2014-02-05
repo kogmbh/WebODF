@@ -247,7 +247,7 @@ gui.EventManager = function EventManager(odtDocument) {
      * @return {boolean}
      */
     function hasFocus() {
-        return odtDocument.getDOM().activeElement === eventTrap;
+        return odtDocument.getDOMDocument().activeElement === eventTrap;
     }
     this.hasFocus = hasFocus;
 

@@ -204,7 +204,7 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
      */
     function updateCaretHeightAndPosition() {
         var selectionRect = getSelectionRect(),
-            zoomLevel = cursor.getOdtDocument().getOdfCanvas().getZoomLevel(),
+            zoomLevel = cursor.getDocument().getCanvas().getZoomLevel(),
             caretRect;
 
         if (selectionRect) {
@@ -239,7 +239,7 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
      * @return {undefined}
      */
     function ensureVisible() {
-        var canvasElement = cursor.getOdtDocument().getOdfCanvas().getElement(),
+        var canvasElement = cursor.getDocument().getCanvas().getElement(),
             canvasContainerElement = canvasElement.parentNode,
             caretRect,
             canvasContainerRect,
@@ -492,7 +492,7 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
     };
 
     function init() {
-        var dom = cursor.getOdtDocument().getDOM(),
+        var dom = cursor.getDocument().getDOMDocument(),
             htmlns = dom.documentElement.namespaceURI;
         span = /**@type{!HTMLSpanElement}*/(dom.createElementNS(htmlns, "span"));
         span.className = "caret";

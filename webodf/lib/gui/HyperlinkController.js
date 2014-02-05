@@ -92,7 +92,7 @@ gui.HyperlinkController = function HyperlinkController(session, inputMemberId) {
             selectedRange = odtDocument.getCursor(inputMemberId).getSelectedRange(),
             links = odfUtils.getHyperlinkElements(selectedRange),
             removeEntireLink = selectedRange.collapsed && links.length === 1,
-            domRange = odtDocument.getDOM().createRange(),
+            domRange = odtDocument.getDOMDocument().createRange(),
             operations = [],
             cursorRange, firstLink, lastLink, offset, op;
 

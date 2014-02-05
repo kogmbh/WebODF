@@ -170,7 +170,7 @@ gui.SessionController = (function () {
          * @return {?{container:!Node, offset:!number}}
          */
         function caretPositionFromPoint(x, y) {
-            var doc = odtDocument.getDOM(),
+            var doc = odtDocument.getDOMDocument(),
                 c,
                 result = null;
 

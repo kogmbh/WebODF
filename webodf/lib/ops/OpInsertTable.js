@@ -152,7 +152,7 @@ ops.OpInsertTable = function OpInsertTable() {
             tableNode;
 
         if (domPosition) {
-            tableNode = createTableNode(odtDocument.getDOM());
+            tableNode = createTableNode(odtDocument.getDOMDocument());
             // For now assume the table should be inserted after the current paragraph
             // or failing that, as the first element in the root node
             previousSibling = odtDocument.getParagraphElement(domPosition.textNode);

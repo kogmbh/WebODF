@@ -139,8 +139,8 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
             remainingAddOps,
             operations = undoStates.pop();
 
-        document.getCursors().forEach(function(cursor) {
-            requiredAddOps[cursor.getMemberId()] = true;
+        document.getCursors().forEach(function (memberid) {
+            requiredAddOps[memberid] = true;
         });
         remainingAddOps = Object.keys(requiredAddOps).length;
 
@@ -153,18 +153,18 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
                 return;
             }
             switch (spec.optype) {
-                case "AddCursor":
-                    if (!addCursor[spec.memberid]) {
-                        addCursor[spec.memberid] = op;
-                        delete requiredAddOps[spec.memberid];
-                        remainingAddOps -= 1;
-                    }
-                    break;
-                case "MoveCursor":
-                    if (!moveCursor[spec.memberid]) {
-                        moveCursor[spec.memberid] = op;
-                    }
-                    break;
+            case "AddCursor":
+                if (!addCursor[spec.memberid]) {
+                    addCursor[spec.memberid] = op;
+                    delete requiredAddOps[spec.memberid];
+                    remainingAddOps -= 1;
+                }
+                break;
+            case "MoveCursor":
+                if (!moveCursor[spec.memberid]) {
+                    moveCursor[spec.memberid] = op;
+                }
+                break;
             }
         }
 
@@ -344,8 +344,8 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
             document.setDocumentElement(initialDoc.cloneNode(true));
             eventNotifier.emit(gui.TrivialUndoManager.signalDocumentRootReplaced, { });
             // Need to reset the odt document cursor list back to nil so new cursors are correctly re-registered
-            document.getCursors().forEach(function (cursor) {
-                document.removeCursor(cursor.getMemberId());
+            document.getCursors().forEach(function (memberid) {
+                document.removeCursor(memberid);
             });
             executeOperations(initialState);
             undoStates.forEach(executeOperations);

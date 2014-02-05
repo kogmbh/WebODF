@@ -147,7 +147,7 @@ ops.OpAddAnnotation = function OpAddAnnotation() {
             paragraphElement,
             domUtils = new core.DomUtils();
 
-        doc = odtDocument.getDOM();
+        doc = odtDocument.getDOMDocument();
 
         annotation.node = createAnnotationNode(odtDocument, new Date(timestamp));
         if (!annotation.node) {

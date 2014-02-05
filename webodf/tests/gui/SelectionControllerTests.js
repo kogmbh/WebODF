@@ -62,6 +62,7 @@ gui.SelectionControllerTests = function SelectionControllerTests(runner) {
         var self = this;
         this.odfContainer = function () { return self; };
         this.getContentElement = function () { return node.getElementsByTagNameNS(odf.Namespaces.officens, 'text')[0]; };
+        this.rootElement = node;
     }
 
     /**

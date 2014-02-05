@@ -413,7 +413,7 @@ ops.OperationTests = function OperationTests(runner) {
             // Test specifically requires the cursor node to have a child element of some sort to
             // reproduce an issue where the cursor ends up in an invalid position after the operation
             function appendToCursor(cursor) {
-                cursor.getNode().appendChild(t.odtDocument.getDOM().createElement("span"));
+                cursor.getNode().appendChild(t.odtDocument.getDOMDocument().createElement("span"));
             }
 
             return {

@@ -62,14 +62,14 @@ ops.OpAddStyle = function OpAddStyle() {
         // Can't use Boolean(...) as Boolean('false') === true
         isAutomaticStyle = data.isAutomaticStyle === 'true' || data.isAutomaticStyle === true;
         setProperties = data.setProperties;
-     };
+    };
 
     this.isEdit = true;
 
     this.execute = function (odtDocument) {
         var odfContainer = odtDocument.getOdfCanvas().odfContainer(),
             formatting = odtDocument.getFormatting(),
-            dom = odtDocument.getDOM(),
+            dom = odtDocument.getDOMDocument(),
             styleNode = dom.createElementNS(stylens, 'style:style');
 
         if (!styleNode) {

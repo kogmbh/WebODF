@@ -67,7 +67,7 @@ gui.TrivialUndoManagerTests = function TrivialUndoManagerTests(runner) {
         function returnThis() { return self; }
         this.rootElement = rootElement;
 
-        this.getOdfCanvas = returnThis;
+        this.getCanvas = returnThis;
         this.odfContainer = returnThis;
         this.getAnnotationViewManager = returnThis;
         this.forgetAnnotations = noOp;
@@ -75,12 +75,20 @@ gui.TrivialUndoManagerTests = function TrivialUndoManagerTests(runner) {
         this.refreshCSS = noOp;
         this.setRootElement = noOp;
         this.setOdfContainer = noOp;
-        this.cursors = [cursor(1)];
-        this.getCursors = function () { return self.cursors; };
+        this.cursors = [cursor("1")];
+        this.getCursors = function () {
+            return self.cursors.map(function (cursor) {
+                return cursor.getMemberId();
+            });
+        };
         this.getDocumentElement = function () { return rootElement; };
+        this.getRootNode = function () { return rootElement; };
+        this.getDOMDocument = function () { return rootElement.ownerDocument; };
         this.cloneDocumentElement = function () { return rootElement; };
         this.setDocumentElement = noOp;
         this.removeCursor = noOp2;
+        this.subscribe = noOp;
+        this.unsubscribe = noOp;
     }
 
     this.setUp = function () {

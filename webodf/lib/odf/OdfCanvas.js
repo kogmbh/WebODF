@@ -937,6 +937,7 @@ runtime.loadClass("gui.AnnotationViewManager");
      * stylesheets are loaded.
      * @constructor
      * @implements {gui.AnnotatableCanvas}
+     * @implements {ops.Canvas}
      * @param {!HTMLElement} element Put and ODF Canvas inside this element.
      */
     odf.OdfCanvas = function OdfCanvas(element) {

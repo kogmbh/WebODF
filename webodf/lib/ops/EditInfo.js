@@ -136,7 +136,7 @@ ops.EditInfo = function EditInfo(container, odtDocument) {
 
     function init() {
         var editInfons = 'urn:webodf:names:editinfo',
-            dom = odtDocument.getDOM();
+            dom = odtDocument.getDOMDocument();
 
         editInfoNode = dom.createElementNS(editInfons, 'editinfo');
         container.insertBefore(editInfoNode, container.firstChild);

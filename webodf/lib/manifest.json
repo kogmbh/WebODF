@@ -315,6 +315,7 @@
         "odf/OdfContainer.js",
         "odf/OdfUtils.js",
         "odf/Style2CSS.js",
+        "ops/Canvas.js",
         "xmldom/XPath.js"
     ],
     "odf/OdfContainer.js": [
@@ -355,8 +356,10 @@
         "odf/Namespaces.js",
         "odf/ObjectNameGenerator.js"
     ],
+    "ops/Canvas.js": [
+    ],
     "ops/Document.js": [
-        "ops/OdtCursor.js"
+        "ops/Canvas.js"
     ],
     "ops/EditInfo.js": [
         "ops/OdtDocument.js"
@@ -367,7 +370,7 @@
         "core/Cursor.js",
         "core/EventNotifier.js",
         "gui/SelectionMover.js",
-        "ops/OdtDocument.js"
+        "ops/Document.js"
     ],
     "ops/OdtDocument.js": [
         "core/DomUtils.js",
@@ -381,6 +384,7 @@
         "odf/Namespaces.js",
         "odf/OdfCanvas.js",
         "odf/OdfUtils.js",
+        "ops/Canvas.js",
         "ops/Document.js",
         "ops/Member.js",
         "ops/OdtCursor.js",
