@@ -260,12 +260,10 @@ endif(NOT ANDROID_SDK_DIR)
 
 set(LIBJSLICENSEFILE ${CMAKE_CURRENT_SOURCE_DIR}/AGPL-3.0.txt)
 
-if(NOT EXISTS ${CMAKE_BINARY_DIR}/jsfileslist.txt)
-  execute_process(
-    COMMAND ${NODE} lib/runtime.js tools/updateJS.js ${CMAKE_BINARY_DIR}/jsfileslist.txt
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/webodf
-  )
-endif(NOT EXISTS ${CMAKE_BINARY_DIR}/jsfileslist.txt)
+execute_process(
+  COMMAND ${NODE} lib/runtime.js tools/updateJS.js ${CMAKE_BINARY_DIR}/jsfileslist.txt
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/webodf
+)
 include(${CMAKE_BINARY_DIR}/jsfileslist.txt)
 set(LIBJSFILES ${TYPEDLIBJSFILES} ${UNTYPEDLIBJSFILES})
 

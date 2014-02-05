@@ -16,7 +16,7 @@ COPY_FILES(tests_nodetests ${CMAKE_CURRENT_SOURCE_DIR}
 add_custom_target(nodetest ALL
 	COMMAND ${NODE} ${RUNTIME} ./tests.js
 	WORKING_DIRECTORY _nodetest
-    DEPENDS NodeJS ${tests_nodetests} manifest.json-target
+    DEPENDS NodeJS ${tests_nodetests}
 )
 
 if (QT4_FOUND)
@@ -25,7 +25,7 @@ if (QT4_FOUND)
 	add_custom_target(qtjsruntimetest ALL
 		COMMAND ${CMAKE_BINARY_DIR}/programs/qtjsruntime/qtjsruntime ${RUNTIME} ./tests.js
 		WORKING_DIRECTORY _qtjsruntimetest
-		DEPENDS NodeJS ${tests_qtjsruntimetest} qtjsruntime manifest.json-target
+		DEPENDS NodeJS ${tests_qtjsruntimetest} qtjsruntime
 	)
 endif (QT4_FOUND)
 
