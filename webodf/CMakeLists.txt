@@ -36,12 +36,6 @@ set(TESTJSFILES tests/core/ZipTests.js
     tests/tests.js
 )
 
-add_custom_target(manifest.json-target
-    COMMAND ${NODE}
-    lib/runtime.js tools/updateJS.js ${CMAKE_BINARY_DIR}/jsfileslist.txt
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
 add_custom_command(
     OUTPUT webodf.css.js
     COMMAND "${NODE}"
