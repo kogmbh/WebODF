@@ -70,17 +70,24 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
         cursorNode,
         domUtils = new core.DomUtils(),
         async = new core.Async(),
+        /**@type{!core.ScheduledTask}*/
         redrawTask,
+        /**@type{!core.ScheduledTask}*/
         blinkTask,
+        /**@type{boolean}*/
         shouldResetBlink = false,
+        /**@type{boolean}*/
         shouldCheckCaretVisibility = false,
+        /**@type{boolean}*/
         shouldUpdateCaretSize = false,
-        /**@type{!Object}*/ state = {
+        /**@type{!{isFocused:boolean,isShown:boolean,visibility:string}}*/
+        state = {
             isFocused: false,
             isShown: true,
             visibility: "hidden"
         },
-        /**@type{!Object}*/ lastState = {
+        /**@type{!{isFocused:boolean,isShown:boolean,visibility:string}}*/
+        lastState = {
             isFocused: !state.isFocused,
             isShown: !state.isShown,
             visibility: "hidden"
@@ -240,7 +247,7 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
      */
     function ensureVisible() {
         var canvasElement = cursor.getDocument().getCanvas().getElement(),
-            canvasContainerElement = canvasElement.parentNode,
+            canvasContainerElement = /**@type{!HTMLElement}*/(canvasElement.parentNode),
             caretRect,
             canvasContainerRect,
         // margin around the caret when calculating the visibility,
@@ -298,7 +305,7 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
      * @return {undefined}
      */
     function saveState() {
-        Object.keys(state).forEach(function(key) {
+        Object.keys(state).forEach(function (key) {
             lastState[key] = state[key];
         });
     }
