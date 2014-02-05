@@ -176,7 +176,6 @@ var webodfEditor = (function () {
 
     /**
      * make a guess about the document (# in URL)
-     * also guess about local/collaborative (depending on nowjs)
      *
      * @param {?Object} args
      *
