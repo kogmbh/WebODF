@@ -269,6 +269,7 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
         canvas.refreshSize();
     }
 
+/*jslint bitwise:true*/
     /**
      * Sorts the internal annotations array by order of occurence in the document.
      * Useful for calculating the order of annotations in the sidebar, and positioning them
@@ -277,12 +278,13 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
      */
     function sortAnnotations() {
         annotations.sort(function (a, b) {
-            if (a.compareDocumentPosition(b) === Node.DOCUMENT_POSITION_FOLLOWING) {
+            if ((a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0) {
                 return -1;
             }
             return 1;
         });
     }
+/*jslint bitwise:false*/
 
     /**
      * Recalculates the rendering - positions, rotation angles for connectors,
