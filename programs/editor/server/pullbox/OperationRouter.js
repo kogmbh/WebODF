@@ -94,7 +94,9 @@ define("webodf/editor/server/pullbox/OperationRouter", [], function () {
                 EVENT_BEFORESAVETOFILE,
                 EVENT_SAVEDTOFILE,
                 EVENT_HASLOCALUNSYNCEDOPERATIONSCHANGED,
-                EVENT_HASSESSIONHOSTCONNECTIONCHANGED
+                EVENT_HASSESSIONHOSTCONNECTIONCHANGED,
+                ops.OperationRouter.signalProcessingBatchStart,
+                ops.OperationRouter.signalProcessingBatchEnd
             ]),
             /**@type{!boolean} tells if any local ops have been modifying ops */
             hasPushedModificationOps = false,
@@ -150,6 +152,8 @@ define("webodf/editor/server/pullbox/OperationRouter", [], function () {
                 // take start time
                 startTime = (new Date()).getTime();
 
+                eventNotifier.emit(ops.OperationRouter.signalProcessingBatchStart, {});
+
                 // apply as much as possible in the given time
                 while (unplayedServerOpspecQueue.length > 0) {
                     // time over?
@@ -164,17 +168,21 @@ define("webodf/editor/server/pullbox/OperationRouter", [], function () {
                     runtime.log(" op in: "+runtime.toJson(opspec));
                     if (op !== null) {
                         if (!playbackFunction(op)) {
+                            eventNotifier.emit(ops.OperationRouter.signalProcessingBatchEnd, {});
                             hasError = true;
                             errorCallback("opExecutionFailure");
                             return;
                         }
                     } else {
+                        eventNotifier.emit(ops.OperationRouter.signalProcessingBatchEnd, {});
                         hasError = true;
                         runtime.log("ignoring invalid incoming opspec: " + opspec);
                         errorCallback("unknownOpReceived");
                         return;
                     }
                 }
+
+                eventNotifier.emit(ops.OperationRouter.signalProcessingBatchEnd, {});
 
                 // still unplayed opspecs?
                 if (unplayedServerOpspecQueue.length > 0) {
@@ -493,6 +501,8 @@ runtime.log("OperationRouter: instant opsSync requested");
                 return;
             }
 
+            eventNotifier.emit(ops.OperationRouter.signalProcessingBatchStart, {});
+
             for (i = 0; i < operations.length; i += 1) {
                 op = operations[i];
                 opspec = op.spec();
@@ -518,6 +528,8 @@ runtime.log("OperationRouter: instant opsSync requested");
             triggerPushingOps();
 
             updateHasLocalUnsyncedOpsState();
+
+            eventNotifier.emit(ops.OperationRouter.signalProcessingBatchEnd, {});
         };
 
         /**
