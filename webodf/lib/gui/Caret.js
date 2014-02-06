@@ -379,6 +379,18 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
      */
     this.handleUpdate = function() {
         shouldUpdateCaretSize = true;
+        if (state.visibility !== "hidden") {
+            // There are significant performance costs with calculating the caret size, so still
+            // want to avoid computing this until all ops have been performed.
+            // However, if the caret size is wildly incorrect for it's new position after an update
+            // (e.g., caret moving from beside an image to beside text), the caret will be user visible
+            // before the render occurs, and results in a large caret momentarily flashing before shrinking
+            // to an appropriate size.
+            // To prevent this flicker, we hide the caret until it is redrawn, as an absent caret is far less
+            // noticeable than an oversized one.
+            state.visibility = "hidden";
+            span.style.visibility = "hidden";
+        }
         redrawTask.trigger();
     };
 
