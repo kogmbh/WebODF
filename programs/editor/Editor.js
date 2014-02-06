@@ -409,6 +409,7 @@ define("webodf/editor/Editor", [
                 var editorPane, memberListPane,
                     inviteButton,
                     canvasElement = document.getElementById("canvas"),
+                    container = document.getElementById('container'),
                     memberListElement = document.getElementById('memberList'),
                     collabEditing = Boolean(server),
                     directParagraphStylingEnabled = (! collabEditing) || args.unstableFeaturesEnabled,
@@ -517,6 +518,18 @@ define("webodf/editor/Editor", [
                     pendingEditorReadyCallback = null;
                     pendingMemberId = null;
                 });
+
+                function translateToolbar() {
+                    var bar = document.getElementById('toolbar'),
+                        y = document.body.scrollTop;
+
+                    bar.style.WebkitTransformOrigin = "center top";
+                    bar.style.WebkitTransform = 'translateY(' + y + 'px)';
+                }
+
+                runtime.getWindow().addEventListener('scroll', translateToolbar);
+                runtime.getWindow().addEventListener('focusout', translateToolbar);
+                runtime.getWindow().addEventListener('touchmove', translateToolbar);
             }
 
             init();
