@@ -64,6 +64,8 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
         avatar,
         /**@type{!Element}*/
         cursorNode,
+        /**@type{!Element}*/
+        overlayElement,
         domUtils = new core.DomUtils(),
         async = new core.Async(),
         /**@type{!core.ScheduledTask}*/
@@ -207,7 +209,9 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
      */
     function updateCaretHeightAndPosition() {
         var selectionRect = getSelectionRect(),
-            zoomLevel = cursor.getDocument().getCanvas().getZoomLevel(),
+            canvas = cursor.getDocument().getCanvas(),
+            zoomLevel = canvas.getZoomLevel(),
+            rootRect = domUtils.getBoundingClientRect(/**@type{!Node}*/(canvas.getElement().firstChild)),
             caretRect;
 
         if (selectionRect) {
@@ -233,6 +237,13 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
             // will fall back to the existing behaviour
             span.style.height = DEFAULT_CARET_HEIGHT;
             span.style.top = DEFAULT_CARET_TOP;
+        }
+
+        // Update the overlay element
+        if (overlayElement) {
+            caretRect = domUtils.getBoundingClientRect(span);
+            overlayElement.style.top = domUtils.adaptRangeDifferenceToZoomLevel(caretRect.top - rootRect.top, zoomLevel) + 'px';
+            overlayElement.style.left = domUtils.adaptRangeDifferenceToZoomLevel(caretRect.right - rootRect.left, zoomLevel) + 'px';
         }
     }
 
@@ -474,6 +485,14 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
      */
     this.hideHandle = function () {
         avatar.hide();
+    };
+
+    /**
+     * @param {!Element} element
+     * @return {undefined}
+     */
+    this.addOverlayElement = function (element) {
+        overlayElement = element;
     };
 
     /**

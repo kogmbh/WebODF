@@ -92,35 +92,10 @@
             selectionController = new gui.SelectionController(session, inputMemberId),
             modifier = gui.KeyboardHandler.Modifier,
             keyCode = gui.KeyboardHandler.KeyCode,
-            isMacOS = window.navigator.appVersion.toLowerCase().indexOf("mac") !== -1,
-            hadFocus;
+            isMacOS = window.navigator.appVersion.toLowerCase().indexOf("mac") !== -1;
 
         runtime.assert(window !== null,
             "Expected to be run in an environment which has a global window, like a browser.");
-
-        function saveFocus() {
-            hadFocus = eventManager.hasFocus();
-            if (hadFocus) {
-                // Performing operations while the event manager has focus causes the browser to
-                // spend a lot of effort maintaining the global window selection.
-                // Avoid this by discarding focus before any operation
-                eventManager.blur();
-            }
-        }
-
-        /**
-         * Execution of an operation can cause the focus to be lost if the local cursor
-         * shifts around. Restore focus back to the event trap if it was in focus before
-         * the operation.
-         */
-        function restoreFocus() {
-            if (hadFocus) {
-                // Only restore focus if previously in focus to prevent
-                // stealing focus when a remote operation occurs
-                eventManager.focus();
-            }
-            hadFocus = undefined;
-        }
 
         /**
          * param {{target:(!Element|undefined),srcElement:(!Element|undefined)}} e
@@ -930,8 +905,6 @@
             odtDocument.unsubscribe(ops.OdtDocument.signalCursorAdded, inputMethodEditor.registerCursor);
             odtDocument.unsubscribe(ops.OdtDocument.signalCursorRemoved, inputMethodEditor.removeCursor);
             odtDocument.unsubscribe(ops.OdtDocument.signalOperationEnd, updateUndoStack);
-            odtDocument.unsubscribe(ops.OdtDocument.signalProcessingBatchStart, saveFocus);
-            odtDocument.unsubscribe(ops.OdtDocument.signalProcessingBatchEnd, restoreFocus);
 
             callback();
         }
@@ -1015,8 +988,6 @@
             odtDocument.subscribe(ops.OdtDocument.signalCursorAdded, inputMethodEditor.registerCursor);
             odtDocument.subscribe(ops.OdtDocument.signalCursorRemoved, inputMethodEditor.removeCursor);
             odtDocument.subscribe(ops.OdtDocument.signalOperationEnd, updateUndoStack);
-            odtDocument.subscribe(ops.OdtDocument.signalProcessingBatchStart, saveFocus);
-            odtDocument.subscribe(ops.OdtDocument.signalProcessingBatchEnd, restoreFocus);
         }
 
         init();
