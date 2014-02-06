@@ -409,6 +409,23 @@ function Main(cmakeListPath) {
         );
     }
 
+    function updateKarmaConfig(deps) {
+        var path = "tools/karma.conf.js",
+            modules = createOrderedList(Object.keys(deps.lib), deps.lib, {});
+        fs.readFile(path, "utf8", function (err, content) {
+            if (err) {
+                throw err;
+            }
+            var re = new RegExp("// MODULES\n[^!]+!");
+            content = content.replace(re,
+                "// MODULES\n            'lib/" +
+                modules.join("',\n            'lib/") + "', // !");
+            saveIfDifferent(path, content, function () {
+                console.log("karma.conf.js was updated. Rerun the build.");
+            });
+        });
+    }
+
     /**
      * Deterministic serialization of manifest.
      * JSON.stringify does not order objects by key.
@@ -495,6 +512,7 @@ function Main(cmakeListPath) {
             saveIfDifferent(d + "manifest.json", serializeManifest(j));
         }
         updateCMakeLists(deps);
+        updateKarmaConfig(deps);
     };
 
     /**
