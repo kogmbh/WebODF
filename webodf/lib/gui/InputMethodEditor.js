@@ -294,7 +294,6 @@
             // https://bugzilla.mozilla.org/show_bug.cgi?id=773137
             // https://bugzilla.mozilla.org/show_bug.cgi?id=787305
             eventManager.blur();
-            eventTrap.setAttribute("contenteditable", false);
         }
 
         /**
@@ -303,13 +302,13 @@
         function synchronizeEventStatus() {
             var hasFocus = eventManager.hasFocus();
             if (hasFocus) {
-                // Toggling the content editable flag while the element is in focus
-                // will sometimes stop the browser from allowing the IME to be activated.
-                // Blurring the focus and then restoring ensures the browser re-evaluates
-                // the IME state after the content editable flag has been updated.
                 eventManager.blur();
             }
-            eventTrap.setAttribute("contenteditable", isEditable);
+            if (isEditable) {
+                eventTrap.removeAttribute('disabled');
+            } else {
+                eventTrap.setAttribute('disabled', true);
+            }
             if (hasFocus) {
                 eventManager.focus();
             }

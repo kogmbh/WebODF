@@ -334,7 +334,7 @@ gui.EventManager = function EventManager(odtDocument) {
             doc = canvasElement.ownerDocument;
 
         runtime.assert(Boolean(window), "EventManager requires a window object to operate correctly");
-        eventTrap = /**@type{!HTMLDivElement}*/(doc.createElement("div"));
+        eventTrap = /**@type{!HTMLInputElement}*/(doc.createElement("input"));
         eventTrap.id = "eventTrap";
         canvasElement.appendChild(eventTrap);
     }
