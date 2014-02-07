@@ -212,7 +212,8 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
             canvas = cursor.getDocument().getCanvas(),
             zoomLevel = canvas.getZoomLevel(),
             rootRect = domUtils.getBoundingClientRect(/**@type{!Node}*/(canvas.getElement().firstChild)),
-            caretRect;
+            caretRect,
+            scrollCorrection = cursor.getDocument().getDOMDocument().body.scrollTop;
 
         if (selectionRect) {
             // Reset the top back to 0 so that the new client rect calculations are simple
@@ -229,14 +230,14 @@ gui.Caret = function Caret(cursor, avatarInitiallyVisible, blinkOnRangeSelect) {
                 };
             }
             span.style.height = domUtils.adaptRangeDifferenceToZoomLevel(selectionRect.height, zoomLevel) + 'px';
-            span.style.top = domUtils.adaptRangeDifferenceToZoomLevel(selectionRect.top - caretRect.top, zoomLevel) + 'px';
+            span.style.top = domUtils.adaptRangeDifferenceToZoomLevel(selectionRect.top - caretRect.top - scrollCorrection, zoomLevel) + 'px';
         } else {
             // fallback to a relatively safe set of values
             // This can happen if the caret is not currently visible, or is in the middle
             // of a collection of nodes that have no client rects. In this case, the caret
             // will fall back to the existing behaviour
             span.style.height = DEFAULT_CARET_HEIGHT;
-            span.style.top = DEFAULT_CARET_TOP;
+            span.style.top = DEFAULT_CARET_TOP - scrollCorrection;
         }
 
         // Update the overlay element
