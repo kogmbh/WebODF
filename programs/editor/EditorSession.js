@@ -59,6 +59,7 @@ define("webodf/editor/EditorSession", [
     runtime.loadClass("gui.Caret");
     runtime.loadClass("gui.SessionController");
     runtime.loadClass("gui.SessionView");
+    runtime.loadClass("gui.TooltipHandler");
     runtime.loadClass("gui.TrivialUndoManager");
     runtime.loadClass("gui.SvgSelectionView");
     runtime.loadClass("gui.SelectionViewManager");
@@ -79,6 +80,7 @@ define("webodf/editor/EditorSession", [
             currentStyleName = null,
             caretManager,
             selectionViewManager,
+            tooltipHandler,
             odtDocument = session.getOdtDocument(),
             textns = odf.Namespaces.textns,
             fontStyles = document.createElement('style'),
@@ -597,6 +599,10 @@ define("webodf/editor/EditorSession", [
             odtDocument.unsubscribe(ops.OdtDocument.signalParagraphChanged, trackCurrentParagraph);
             odtDocument.unsubscribe(ops.OdtDocument.signalUndoStackChanged, undoStackModified);
 
+            self.sessionController.getEventManager().unsubscribe("mouseover", tooltipHandler.showTooltip);
+            self.sessionController.getEventManager().unsubscribe("mouseout", tooltipHandler.hideTooltip);
+            self.sessionController.getHyperlinkClickHandler().unsubscribe(gui.HyperlinkClickHandler.signalModifierUpdated, tooltipHandler.updateHint);
+
             self.sessionView.destroy(function(err) {
                 if (err) {
                     callback(err);
@@ -638,6 +644,11 @@ define("webodf/editor/EditorSession", [
             self.sessionController = new gui.SessionController(session, localMemberId, shadowCursor, {
                 directParagraphStylingEnabled: config.directParagraphStylingEnabled
             });
+            tooltipHandler = new gui.TooltipHandler(session.getOdtDocument().getOdfCanvas());
+            self.sessionController.getEventManager().subscribe("mouseover", tooltipHandler.showTooltip);
+            self.sessionController.getEventManager().subscribe("mouseout", tooltipHandler.hideTooltip);
+            self.sessionController.getHyperlinkClickHandler().subscribe(gui.HyperlinkClickHandler.signalModifierUpdated, tooltipHandler.updateHint);
+
             caretManager = new gui.CaretManager(self.sessionController);
             selectionViewManager = new gui.SelectionViewManager(gui.SvgSelectionView);
             self.sessionView = new gui.SessionView(config.viewOptions, localMemberId, session, caretManager, selectionViewManager);

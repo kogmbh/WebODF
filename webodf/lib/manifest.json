@@ -164,6 +164,12 @@
     "gui.TextController": [
         "ops.Session"
     ],
+    "gui.TooltipHandler": [
+        "core.DomUtils",
+        "gui.KeyboardHandler",
+        "odf.OdfCanvas",
+        "odf.OdfUtils"
+    ],
     "gui.TrivialUndoManager": [
         "core.DomUtils",
         "core.EventNotifier",
