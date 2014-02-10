@@ -521,10 +521,14 @@ define("webodf/editor/Editor", [
 
                 function translateToolbar() {
                     var bar = document.getElementById('toolbar'),
-                        y = document.body.scrollTop;
+                        y = document.body.scrollTop,
+                        x = document.body.scrollLeft,
+                        zoom = document.documentElement.clientWidth / window.innerWidth;
 
-                    bar.style.WebkitTransformOrigin = "center top";
-                    bar.style.WebkitTransform = 'translateY(' + y + 'px)';
+                    bar.style.WebkitTransformOrigin =
+                    bar.style.MozTransformOrigin =
+                    bar.style.TransformOrigin = "left top";
+                    bar.style.WebkitTransform = 'translate(' + x + 'px, ' + y + 'px) scale(' + 1/zoom + ')';
                 }
 
                 runtime.getWindow().addEventListener('scroll', translateToolbar);
