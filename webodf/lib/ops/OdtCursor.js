@@ -81,24 +81,6 @@ ops.OdtCursor = function OdtCursor(memberId, document) {
     };
 
     /**
-     * Move the cursor the supplied number of positions in either a forward (positive) or backwards (negative) direction
-     * @param {!number} number positions
-     * @param {boolean=} extend true if range is to be expanded from the current
-     *                      point
-     * @return {!number}
-     */
-    this.move = function (number, extend) {
-        var moved = 0;
-        if (number > 0) {
-            moved = selectionMover.movePointForward(number, extend);
-        } else if (number <= 0) {
-            moved = -selectionMover.movePointBackward(-number, extend);
-        }
-        events.emit(ops.OdtCursor.signalCursorUpdated, self);
-        return moved;
-    };
-
-    /**
      * Subscribe to cursor update events.
      *
      * The update event called whenever the cursor is moved around manually.

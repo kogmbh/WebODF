@@ -103,13 +103,6 @@
         "odf.OdfUtils",
         "odf.TextStyleApplicator"
     ],
-    "ops.OdtCursorTests": [
-        "core.UnitTester",
-        "odf.OdfCanvas",
-        "odf.OdfContainer",
-        "ops.OdtCursor",
-        "ops.OdtDocument"
-    ],
     "ops.OdtDocumentTests": [
         "core.UnitTester",
         "odf.Namespaces",

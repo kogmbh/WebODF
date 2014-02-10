@@ -24,7 +24,6 @@ set(TESTJSFILES tests/core/ZipTests.js
     tests/odf/OdfContainerTests.js
     tests/odf/StyleInfoTests.js
     tests/odf/TextStyleApplicatorTests.js
-    tests/ops/OdtCursorTests.js
     tests/ops/OdtDocumentTests.js
     tests/ops/OperationTests.js
     tests/ops/TransformerTests.js
