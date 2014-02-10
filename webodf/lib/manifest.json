@@ -86,6 +86,9 @@
         "ops.OdtDocument"
     ],
     "gui.HyperlinkClickHandler": [
+        "core.EventNotifier",
+        "gui.KeyboardHandler",
+        "odf.Namespaces",
         "odf.OdfUtils",
         "xmldom.XPath"
     ],

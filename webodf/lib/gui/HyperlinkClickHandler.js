@@ -35,14 +35,15 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, gui, odf, xmldom */
-
+/*global runtime, gui, odf, core, xmldom */
 
 /**
  * @constructor
  * @param {!function():!Element} getRootNode
+ * @param {!gui.KeyboardHandler} keyDownHandler
+ * @param {!gui.KeyboardHandler} keyUpHandler
  */
-gui.HyperlinkClickHandler = function HyperlinkClickHandler(getRootNode) {
+gui.HyperlinkClickHandler = function HyperlinkClickHandler(getRootNode, keyDownHandler, keyUpHandler) {
     "use strict";
     var /**@const
          @type{!string}*/
@@ -53,19 +54,20 @@ gui.HyperlinkClickHandler = function HyperlinkClickHandler(getRootNode) {
         /**@const
          @type{!string}*/
         inactive = "inactive",
-        /**@const
-         @type{!number}*/
-        None = gui.HyperlinkClickHandler.Modifier.None,
-        /**@const
-         @type{!number}*/
-        Ctrl = gui.HyperlinkClickHandler.Modifier.Ctrl,
-        /**@const
-         @type{!number}*/
-        Meta = gui.HyperlinkClickHandler.Modifier.Meta,
-        odfUtils = new odf.OdfUtils(),
+        modifier = gui.KeyboardHandler.Modifier,
+        keyCode = gui.KeyboardHandler.KeyCode,
         xpath = xmldom.XPath,
+        odfUtils = new odf.OdfUtils(),
+        /**@type{!Window}*/
+        window = /**@type{!Window}*/(runtime.getWindow()),
         /**@type{!number}*/
-        modifier = None;
+        activeModifier = modifier.None,
+        eventNotifier = new core.EventNotifier([
+            gui.HyperlinkClickHandler.signalModifierUpdated
+        ]);
+
+    runtime.assert(window !== null,
+        "Expected to be run in an environment which has a global window, like a browser.");
 
     /**
      * @param {?Node} node
@@ -86,10 +88,11 @@ gui.HyperlinkClickHandler = function HyperlinkClickHandler(getRootNode) {
 
     /**
      * @param {!Event} e
+     * @return {undefined}
      */
     this.handleClick = function (e) {
         var target = e.target || e.srcElement,
-            modifierPressed,
+            pressedModifier,
             linkElement,
             /**@type{!string}*/
             url,
@@ -97,12 +100,12 @@ gui.HyperlinkClickHandler = function HyperlinkClickHandler(getRootNode) {
             bookmarks;
 
         if (e.ctrlKey) {
-            modifierPressed = Ctrl;
+            pressedModifier = modifier.Ctrl;
         } else if (e.metaKey) {
-            modifierPressed = Meta;
+            pressedModifier = modifier.Meta;
         }
 
-        if (modifier !== None && modifier !== modifierPressed) {
+        if (activeModifier !== modifier.None && activeModifier !== pressedModifier) {
             return;
         }
 
@@ -146,37 +149,102 @@ gui.HyperlinkClickHandler = function HyperlinkClickHandler(getRootNode) {
 
     /**
      * Show pointer cursor when hover over hyperlink
+     * @return {undefined}
      */
     function showPointerCursor() {
         getRootNode().removeAttributeNS(webodfns, links);
     }
-    this.showPointerCursor = showPointerCursor;
 
     /**
      * Show text cursor when hover over hyperlink
+     * @return {undefined}
      */
     function showTextCursor() {
         getRootNode().setAttributeNS(webodfns, links, inactive);
     }
-    this.showTextCursor = showTextCursor;
+
+    /**
+     * @param {!number} modifierKey
+     * @return {undefined}
+     */
+    function bindEvents(modifierKey) {
+        window.removeEventListener("focus", showTextCursor, false);
+        if (modifierKey !== modifier.None) {
+            window.addEventListener("focus", showTextCursor, false);
+        }
+
+        keyDownHandler.unbind(keyCode.LeftMeta, modifier.Meta);
+        keyDownHandler.unbind(keyCode.MetaInMozilla, modifier.Meta);
+        keyDownHandler.unbind(keyCode.Ctrl, modifier.Ctrl);
+        keyUpHandler.unbind(keyCode.LeftMeta, modifier.None);
+        keyUpHandler.unbind(keyCode.MetaInMozilla, modifier.None);
+        keyUpHandler.unbind(keyCode.Ctrl, modifier.None);
+        switch (modifierKey) {
+        case modifier.Ctrl:
+            keyDownHandler.bind(keyCode.Ctrl, modifier.Ctrl, showPointerCursor);
+            // event.ctrlKey and event.metaKey are always equal false in keyup event. Cannot really refer a source,
+            // but seem this is how all browsers behave. Probably because there is no such need in this event.
+            keyUpHandler.bind(keyCode.Ctrl, modifier.None, showTextCursor);
+            break;
+        case modifier.Meta:
+            keyDownHandler.bind(keyCode.LeftMeta, modifier.Meta, showPointerCursor);
+            keyDownHandler.bind(keyCode.MetaInMozilla, modifier.Meta, showPointerCursor);
+            // event.ctrlKey and event.metaKey are always equal false in keyup event. Cannot really refer a source,
+            // but seem this is how all browsers behave. Probably because there is no such need in this event.
+            keyUpHandler.bind(keyCode.LeftMeta, modifier.None, showTextCursor);
+            keyUpHandler.bind(keyCode.MetaInMozilla, modifier.None, showTextCursor);
+            break;
+        }
+    }
 
     /**
      * Sets the modifier key for activating the hyperlink.
      * @param {!number} value
+     * @return {undefined}
      */
     this.setModifier = function (value) {
-        modifier = value;
-        if (modifier !== None) {
+        if (activeModifier === value) {
+            return;
+        }
+        runtime.assert(value === modifier.None || value === modifier.Ctrl || value === modifier.Meta,
+            "Unsupported KeyboardHandler.Modifier value: " + value);
+
+        activeModifier = value;
+        if (activeModifier !== modifier.None) {
             showTextCursor();
         } else {
             showPointerCursor();
         }
+        bindEvents(activeModifier);
+        eventNotifier.emit(gui.HyperlinkClickHandler.signalModifierUpdated, activeModifier);
+    };
+
+    /**
+     * @param {!string} eventid
+     * @param {*} args
+     * @return {undefined}
+     */
+    this.emit = function (eventid, args) {
+        eventNotifier.emit(eventid, args);
+    };
+
+    /**
+     * @param {!string} eventid
+     * @param {!Function} cb
+     * @return {undefined}
+     */
+    this.subscribe = function (eventid, cb) {
+        eventNotifier.subscribe(eventid, cb);
+    };
+
+    /**
+     * @param {!string} eventid
+     * @param {!Function} cb
+     * @return {undefined}
+     */
+    this.unsubscribe = function (eventid, cb) {
+        eventNotifier.unsubscribe(eventid, cb);
     };
 };
 
-/**@const*/
-gui.HyperlinkClickHandler.Modifier = {
-    None: 0,
-    Ctrl: 1,
-    Meta: 2
-};
+/**@const*/gui.HyperlinkClickHandler.signalModifierUpdated = "modifier/updated";
