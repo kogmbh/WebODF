@@ -503,14 +503,16 @@
         }
 
         /**
-         * Convert the requested steps from root into the equivalent DOM node & offset pair
+         * Convert the requested steps from root into the equivalent DOM node & offset pair. If the
+         * requested step is past the end of the document, return the last step in the document.
          * @param {!number} steps
-         * @return {{node: !Node, offset: !number}}
+         * @return {!{node: !Node, offset: !number}}
          */
         this.convertStepsToDomPoint = function (steps) {
             var /**@type{!number}*/
                 stepsFromRoot,
-                isWalkable;
+                isWalkable,
+                positionsToLastStep = 0;
 
             if (steps < 0) {
                 runtime.log("warn", "Requested steps were negative (" + steps + ")");
@@ -520,14 +522,20 @@
             stepsFromRoot = stepsCache.setToClosestStep(steps, iterator);
             
             while (stepsFromRoot < steps && iterator.nextPosition()) {
+                positionsToLastStep += 1;
                 isWalkable = filter.acceptPosition(iterator) === FILTER_ACCEPT;
                 if (isWalkable) {
+                    positionsToLastStep = 0;
                     stepsFromRoot += 1;
                 }
                 stepsCache.updateCache(stepsFromRoot, iterator.container(), iterator.unfilteredDomOffset(), isWalkable);
             }
             if (stepsFromRoot !== steps) {
                 runtime.log("warn", "Requested " + steps + " steps but only " + stepsFromRoot + " are available");
+                while (positionsToLastStep !== 0) {
+                    iterator.previousPosition();
+                    positionsToLastStep -= 1;
+                }
             }
             return {
                 node: iterator.container(),

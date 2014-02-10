@@ -192,9 +192,10 @@ ops.StepsTranslatorTests = function StepsTranslatorTests(runner) {
     }
 
     function convertStepsToDomPoint_BeyondMaxSteps_ReturnsMaxSteps() {
-        createDoc("<text:p>ABCD</text:p><text:p>EF</text:p>");
+        var doc = createDoc("<text:p>ABCD</text:p><text:p>EF</text:p>"),
+            p = doc.getElementsByTagNameNS(odf.Namespaces.textns, "p")[1];
 
-        t.expected = {node: testarea, offset: testarea.childNodes.length};
+        t.expected = {node: p, offset: p.childNodes.length};
         t.position = t.translator.convertStepsToDomPoint(100);
         r.shouldBe(t, "t.position.node", "t.expected.node");
         r.shouldBe(t, "t.position.offset", "t.expected.offset");
