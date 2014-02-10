@@ -39,12 +39,6 @@
         "ops.OdtDocument",
         "ops.Session"
     ],
-    "gui.SelectionMoverTests": [
-        "core.Cursor",
-        "core.PositionFilter",
-        "core.UnitTester",
-        "gui.SelectionMover"
-    ],
     "gui.StyleSummaryTests": [
         "core.UnitTester",
         "gui.StyleSummary",
