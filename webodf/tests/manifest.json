@@ -114,9 +114,11 @@
         "core.UnitTester",
         "odf.Namespaces",
         "odf.OdfCanvas",
+        "odf.OdfNodeFilter",
         "ops.OdtCursor",
         "ops.OdtDocument",
-        "xmldom.LSSerializer"
+        "xmldom.LSSerializer",
+        "xmldom.LSSerializerFilter"
     ],
     "ops.OperationTests": [
         "core.UnitTester",

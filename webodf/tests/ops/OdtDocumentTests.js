@@ -47,6 +47,26 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         inputMemberId = "Joe";
 
     /**
+     * Class that filters runtime specific nodes from the DOM.
+     * @constructor
+     * @implements {xmldom.LSSerializerFilter}
+     */
+    function OdfOrCursorNodeFilter() {
+        var odfFilter = new odf.OdfNodeFilter();
+
+        /**
+         * @param {!Node} node
+         * @return {!number}
+         */
+        this.acceptNode = function (node) {
+            if (node.namespaceURI === "urn:webodf:names:cursor") {
+                return NodeFilter.FILTER_ACCEPT;
+            }
+            return odfFilter.acceptNode(node);
+        };
+    }
+
+    /**
      * Trying to avoid having to load a complete document for these tests. Mocking ODF
      * canvas allows some simplification in the testing setup
      * @param {Element} node
@@ -80,22 +100,12 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         t.styles.insertRule(rule, t.styles.cssRules.length);
     }
     /**
-     * @param {!number} stepsToStart Number of steps to advance the cursor
-     * @param {!number=} stepsToEnd
+     * @param {!number} stepsToAnchor Number of steps to advance the cursor
+     * @param {!number=} stepsDiffToFocus
      */
-    function setCursorPosition(stepsToStart, stepsToEnd) {
-        var positions;
-        positions = t.counter.countSteps(stepsToStart, t.filter);
-        t.cursor.move(positions, false);
-        if (stepsToEnd) {
-            positions = t.counter.countSteps(stepsToEnd, t.filter);
-            t.cursor.move(positions, true);
-        } else {
-            // workaround for SelectionMover cachedXOffset "feature"
-            // Failure to do this will leave SelectionMover incorrectly assuming countLineSteps wants to get
-            // to left = 8px due to the fact setCursorPosition moved over multiple lines in a single command
-            t.cursor.move(0, false);
-        }
+    function setCursorPosition(stepsToAnchor, stepsDiffToFocus) {
+        var newRangeSelection = t.odtDocument.convertCursorToDomRange(stepsToAnchor, stepsDiffToFocus);
+        t.cursor.setSelectedRange(newRangeSelection, stepsDiffToFocus >= 0);
     }
 
     /**
@@ -119,16 +129,20 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
      * the fragment using the pipe character ('|'). This exercises both forwards and backwards iteration.
      * @param {!string} documentString Document fragment with cursor positions indicated using a vertical pipe '|'
      */
+    /*jslint regexp:true*/
     function testCursorPositions(documentString) {
         var segments = documentString.split("|"),
             serializer = new xmldom.LSSerializer(),
-            cursorSerialized = '<ns0:cursor xmlns:ns0="urn:webodf:names:cursor" ns0:memberId="Joe"></ns0:cursor>',
-            position;
+            cursorSerialized = /<ns\d:cursor[^>]*><\/ns\d:cursor>/,
+            position,
+            step = 0;
+
+        serializer.filter = new OdfOrCursorNodeFilter();
         runtime.log("Scenario: " + documentString);
         t.segmentCount = segments.length;
         r.shouldBe(t, "t.segmentCount > 1", "true");
         createOdtDocument(segments.join(""));
-        setCursorPosition(0);
+        setCursorPosition(step);
 
         // Test iteration forward
         for (position = 1; position < segments.length; position += 1) {
@@ -138,11 +152,14 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             t.result = serializer.writeToString(t.root.firstChild, odf.Namespaces.namespaceMap);
             t.result = t.result.replace(cursorSerialized, "|");
             r.shouldBe(t, "t.result", "t.expected");
-            t.stepsToNextPosition = t.counter.countSteps(1, t.filter);
-            t.cursor.move(t.stepsToNextPosition, false);
+            t.lastValidStep = step;
+            step += 1;
+            setCursorPosition(step);
         }
         // Ensure there are no other walkable positions in the document
-        r.shouldBe(t, "t.stepsToNextPosition", "0");
+        t.currentCursorStep = t.odtDocument.convertDomPointToCursorStep(t.cursor.getNode(), 0);
+        r.shouldBe(t, "t.currentCursorStep", "t.lastValidStep");
+        step = t.lastValidStep;
 
         // Test iteration backward
         for (position = segments.length - 1; position > 0; position -= 1) {
@@ -152,12 +169,14 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             t.result = serializer.writeToString(t.root.firstChild, odf.Namespaces.namespaceMap);
             t.result = t.result.replace(cursorSerialized, "|");
             r.shouldBe(t, "t.result", "t.expected");
-            t.stepsToNextPosition = t.counter.countSteps(-1, t.filter);
-            t.cursor.move(t.stepsToNextPosition, false);
+            step -= 1;
+            setCursorPosition(step);
         }
         // Ensure there are no other walkable positions in the document
-        r.shouldBe(t, "t.stepsToNextPosition", "0");
+        t.currentCursorStep = t.odtDocument.convertDomPointToCursorStep(t.cursor.getNode(), 0);
+        r.shouldBe(t, "t.currentCursorStep", "0");
     }
+    /*jslint regexp:false*/
     function testCountLinesStepsDown_FromParagraphStart() {
         createOdtDocument("<text:p>ABCD</text:p><text:p>FGHIJ</text:p>");
         setCursorPosition(0);
