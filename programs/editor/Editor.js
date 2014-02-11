@@ -531,9 +531,23 @@ define("webodf/editor/Editor", [
                     bar.style.WebkitTransform = 'translate(' + x + 'px, ' + y + 'px) scale(' + 1/zoom + ')';
                 }
 
+                function hideToolbar() {
+                    var bar= document.getElementById('toolbar');
+                    bar.style.display = 'none';
+                }
+                function showToolbar() {
+                    var bar= document.getElementById('toolbar');
+                    bar.style.display = 'block';
+                }
                 runtime.getWindow().addEventListener('scroll', translateToolbar);
                 runtime.getWindow().addEventListener('focusout', translateToolbar);
                 runtime.getWindow().addEventListener('touchmove', translateToolbar);
+
+                runtime.getWindow().addEventListener('touchmove', hideToolbar);
+                runtime.getWindow().addEventListener('touchend', showToolbar);
+
+                runtime.getWindow().addEventListener('gesturestart', hideToolbar);
+                runtime.getWindow().addEventListener('gestureend', showToolbar);
             }
 
             init();
