@@ -1,17 +1,19 @@
 @namespace htmlns url(http://www.w3.org/1999/xhtml);
 
 html, htmlns|body, #mainContainer {
-    width: 100%;
-    height: 100%;
     margin: 0;
     font-family: sans-serif;
     font-size: 10pt;
     padding: 0px;
-    overflow: hidden;
 }
 
 #mainContainer {
-    background-color: #ddd;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    position: absolute;
+    overflow: visible;
 }
 
 #editor *:focus {
@@ -20,10 +22,13 @@ html, htmlns|body, #mainContainer {
 
 #editor {
     border: none;
-    box-shadow: 0px 0px 14px #555;
-    overflow: hidden;
     padding: 0px !important;
     z-index: 4;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: visible;
 }
 
 #toolbar {
@@ -39,22 +44,13 @@ html, htmlns|body, #mainContainer {
 #container {
     text-align: center;
     background-color: #ddd;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
     position: absolute;
-    top: 30px;
-    bottom: 0;
     left: 0;
     right: 0;
 }
 
 #canvas {
-    box-shadow: 0px 0px 20px #aaa;
-    margin-top: 30px;
-    margin-left: 10px;
-    margin-right: 10px;
-    margin-bottom: 30px;
-
+    margin: 0;
     transform-origin: top center;
     -webkit-transform-origin: top center;
     -moz-transform-origin: top center;
