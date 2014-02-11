@@ -68,7 +68,7 @@ gui.EventManager = function EventManager(odtDocument) {
         },
         /**@type{!Object.<string,!EventDelegate>}*/
         eventDelegates = {},
-        /**@type{!HTMLDivElement}*/
+        /**@type{!HTMLInputElement}*/
         eventTrap;
 
     /**
@@ -336,6 +336,14 @@ gui.EventManager = function EventManager(odtDocument) {
         runtime.assert(Boolean(window), "EventManager requires a window object to operate correctly");
         eventTrap = /**@type{!HTMLInputElement}*/(doc.createElement("input"));
         eventTrap.id = "eventTrap";
+        eventTrap.onfocus = function () {
+            // A hack to check if the iOS keyboard is open, in which case do not scroll when
+            // focus is readded
+            if (window.innerHeight !== window.outerHeight) {
+                eventTrap.style.display = 'none';
+                window.requestAnimationFrame(function() { eventTrap.style.display = 'block'; });
+            }
+        };
         canvasElement.appendChild(eventTrap);
     }
     init();
