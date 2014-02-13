@@ -409,6 +409,7 @@ define("webodf/editor/Editor", [
                 var editorPane, memberListPane,
                     inviteButton,
                     canvasElement = document.getElementById("canvas"),
+                    container = document.getElementById('container'),
                     memberListElement = document.getElementById('memberList'),
                     collabEditing = Boolean(server),
                     directParagraphStylingEnabled = (! collabEditing) || args.unstableFeaturesEnabled,
@@ -517,6 +518,36 @@ define("webodf/editor/Editor", [
                     pendingEditorReadyCallback = null;
                     pendingMemberId = null;
                 });
+
+                function translateToolbar() {
+                    var bar = document.getElementById('toolbar'),
+                        y = document.body.scrollTop,
+                        x = document.body.scrollLeft,
+                        zoom = document.documentElement.clientWidth / window.innerWidth;
+
+                    bar.style.WebkitTransformOrigin =
+                    bar.style.MozTransformOrigin =
+                    bar.style.TransformOrigin = "left top";
+                    bar.style.WebkitTransform = 'translate(' + x + 'px, ' + y + 'px) scale(' + 1/zoom + ')';
+                }
+
+                function hideToolbar() {
+                    var bar= document.getElementById('toolbar');
+                    bar.style.display = 'none';
+                }
+                function showToolbar() {
+                    var bar= document.getElementById('toolbar');
+                    bar.style.display = 'block';
+                }
+                runtime.getWindow().addEventListener('scroll', translateToolbar);
+                runtime.getWindow().addEventListener('focusout', translateToolbar);
+                runtime.getWindow().addEventListener('touchmove', translateToolbar);
+
+                runtime.getWindow().addEventListener('touchmove', hideToolbar);
+                runtime.getWindow().addEventListener('touchend', showToolbar);
+
+                runtime.getWindow().addEventListener('gesturestart', hideToolbar);
+                runtime.getWindow().addEventListener('gestureend', showToolbar);
             }
 
             init();
