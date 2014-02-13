@@ -123,6 +123,20 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         }
         return false;
     }
+
+    /**
+     * Returns true if the supplied step exists in the current document. Otherwise returns false.
+     * @param {!number} step
+     * @returns {!boolean}
+     */
+    function documentHasStep(step) {
+        try {
+            t.odtDocument.convertCursorToDomRange(step, 0);
+            return true;
+        } catch(e) {
+            return false;
+        }
+    }
     
     /**
      * Test cursor iteration over a document fragment. Each supported cursor position should be indicated in
@@ -142,27 +156,27 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         t.segmentCount = segments.length;
         r.shouldBe(t, "t.segmentCount > 1", "true");
         createOdtDocument(segments.join(""));
-        setCursorPosition(step);
 
         // Test iteration forward
         for (position = 1; position < segments.length; position += 1) {
+            setCursorPosition(step);
+            t.lastValidStep = step;
             t.expected = "<office:text>" +
                 segments.slice(0, position).join("") + "|" + segments.slice(position, segments.length).join("") +
                 "</office:text>";
             t.result = serializer.writeToString(t.root.firstChild, odf.Namespaces.namespaceMap);
             t.result = t.result.replace(cursorSerialized, "|");
             r.shouldBe(t, "t.result", "t.expected");
-            t.lastValidStep = step;
             step += 1;
-            setCursorPosition(step);
         }
         // Ensure there are no other walkable positions in the document
-        t.currentCursorStep = t.odtDocument.convertDomPointToCursorStep(t.cursor.getNode(), 0);
-        r.shouldBe(t, "t.currentCursorStep", "t.lastValidStep");
+        t.isLastStep = documentHasStep(step) === false;
+        r.shouldBe(t, "t.isLastStep", "true");
         step = t.lastValidStep;
 
         // Test iteration backward
         for (position = segments.length - 1; position > 0; position -= 1) {
+            setCursorPosition(step);
             t.expected = "<office:text>" +
                 segments.slice(0, position).join("") + "|" + segments.slice(position, segments.length).join("") +
                 "</office:text>";
@@ -170,11 +184,10 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             t.result = t.result.replace(cursorSerialized, "|");
             r.shouldBe(t, "t.result", "t.expected");
             step -= 1;
-            setCursorPosition(step);
         }
         // Ensure there are no other walkable positions in the document
-        t.currentCursorStep = t.odtDocument.convertDomPointToCursorStep(t.cursor.getNode(), 0);
-        r.shouldBe(t, "t.currentCursorStep", "0");
+        t.isFirstStep = documentHasStep(step) === false;
+        r.shouldBe(t, "t.isFirstStep", "true");
     }
     /*jslint regexp:false*/
     function testCountLinesStepsDown_FromParagraphStart() {
