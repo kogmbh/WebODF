@@ -181,24 +181,37 @@ ops.StepsTranslatorTests = function StepsTranslatorTests(runner) {
         r.shouldBe(t, "t.position.offset", "t.expected.offset");
     }
 
-    function convertStepsToDomPoint_LessThan0_Returns0() {
-        var doc = createDoc("<text:p>AB</text:p>"),
-            p = doc.getElementsByTagNameNS(odf.Namespaces.textns, "p")[0];
+    function convertStepsToDomPoint_LessThan0_ThrowsException() {
+        createDoc("<text:p>AB</text:p>");
 
-        t.expected = {node: p.firstChild, offset: 0};
-        t.position = t.translator.convertStepsToDomPoint(-1);
-        r.shouldBe(t, "t.position.node", "t.expected.node");
-        r.shouldBe(t, "t.position.offset", "t.expected.offset");
+        try {
+            t.translator.convertStepsToDomPoint(-1);
+        } catch(e) {
+            t.exceptionThrown = true;
+        }
+        r.shouldBe(t, "t.exceptionThrown", "true");
     }
 
-    function convertStepsToDomPoint_BeyondMaxSteps_ReturnsMaxSteps() {
-        var doc = createDoc("<text:p>ABCD</text:p><text:p>EF</text:p>"),
-            p = doc.getElementsByTagNameNS(odf.Namespaces.textns, "p")[1];
+    function convertStepsToDomPoint_BeyondMaxSteps_ThrowsException() {
+        createDoc("<text:p>ABCD</text:p><text:p>EF</text:p>");
 
-        t.expected = {node: p, offset: p.childNodes.length};
-        t.position = t.translator.convertStepsToDomPoint(100);
-        r.shouldBe(t, "t.position.node", "t.expected.node");
-        r.shouldBe(t, "t.position.offset", "t.expected.offset");
+        try {
+            t.translator.convertStepsToDomPoint(100);
+        } catch(e) {
+            t.exceptionThrown = true;
+        }
+        r.shouldBe(t, "t.exceptionThrown", "true");
+    }
+
+    function convertStepsToDomPoint_isNan_ThrowsException() {
+        createDoc("<text:p>ABCD</text:p><text:p>EF</text:p>");
+
+        try {
+            t.translator.convertStepsToDomPoint(undefined);
+        } catch(e) {
+            t.exceptionThrown = true;
+        }
+        r.shouldBe(t, "t.exceptionThrown", "true");
     }
 
     function convertStepsToDomPoint_Prime_PrimesCache() {
@@ -591,8 +604,9 @@ ops.StepsTranslatorTests = function StepsTranslatorTests(runner) {
             convertStepsToDomPoint_At0,
             convertStepsToDomPoint_At1,
             convertStepsToDomPoint_At5,
-            convertStepsToDomPoint_LessThan0_Returns0,
-            convertStepsToDomPoint_BeyondMaxSteps_ReturnsMaxSteps,
+            convertStepsToDomPoint_LessThan0_ThrowsException,
+            convertStepsToDomPoint_BeyondMaxSteps_ThrowsException,
+            convertStepsToDomPoint_isNan_ThrowsException,
             convertStepsToDomPoint_Prime_PrimesCache,
             convertStepsToDomPoint_Cached_SpeedsUpSecondCall,
             convertStepsToDomPoint_Cached_UsesClosestPointForCalculations,

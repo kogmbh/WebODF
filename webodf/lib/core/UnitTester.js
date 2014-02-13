@@ -485,6 +485,8 @@ core.UnitTestRunner = function UnitTestRunner(resourcePrefix, logger) {
     this.shouldBeNull = shouldBeNull;
     this.shouldBeNonNull = shouldBeNonNull;
     this.shouldBe = shouldBe;
+    this.testFailed = testFailed;
+
     /**
      * @return {!number}
      */
@@ -615,7 +617,11 @@ core.UnitTester = function UnitTester() {
             if (texpectFail) {
                 runner.beginExpectFail();
             }
-            t();
+            try {
+                t();
+            } catch(/**@type{!Error}*/e) {
+                runner.testFailed("Unexpected exception encountered: " + e.toString());
+            }
             if (texpectFail) {
                 runner.endExpectFail();
             }

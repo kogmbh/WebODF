@@ -504,38 +504,33 @@
 
         /**
          * Convert the requested steps from root into the equivalent DOM node & offset pair. If the
-         * requested step is past the end of the document, return the last step in the document.
+         * requested step is before the start or past the end of the document, a RangeError will be thrown.
          * @param {!number} steps
          * @return {!{node: !Node, offset: !number}}
          */
         this.convertStepsToDomPoint = function (steps) {
             var /**@type{!number}*/
                 stepsFromRoot,
-                isWalkable,
-                positionsToLastStep = 0;
+                isWalkable;
 
+            if (isNaN(steps)) {
+                throw new TypeError("Requested steps is not numeric (" + steps + ")");
+            }
             if (steps < 0) {
-                runtime.log("warn", "Requested steps were negative (" + steps + ")");
-                steps = 0;
+                throw new RangeError("Requested steps is negative (" + steps + ")");
             }
             verifyRootNode();
             stepsFromRoot = stepsCache.setToClosestStep(steps, iterator);
             
             while (stepsFromRoot < steps && iterator.nextPosition()) {
-                positionsToLastStep += 1;
                 isWalkable = filter.acceptPosition(iterator) === FILTER_ACCEPT;
                 if (isWalkable) {
-                    positionsToLastStep = 0;
                     stepsFromRoot += 1;
                 }
                 stepsCache.updateCache(stepsFromRoot, iterator.container(), iterator.unfilteredDomOffset(), isWalkable);
             }
             if (stepsFromRoot !== steps) {
-                runtime.log("warn", "Requested " + steps + " steps but only " + stepsFromRoot + " are available");
-                while (positionsToLastStep !== 0) {
-                    iterator.previousPosition();
-                    positionsToLastStep -= 1;
-                }
+                throw new RangeError("Requested steps (" + steps + ") exceeds available steps (" + stepsFromRoot + ")");
             }
             return {
                 node: iterator.container(),
