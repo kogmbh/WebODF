@@ -119,7 +119,6 @@
             localCursor = null,
             eventTrap = eventManager.getEventTrap(),
             async = new core.Async(),
-            domUtils = new core.DomUtils(),
             FAKE_CONTENT = "b",
             /**@type{!core.ScheduledTask}*/
             processUpdates,
@@ -199,16 +198,6 @@
                 doc = eventTrap.ownerDocument;
 
             flushEvent();
-            if (!domUtils.containsNode(getCanvasElement(), eventTrap)) {
-                // TODO Remove when a proper undo manager arrives
-                // The undo manager can replace the root element, discarding the original.
-                // The event trap node is still valid, and simply needs to be re-attached
-                // after this occurs.
-
-                // Don't worry about the local caret yet. The event trap will eventually be moved to
-                // a new valid local caret when it is registered upon cursor re-registration
-                getCanvasElement().appendChild(eventTrap);
-            }
 
             while (eventTrap.childNodes.length > 1) {
                 // Repeated text entry events can result in lots of empty text nodes
@@ -280,17 +269,8 @@
          * @param {!ops.OdtCursor} cursor
          */
         this.registerCursor = function (cursor) {
-            var cursorNode, hasFocus;
             if (cursor.getMemberId() === inputMemberId) {
-                hasFocus = eventManager.hasFocus();
                 localCursor = cursor;
-                cursorNode = localCursor.getNode();
-                cursorNode.insertBefore(eventTrap, cursorNode.firstChild);
-                if (hasFocus) {
-                    // Relocating the event trap will reset the window selection
-                    // Restore this again if the document previously had focus
-                    eventManager.focus();
-                }
             }
         };
 
@@ -299,16 +279,8 @@
          * @param {!string} memberid Member id of the removed cursor
          */
         this.removeCursor = function (memberid) {
-            var hasFocus;
             if (localCursor && memberid ===  inputMemberId) {
-                hasFocus = eventManager.hasFocus();
                 localCursor = null;
-                getCanvasElement().appendChild(eventTrap);
-                if (hasFocus) {
-                    // Relocating the event trap will reset the window selection
-                    // Restore this again if the document previously had focus
-                    eventManager.focus();
-                }
             }
         };
 
@@ -322,7 +294,6 @@
             // https://bugzilla.mozilla.org/show_bug.cgi?id=773137
             // https://bugzilla.mozilla.org/show_bug.cgi?id=787305
             eventManager.blur();
-            eventTrap.setAttribute("contenteditable", false);
         }
 
         /**
@@ -331,13 +302,13 @@
         function synchronizeEventStatus() {
             var hasFocus = eventManager.hasFocus();
             if (hasFocus) {
-                // Toggling the content editable flag while the element is in focus
-                // will sometimes stop the browser from allowing the IME to be activated.
-                // Blurring the focus and then restoring ensures the browser re-evaluates
-                // the IME state after the content editable flag has been updated.
                 eventManager.blur();
             }
-            eventTrap.setAttribute("contenteditable", isEditable);
+            if (isEditable) {
+                eventTrap.removeAttribute('disabled');
+            } else {
+                eventTrap.setAttribute('disabled', true);
+            }
             if (hasFocus) {
                 eventManager.focus();
             }
@@ -387,6 +358,7 @@
             cleanup = filters.map(getDestroy);
 
             // Negative tab index still allows focus, but removes accessibility by keyboard
+            getCanvasElement().firstChild.appendChild(eventTrap);
             eventTrap.setAttribute("tabindex", -1);
             processUpdates = new core.ScheduledTask(resetWindowSelection, 1);
             cleanup.push(processUpdates.destroy);

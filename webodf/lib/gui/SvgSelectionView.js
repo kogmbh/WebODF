@@ -525,7 +525,8 @@ gui.SvgSelectionView = function SvgSelectionView(cursor) {
             left,
             right,
             top,
-            bottom;
+            bottom,
+            scrollCorrection = doc.body.scrollTop;
 
         // If the range is collapsed (no selection) or no extremes were found, do not show
         // any virtual selections.
@@ -551,8 +552,8 @@ gui.SvgSelectionView = function SvgSelectionView(cursor) {
             // We will use the topmost 'top' value, because if lastRect.top lies above
             // firstRect.top, then both are most likely on the same line, and font sizes
             // are different, so the selection should be taller.
-            top = Math.min(firstRect.top, lastRect.top);
-            bottom = lastRect.top + lastRect.height;
+            top = Math.min(firstRect.top, lastRect.top) - scrollCorrection;
+            bottom = lastRect.top + lastRect.height - scrollCorrection;
 
             // Now we grow the polygon by adding the corners one by one,
             // and finally we make sure that the last point is the same

@@ -278,12 +278,11 @@ cursor|cursor > .handle:after {
 /* not within a cursor */
 #eventTrap {
     height: 1px;
-    margin: auto 0;
     display: block;
     position: absolute;
-    left: -10000px;
     width: 1px;
     outline: none;
+    opacity: 0;
 }
 
 /* within a cursor */

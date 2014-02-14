@@ -92,35 +92,10 @@
             selectionController = new gui.SelectionController(session, inputMemberId),
             modifier = gui.KeyboardHandler.Modifier,
             keyCode = gui.KeyboardHandler.KeyCode,
-            isMacOS = window.navigator.appVersion.toLowerCase().indexOf("mac") !== -1,
-            hadFocus;
+            isMacOS = window.navigator.appVersion.toLowerCase().indexOf("mac") !== -1;
 
         runtime.assert(window !== null,
             "Expected to be run in an environment which has a global window, like a browser.");
-
-        function saveFocus() {
-            hadFocus = eventManager.hasFocus();
-            if (hadFocus) {
-                // Performing operations while the event manager has focus causes the browser to
-                // spend a lot of effort maintaining the global window selection.
-                // Avoid this by discarding focus before any operation
-                eventManager.blur();
-            }
-        }
-
-        /**
-         * Execution of an operation can cause the focus to be lost if the local cursor
-         * shifts around. Restore focus back to the event trap if it was in focus before
-         * the operation.
-         */
-        function restoreFocus() {
-            if (hadFocus) {
-                // Only restore focus if previously in focus to prevent
-                // stealing focus when a remote operation occurs
-                eventManager.focus();
-            }
-            hadFocus = undefined;
-        }
 
         /**
          * param {{target:(!Element|undefined),srcElement:(!Element|undefined)}} e
@@ -457,14 +432,62 @@
         /**
          * @param {!Event} event
          */
+        function moveByMouseClickEvent(event) {
+            var selection = mutableSelection(window.getSelection()),
+                selectionRange,
+                position,
+                frameNode,
+                rect;
+            if (!selection.anchorNode && !selection.focusNode) {
+                // chrome & safari will report null for focus and anchor nodes after a right-click in text selection
+                position = caretPositionFromPoint(event.clientX, event.clientY);
+                if (position) {
+                    selection.anchorNode = /**@type{!Node}*/(position.container);
+                    selection.anchorOffset = position.offset;
+                    selection.focusNode = selection.anchorNode;
+                    selection.focusOffset = selection.anchorOffset;
+                }
+            }
+
+            if (odfUtils.isImage(selection.focusNode) && selection.focusOffset === 0) {
+                // In FireFox if an image has no text around it, click on either side of the
+                // image resulting the same selection get returned. focusNode: image, focusOffset: 0
+                // Move the cursor to the next walkable position when clicking on the right side of an image
+                frameNode = /**@type{!Element}*/(selection.anchorNode.parentNode);
+                rect = frameNode.getBoundingClientRect();
+                if (event.clientX > rect.right) {
+                    position = getNextWalkablePosition(frameNode);
+                    if (position) {
+                        selection.anchorNode = selection.focusNode = position.container;
+                        selection.anchorOffset = selection.focusOffset = position.offset;
+                    }
+                }
+            } else if (odfUtils.isImage(selection.focusNode.firstChild) && selection.focusOffset === 1) {
+                // When click on the right side of an image that has no text elements, non-FireFox browsers
+                // will return focusNode: frame, focusOffset: 1 as the selection. Since this is not a valid cursor
+                // position, move the cursor to the next walkable position after the frame node.
+                position = getNextWalkablePosition(selection.focusNode);
+                if (position) {
+                    selection.anchorNode = selection.focusNode = position.container;
+                    selection.anchorOffset = selection.focusOffset = position.offset;
+                }
+            }
+
+            // Need to check the selection again in case the caret position didn't return any result
+            if (selection.anchorNode && selection.focusNode) {
+                selectionRange = selectionController.selectionToRange(selection);
+                selectionController.selectRange(selectionRange.range,
+                    selectionRange.hasForwardSelection, event.detail);
+            }
+            eventManager.focus(); // Mouse clicks often cause focus to shift. Recapture this straight away
+        }
+
+        /**
+         * @param {!Event} event
+         */
         function handleMouseClickEvent(event) {
             var target = getTarget(event),
-                eventDetails = {
-                    detail: event.detail,
-                    clientX: event.clientX,
-                    clientY: event.clientY,
-                    target: target
-                };
+                p = runtime.getWindow().navigator.platform;
             drawShadowCursorTask.processRequests(); // Resynchronise the shadow cursor before processing anything else
             if (odfUtils.isImage(target) && odfUtils.isCharacterFrame(target.parentNode)) {
                 selectionController.selectImage(/**@type{!Node}*/(target.parentNode));
@@ -481,55 +504,14 @@
                     // the click is processed. Set 0 timeout here so the newly clicked position can be updated
                     // by the browser. Unfortunately this is only working in Firefox. For other browsers, we have to work
                     // out the caret position from two coordinates.
-                    handleMouseClickTimeoutId = runtime.setTimeout(function () {
-                        var selection = mutableSelection(window.getSelection()),
-                            selectionRange,
-                            position,
-                            frameNode,
-                            rect;
-                        if (!selection.anchorNode && !selection.focusNode) {
-                            // chrome & safari will report null for focus and anchor nodes after a right-click in text selection
-                            position = caretPositionFromPoint(eventDetails.clientX, eventDetails.clientY);
-                            if (position) {
-                                selection.anchorNode = /**@type{!Node}*/(position.container);
-                                selection.anchorOffset = position.offset;
-                                selection.focusNode = selection.anchorNode;
-                                selection.focusOffset = selection.anchorOffset;
-                            }
-                        }
-
-                        if (odfUtils.isImage(selection.focusNode) && selection.focusOffset === 0) {
-                            // In FireFox if an image has no text around it, click on either side of the
-                            // image resulting the same selection get returned. focusNode: image, focusOffset: 0
-                            // Move the cursor to the next walkable position when clicking on the right side of an image
-                            frameNode = /**@type{!Element}*/(selection.anchorNode.parentNode);
-                            rect = frameNode.getBoundingClientRect();
-                            if (event.clientX > rect.right) {
-                                position = getNextWalkablePosition(frameNode);
-                                if (position) {
-                                    selection.anchorNode = selection.focusNode = position.container;
-                                    selection.anchorOffset = selection.focusOffset = position.offset;
-                                }
-                            }
-                        } else if (odfUtils.isImage(selection.focusNode.firstChild) && selection.focusOffset === 1) {
-                            // When click on the right side of an image that has no text elements, non-FireFox browsers
-                            // will return focusNode: frame, focusOffset: 1 as the selection. Since this is not a valid cursor
-                            // position, move the cursor to the next walkable position after the frame node.
-                            position = getNextWalkablePosition(selection.focusNode);
-                            if (position) {
-                                selection.anchorNode = selection.focusNode = position.container;
-                                selection.anchorOffset = selection.focusOffset = position.offset;
-                            }
-                        }
-
-                        // Need to check the selection again in case the caret position didn't return any result
-                        if (selection.anchorNode && selection.focusNode) {
-                            selectionRange = selectionController.selectionToRange(selection);
-                            selectionController.selectRange(selectionRange.range,
-                                selectionRange.hasForwardSelection, eventDetails.detail);
-                        }
-                        eventManager.focus(); // Mouse clicks often cause focus to shift. Recapture this straight away
-                    }, 0);
+                    // On iOS Safari however, you cannot trigger focus on the event manager within a timeout.
+                    if (p === 'iPad' || p === 'iPhone' || p === 'iPod') {
+                        moveByMouseClickEvent(event);
+                    } else {
+                        handleMouseClickTimeoutId = runtime.setTimeout(function () {
+                            moveByMouseClickEvent(event);
+                        }, 0);
+                    }
                 }
             }
             clickCount = 0;
@@ -930,8 +912,6 @@
             odtDocument.unsubscribe(ops.OdtDocument.signalCursorAdded, inputMethodEditor.registerCursor);
             odtDocument.unsubscribe(ops.OdtDocument.signalCursorRemoved, inputMethodEditor.removeCursor);
             odtDocument.unsubscribe(ops.OdtDocument.signalOperationEnd, updateUndoStack);
-            odtDocument.unsubscribe(ops.OdtDocument.signalProcessingBatchStart, saveFocus);
-            odtDocument.unsubscribe(ops.OdtDocument.signalProcessingBatchEnd, restoreFocus);
 
             callback();
         }
@@ -1015,8 +995,6 @@
             odtDocument.subscribe(ops.OdtDocument.signalCursorAdded, inputMethodEditor.registerCursor);
             odtDocument.subscribe(ops.OdtDocument.signalCursorRemoved, inputMethodEditor.removeCursor);
             odtDocument.subscribe(ops.OdtDocument.signalOperationEnd, updateUndoStack);
-            odtDocument.subscribe(ops.OdtDocument.signalProcessingBatchStart, saveFocus);
-            odtDocument.subscribe(ops.OdtDocument.signalProcessingBatchEnd, restoreFocus);
         }
 
         init();
