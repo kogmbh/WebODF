@@ -1608,7 +1608,10 @@ var ops = {};
         try {
             content = runtime.readFileSync(path, "utf-8");
         } catch (/**@type{string}*/e) {
-            console.log(String(e));
+            // Windows gets really excited about seeing the word Error before the first colon
+            // and decides the build has failed. Prevent this misunderstanding  by replacing
+            // the first "Error" with "WARN"
+            console.log(String(e).replace(/^\s*[Ee]rror\s*:\s*/, "WARN: "));
             return;
         }
         list = JSON.parse(/**@type{string}*/(content));
