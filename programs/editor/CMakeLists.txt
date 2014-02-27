@@ -1,4 +1,5 @@
 SET(COMMON_EDITOR_FILES
+    avatar-bella.png
     Tools.js
     avatar-joe.png
     EditorSession.js
@@ -116,6 +117,7 @@ add_custom_target(more-common-editorfiles-target
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/resources/ resources/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/translations/ translations/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/widgets/ widgets/
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/plugins/ plugins/
 )
 
 ##################
@@ -137,6 +139,7 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy_directory resources/ ${WODOTEXTEDITORCODE_BUILDDIR}/resources/
     COMMAND ${CMAKE_COMMAND} -E copy_directory translations/ ${WODOTEXTEDITORCODE_BUILDDIR}/translations/
     COMMAND ${CMAKE_COMMAND} -E copy_directory widgets/ ${WODOTEXTEDITORCODE_BUILDDIR}/widgets/
+    COMMAND ${CMAKE_COMMAND} -E copy_directory plugins/ ${WODOTEXTEDITORCODE_BUILDDIR}/plugins/
 
     # dojo compiled
     COMMAND ${CMAKE_COMMAND} -E copy dojo-amalgamation.js ${WODOTEXTEDITORCODE_BUILDDIR}

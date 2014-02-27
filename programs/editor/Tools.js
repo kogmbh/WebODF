@@ -41,8 +41,9 @@ define("webodf/editor/Tools", [
     "webodf/editor/widgets/paragraphStylesDialog",
     "webodf/editor/widgets/zoomSlider",
     "webodf/editor/widgets/aboutDialog",
-    "webodf/editor/EditorSession"],
-    function (ready, MenuItem, DropDownMenu, Button, DropDownButton, Toolbar, ParagraphAlignment, SimpleStyles, UndoRedoMenu, CurrentStyle, AnnotationControl, EditHyperlinks, ImageInserter, ParagraphStylesDialog, ZoomSlider, AboutDialog, EditorSession) {
+    "webodf/editor/EditorSession",
+    "webodf/plugins/bella/BellaControl"],
+    function (ready, MenuItem, DropDownMenu, Button, DropDownButton, Toolbar, ParagraphAlignment, SimpleStyles, UndoRedoMenu, CurrentStyle, AnnotationControl, EditHyperlinks, ImageInserter, ParagraphStylesDialog, ZoomSlider, AboutDialog, EditorSession, BellaControl) {
         "use strict";
 
         return function Tools(toolbarElementId, args) {
@@ -262,6 +263,8 @@ define("webodf/editor/Tools", [
                     });
                     closeButton.placeAt(toolbar);
                 }
+
+                createTool(BellaControl, true);
 
                 setEditorSession(editorSession);
             });

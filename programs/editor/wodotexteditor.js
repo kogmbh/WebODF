@@ -113,6 +113,7 @@ var Wodo = Wodo || (function () {
         return {
             locale: WebODFEditorDojoLocale,
             paths: {
+                "webodf/plugins": installationPath + "/plugins",
                 "webodf/editor": installationPath,
                 "dijit":         installationPath + "/dijit",
                 "dojox":         installationPath + "/dojox",
