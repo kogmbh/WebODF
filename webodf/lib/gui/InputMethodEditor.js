@@ -262,7 +262,7 @@
          * @return {undefined}
          */
         function synchronizeCompositionText() {
-            compositionElement.textContent = eventTrap.textContent;
+            compositionElement.textContent = eventTrap.value;
         }
 
         /**

@@ -282,7 +282,7 @@ gui.EventManager = function EventManager(odtDocument) {
 
     /**
      * Returns the event trap div
-     * @return {!Element}
+     * @return {!HTMLInputElement}
      */
     this.getEventTrap = function () {
         return eventTrap;
