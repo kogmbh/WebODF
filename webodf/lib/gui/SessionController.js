@@ -87,7 +87,7 @@
             inputMethodEditor = new gui.InputMethodEditor(inputMemberId, eventManager),
             /**@type{number}*/
             clickCount = 0,
-            hyperlinkClickHandler = new gui.HyperlinkClickHandler(odtDocument.getRootNode),
+            hyperlinkClickHandler = new gui.HyperlinkClickHandler(odtDocument.getRootNode, keyDownHandler, keyUpHandler),
             hyperlinkController = new gui.HyperlinkController(session, inputMemberId),
             selectionController = new gui.SelectionController(session, inputMemberId),
             modifier = gui.KeyboardHandler.Modifier,
@@ -715,9 +715,6 @@
             eventManager.subscribe("cut", handleCut);
             eventManager.subscribe("beforepaste", handleBeforePaste);
             eventManager.subscribe("paste", handlePaste);
-            // eventManager will bind focus event on both eventTrap and window which changes the cursor style to text
-            // straight after cmd+click on MacOs. So bind to window object directly here.
-            window.addEventListener("focus", hyperlinkClickHandler.showTextCursor, false);
 
             if (undoManager) {
                 // For most undo managers, the initial state is a clean document *with* a cursor present
@@ -725,7 +722,7 @@
             }
 
             inputMethodEditor.setEditing(true);
-            hyperlinkClickHandler.setModifier(isMacOS ? gui.HyperlinkClickHandler.Modifier.Meta : gui.HyperlinkClickHandler.Modifier.Ctrl);
+            hyperlinkClickHandler.setModifier(isMacOS ? modifier.Meta : modifier.Ctrl);
             // Most browsers will go back one page when given an unhandled backspace press
             // To prevent this, the event handler for this key should always return true
             keyDownHandler.bind(keyCode.Backspace, modifier.None, returnTrue(textController.removeTextByBackspaceKey), true);
@@ -750,13 +747,6 @@
                 keyDownHandler.bind(keyCode.C, modifier.MetaShift, annotationController.addAnnotation);
                 keyDownHandler.bind(keyCode.Z, modifier.Meta, undo);
                 keyDownHandler.bind(keyCode.Z, modifier.MetaShift, redo);
-                keyDownHandler.bind(keyCode.LeftMeta, modifier.Meta, hyperlinkClickHandler.showPointerCursor);
-                keyDownHandler.bind(keyCode.MetaInMozilla, modifier.Meta, hyperlinkClickHandler.showPointerCursor);
-
-                // event.ctrlKey and event.metaKey are always equal false in keyup event. Cannot really refer a source,
-                // but seem this is how all browsers behave. Probably because there is no such need in this event.
-                keyUpHandler.bind(keyCode.LeftMeta, modifier.None, hyperlinkClickHandler.showTextCursor);
-                keyUpHandler.bind(keyCode.MetaInMozilla, modifier.None, hyperlinkClickHandler.showTextCursor);
             } else {
                 keyDownHandler.bind(keyCode.B, modifier.Ctrl, rangeSelectionOnly(directFormattingController.toggleBold));
                 keyDownHandler.bind(keyCode.I, modifier.Ctrl, rangeSelectionOnly(directFormattingController.toggleItalic));
@@ -768,11 +758,6 @@
                 keyDownHandler.bind(keyCode.C, modifier.CtrlAlt, annotationController.addAnnotation);
                 keyDownHandler.bind(keyCode.Z, modifier.Ctrl, undo);
                 keyDownHandler.bind(keyCode.Z, modifier.CtrlShift, redo);
-                keyDownHandler.bind(keyCode.Ctrl, modifier.Ctrl, hyperlinkClickHandler.showPointerCursor);
-
-                // event.ctrlKey and event.metaKey are always equal false in keyup event. Cannot really refer a source,
-                // but seem this is how all browsers behave. Probably because there is no such need in this event.
-                keyUpHandler.bind(keyCode.Ctrl, modifier.None, hyperlinkClickHandler.showTextCursor);
             }
 
             // the default action is to insert text into the document
@@ -803,10 +788,9 @@
             eventManager.unsubscribe("beforecut", handleBeforeCut);
             eventManager.unsubscribe("paste", handlePaste);
             eventManager.unsubscribe("beforepaste", handleBeforePaste);
-            window.removeEventListener("focus", hyperlinkClickHandler.showTextCursor, false);
 
             inputMethodEditor.setEditing(false);
-            hyperlinkClickHandler.setModifier(gui.HyperlinkClickHandler.Modifier.None);
+            hyperlinkClickHandler.setModifier(modifier.None);
             keyDownHandler.bind(keyCode.Backspace, modifier.None, function () { return true; }, true);
             keyDownHandler.unbind(keyCode.Delete, modifier.None);
             keyDownHandler.unbind(keyCode.Tab, modifier.None);
@@ -823,11 +807,6 @@
                 keyDownHandler.unbind(keyCode.C, modifier.MetaShift);
                 keyDownHandler.unbind(keyCode.Z, modifier.Meta);
                 keyDownHandler.unbind(keyCode.Z, modifier.MetaShift);
-                keyDownHandler.unbind(keyCode.LeftMeta, modifier.Meta);
-                keyDownHandler.unbind(keyCode.MetaInMozilla, modifier.Meta);
-
-                keyUpHandler.unbind(keyCode.LeftMeta, modifier.None);
-                keyUpHandler.unbind(keyCode.MetaInMozilla, modifier.None);
             } else {
                 keyDownHandler.unbind(keyCode.B, modifier.Ctrl);
                 keyDownHandler.unbind(keyCode.I, modifier.Ctrl);
@@ -839,9 +818,6 @@
                 keyDownHandler.unbind(keyCode.C, modifier.CtrlAlt);
                 keyDownHandler.unbind(keyCode.Z, modifier.Ctrl);
                 keyDownHandler.unbind(keyCode.Z, modifier.CtrlShift);
-                keyDownHandler.unbind(keyCode.Ctrl, modifier.Ctrl);
-
-                keyUpHandler.unbind(keyCode.Ctrl, modifier.None);
             }
 
             keyPressHandler.setDefault(null);
@@ -900,6 +876,13 @@
          */
         this.getDirectFormattingController = function () {
             return directFormattingController;
+        };
+
+        /**
+         * @return {!gui.HyperlinkClickHandler}
+         */
+        this.getHyperlinkClickHandler = function () {
+            return hyperlinkClickHandler;
         };
 
         /**

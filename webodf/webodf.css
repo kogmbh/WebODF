@@ -612,3 +612,23 @@ dc|*::-moz-selection {
     left: -4px;
     margin-top: -2.5px; /* half of the height defined in #imageSelector > div */
 }
+
+#tooltip {
+    display: none;
+    color: #000000;
+    background-color: #f5f5f5;
+    border: 1px solid #000000;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px gray;
+    padding: 3px;
+    position: absolute;
+    width: 210px;
+    text-align: left;
+    word-break: break-all;
+    z-index: 16;
+}
+
+#tooltipText {
+    display: block;
+    font-weight: bold;
+}
