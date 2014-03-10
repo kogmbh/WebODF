@@ -1284,6 +1284,7 @@
                 element.style.display = "inline-block";
                 var odfnode = odfcontainer.rootElement;
                 element.ownerDocument.importNode(odfnode, true);
+                (new odf.Style(odfnode)).update(); // just to test Style class
 
                 formatting.setOdfContainer(odfcontainer);
                 handleFonts(odfcontainer, fontcss);

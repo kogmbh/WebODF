@@ -203,6 +203,7 @@
         "gui.AnnotationViewManager",
         "odf.FontLoader",
         "odf.Formatting",
+        "odf.Style",
         "odf.Style2CSS",
         "ops.Canvas"
     ],
@@ -219,6 +220,9 @@
     "odf.OdfUtils": [
         "core.DomUtils",
         "odf.Namespaces"
+    ],
+    "odf.Style": [
+        "odf.OdfContainer"
     ],
     "odf.Style2CSS": [
         "core.CSSUnits",
