@@ -341,7 +341,7 @@ odf.StyleInfo = function StyleInfo() {
          *     localname: name of attribute,
          *     keyname: keyname
          * }
-         * @type {!Object.<string,Object.<string,Array.<Object.<string,string>>>>}
+         * @type {!Object.<!string,!Object.<!string,!Array.<!{keyname:!string,ns:!string,localname:!string}>>>}
          */
         elements,
         xpath = xmldom.XPath;
@@ -898,6 +898,34 @@ odf.StyleInfo = function StyleInfo() {
             mergeUsedAutomaticStyles(automaticStylesRoot, usedStyles);
         }
     };
+
+    /**
+     * Return the name of the style for the given family if it is associated
+     * with the element.
+     * @param {!string} family
+     * @param {!Element} element
+     * @return {!string|undefined}
+     */
+    function getStyleName(family, element) {
+        var stylename, i,
+            map = elements[element.localName];
+        if (map) {
+            map = map[element.namespaceURI];
+            if (map) {
+                for (i = 0; i < map.length; i += 1) {
+                    if (map[i].keyname === family) {
+                        map = map[i];
+                        if (element.hasAttributeNS(map.ns, map.localname)) {
+                            stylename = element.getAttributeNS(map.ns, map.localname);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return stylename;
+    }
+    this.getStyleName = getStyleName;
 
     this.hasDerivedStyles = hasDerivedStyles;
     this.prefixStyleNames = prefixStyleNames;

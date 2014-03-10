@@ -182,6 +182,7 @@ odf.Style = function Style(odfroot) {
         paragraphStylePile,
         fons = odf.Namespaces.fons,
         stylens = odf.Namespaces.stylens,
+        textns = odf.Namespaces.textns,
         /**@type{!odf.Style.TextProperties}*/
         defaultTextProperties = {
             fontWeight: "normal",
@@ -190,7 +191,8 @@ odf.Style = function Style(odfroot) {
         /**@type{!odf.Style.ParagraphProperties}*/
         defaultParagraphProperties = {
             marginTop: "1cm"
-        };
+        },
+        styleInfo = new odf.StyleInfo();
     /**
      * @param {!string} family
      * @return {!odf.StylePile|undefined}
@@ -205,20 +207,91 @@ odf.Style = function Style(odfroot) {
         return pile;
     }
     /**
-     * @param {!string} styleName
-     * @return {!odf.Style.TextStyle}
+     * @param {!string} family
+     * @param {!string} ns
+     * @param {!Element} element
+     * @param {!Array.<!string>} chain
+     * @return {undefined}
      */
-    this.getTextStyle = function (styleName) {
-        var style = textStylePile.getStyle(styleName);
-        return /**@type{!odf.Style.TextStyle}*/(style);
-    };
+    function appendStyles(family, ns, element, chain) {
+        var names = element.getAttributeNS(ns, "class-names"),
+            stylename,
+            i;
+        if (names) {
+            names = names.split(" ");
+            for (i = 0; i < names.length; i += 1) {
+                stylename = names[i];
+                if (stylename) {
+                    chain.push(family);
+                    chain.push(stylename);
+                }
+            }
+        }
+    }
     /**
-     * @param {!string} styleName
+     * @param {!Element} element
+     * @param {!Array.<!string>} chain
+     * @return {!Array.<!string>}
+     */
+    function getParagraphStyleChain(element, chain) {
+        var stylename = styleInfo.getStyleName("paragraph", element);
+        // text:p and text:h can have text:class-names
+        if (element.namespaceURI === textns &&
+                (element.localName === "h" || element.localName === "p")) {
+            appendStyles("paragraph", textns, element, chain);
+        }
+        if (stylename !== undefined) {
+            chain.push("paragraph");
+            chain.push(stylename);
+        }
+console.log(chain);
+        return chain;
+    }
+    /**
+     * @param {!Element} element
+     * @param {!Array.<!string>} chain
+     * @return {!Array.<!string>}
+     */
+    function getTextStyleChain(element, chain) {
+        var stylename = styleInfo.getStyleName("text", element),
+            parent = element.parentElement;
+        // a text:span can have text:class-names
+        if (element.localName === "span" && element.namespaceURI === textns) {
+            appendStyles("text", textns, element, chain);
+        }
+        if (stylename !== undefined) {
+            chain.push("text");
+            chain.push(stylename);
+        }
+        if (!parent || parent === odfroot) {
+            return chain;
+        }
+        if (parent.namespaceURI === textns &&
+                (parent.localName === "p" || parent.localName === "h")) {
+            getParagraphStyleChain(parent, chain);
+        } else {
+            getTextStyleChain(parent, chain);
+        }
+console.log(chain);
+        return chain;
+    }
+    /**
+     * @param {!Element} element
      * @return {!odf.Style.ParagraphStyle}
      */
-    this.getParagraphStyle = function (styleName) {
-        var style = paragraphStylePile.getStyle(styleName);
+    this.getParagraphStyle = function (element) {
+        var styleChain = getParagraphStyleChain(element, []),
+            style = paragraphStylePile.getStyle(styleChain[0]);
         return /**@type{!odf.Style.ParagraphStyle}*/(style);
+    };
+    /**
+     * @param {!Element} element
+     * @return {!odf.Style.TextStyle}
+     */
+    this.getTextStyle = function (element) {
+        var styleChain = getTextStyleChain(element, []),
+            style = textStylePile.getStyle(styleChain[0]);
+        return /**@type{!odf.Style.TextStyle}*/(style);
     };
     /**
      * @param {!Element} element
@@ -282,7 +355,7 @@ odf.Style = function Style(odfroot) {
      * @return {?Element}
      */
     function parseParagraphProperties(styleChild, paragraph) {
-        var e = advanceToSibling(styleChild, stylens, "text-properties");
+        var e = advanceToSibling(styleChild, stylens, "paragraph-properties");
         if (e === null) {
             return e;
         }
@@ -328,6 +401,7 @@ odf.Style = function Style(odfroot) {
     function createParagraphStylePile() {
         var /**@type{!odf.Style.ParagraphStyle}*/
             def = {
+                masterPageStyle: null,
                 text: defaultTextProperties,
                 paragraph: defaultParagraphProperties
             };
@@ -363,8 +437,12 @@ odf.Style = function Style(odfroot) {
     }
     this.update = update;
     update();
-    console.log(JSON.stringify(this.getParagraphStyle("P1")));
-    console.log(JSON.stringify(this.getTextStyle("T2").text.fontWeight));
+/*
+    console.log(JSON.stringify(this.getParagraphStyle(odfroot.body.getElementsByTagName("p")[0])));
+console.log(odfroot.body);
+    console.log(JSON.stringify(this.getParagraphStyle(odfroot.body)));
+//    console.log(JSON.stringify(this.getTextStyle("T2").text.fontWeight));
+*/
 };
 /**@typedef{{
     fontWeight:!string,
@@ -380,6 +458,7 @@ odf.Style.ParagraphProperties;
 }}*/
 odf.Style.TextStyle;
 /**@typedef{{
+    masterPageStyle:?string,
     text:!odf.Style.TextProperties,
     paragraph:!odf.Style.ParagraphProperties
 }}*/
