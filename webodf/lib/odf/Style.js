@@ -51,18 +51,63 @@ odf.StylePile = function (parser, implementationDefault) {
      */
     function cloneStyle(parent) {
         var style, i, group;
-        if (parent) {
-            style = Object.create(parent);
-            for (i = 0; i < propertyGroups.length; i += 1) {
-                group = propertyGroups[i];
-                if (parent[group]) {
-                    style[group] = Object.create(parent[group]);
-                }
+        style = Object.create(parent);
+        for (i = 0; i < propertyGroups.length; i += 1) {
+            group = propertyGroups[i];
+            if (parent[group]) {
+                style[group] = Object.create(parent[group]);
             }
-        } else {
-            style = {};
         }
         return style;
+    }
+    /**
+     * Copy properties of a into b.
+     * @param {!Object} a
+     * @param {!Object} b
+     * @return {undefined}
+     */
+    function copyProperties(a, b) {
+        var /**@type{!string}*/
+            i;
+        for (i in a) {
+            if (a.hasOwnProperty(i) && !b.hasOwnProperty(i)) {
+                b[i] = a[i];
+            }
+        }
+    }
+    /**
+     * Copy all properties of a into b.
+     * @param {!Object} a
+     * @param {!Object} b
+     * @return {undefined}
+     */
+    function copyAllProperties(a, b) {
+        copyProperties(a, b);
+        var i, group;
+        for (i = 0; i < propertyGroups.length; i += 1) {
+            group = propertyGroups[i];
+            copyProperties(a[group], b[group]);
+        }
+    }
+    /**
+     * Place a copy of the object chain child on the object chain parent.
+     * @param {!Object} child
+     * @param {!Object} parent
+     * @return {!Object}
+     */
+    function combine(child, parent) {
+        var proto = "__proto__",
+            p = /**@type{!Object}*/(child[proto]),
+            input,
+            output;
+        if (Object.keys(p).length !== 0) {
+            input = combine(p, parent);
+        } else {
+            input = child;
+        }
+        output = cloneStyle(input);
+        copyAllProperties(child, output);
+        return output;
     }
     /**
      * @param {!Element} element
@@ -100,7 +145,7 @@ odf.StylePile = function (parser, implementationDefault) {
         if (!style) {
             element = styles[styleName];
             if (element) {
-                visited.push(element.getAttributeNS(stylens, "name"));
+                visited.push(styleName);
                 style = parseStyle(element, visited);
                 parsedStyles[styleName] = style;
             } else {
@@ -111,25 +156,32 @@ odf.StylePile = function (parser, implementationDefault) {
     };
     /**
      * @param {!string} styleName
+     * @param {!Object} parentStyle
      * @return {!Object}
      */
-    function getStyle(styleName) {
-        var style = parsedAutomaticStyles[styleName],
-            element;
+    function getStyle(styleName, parentStyle) {
+        var style = parsedAutomaticStyles[styleName] || parsedStyles[styleName],
+            element,
+            visited = [];
         if (!style) {
             element = automaticStyles[styleName];
-            if (element) {
-                style = parseStyle(element, []);
-            } else {
-                style = defaultStyle;
+            if (!element) {
+                element = styles[styleName];
+                if (element) {
+                    visited.push(styleName);
+                }
             }
+            if (element) {
+                style = parseStyle(element, visited);
+            }
+        }
+        if (style) {
+            style = combine(style, parentStyle);
+        } else {
+            style = parentStyle;
         }
         return style;
     }
-    /**
-     * @param {!string} styleName
-     * @return {!Object}
-     */
     this.getStyle = getStyle;
     /**
      * @param {!Element} style
@@ -139,6 +191,12 @@ odf.StylePile = function (parser, implementationDefault) {
         if (defaultStyle === implementationDefault) {
             defaultStyle = parseStyle(style, []);
         }
+    };
+    /**
+     * @return {!Object}
+     */
+    this.getDefaultStyle = function () {
+        return defaultStyle;
     };
     /**
      * @param {!Element} style
@@ -176,7 +234,11 @@ odf.StylePile = function (parser, implementationDefault) {
  */
 odf.Style = function Style(odfroot) {
     "use strict";
-    var /**@type{!odf.StylePile}*/
+    var /**@type{!{text:!odf.StylePile,paragraph:!odf.StylePile}}*/
+        stylePiles,
+        /**@type{!Object.<!string,!Object>}*/
+        styleCache,
+        /**@type{!odf.StylePile}*/
         textStylePile,
         /**@type{!odf.StylePile}*/
         paragraphStylePile,
@@ -198,13 +260,7 @@ odf.Style = function Style(odfroot) {
      * @return {!odf.StylePile|undefined}
      */
     function getPile(family) {
-        var pile;
-        if (family === "text") {
-            pile = textStylePile;
-        } else if (family === "paragraph") {
-            pile = paragraphStylePile;
-        }
-        return pile;
+        return stylePiles[family];
     }
     /**
      * @param {!string} family
@@ -244,7 +300,6 @@ odf.Style = function Style(odfroot) {
             chain.push("paragraph");
             chain.push(stylename);
         }
-console.log(chain);
         return chain;
     }
     /**
@@ -272,8 +327,58 @@ console.log(chain);
         } else {
             getTextStyleChain(parent, chain);
         }
-console.log(chain);
         return chain;
+    }
+    /**
+     * @param {!Array.<!string>} styleChain
+     * @param {!string} family
+     * @return {!{style:!Object,pos:!number,key:!string}}
+     */
+    function findCachedStyle(styleChain, family) {
+        var key = styleChain.join("/"),
+            i,
+            /**@type{!Object|undefined}*/
+            style,
+            stylePile;
+        for (i = 0; i < styleChain.length; i += 2) {
+            style = /**@type{!Object|undefined}*/(styleCache[key]);
+            if (style) {
+                break;
+            }
+            key = key.substr(2 + styleChain[i].length + styleChain[i + 1].length);
+        }
+        if (style === undefined) {
+            if (styleChain.length > 1) {
+                family = styleChain[styleChain.length - 2];
+            }
+            stylePile = /**@type{!odf.StylePile}*/(stylePiles[family]);
+            style = stylePile.getDefaultStyle();
+        }
+        return { style: style, pos: i - 2, key: key };
+    }
+    /**
+     * @param {!Array.<!string>} styleChain
+     * @param {!string} family
+     * @return {!Object}
+     */
+    function chainToStyle(styleChain, family) {
+        runtime.assert(styleChain.length % 2 === 0, "Invalid style chain.");
+        var r = findCachedStyle(styleChain, family),
+            i = r.pos,
+            style = r.style,
+            key = r.key,
+            styleName,
+            stylePile;
+        while (i >= 0) {
+            family =  styleChain[i];
+            styleName = styleChain[i + 1];
+            key = family + "/" + styleName + (key ? "/" + key : "");
+            stylePile = /**@type{!odf.StylePile}*/(stylePiles[family]);
+            style = stylePile.getStyle(styleName, style);
+            styleCache[key] = style;
+            i -= 2;
+        }
+        return style;
     }
     /**
      * @param {!Element} element
@@ -281,7 +386,7 @@ console.log(chain);
      */
     this.getParagraphStyle = function (element) {
         var styleChain = getParagraphStyleChain(element, []),
-            style = paragraphStylePile.getStyle(styleChain[0]);
+            style = chainToStyle(styleChain, "paragraph");
         return /**@type{!odf.Style.ParagraphStyle}*/(style);
     };
     /**
@@ -290,7 +395,7 @@ console.log(chain);
      */
     this.getTextStyle = function (element) {
         var styleChain = getTextStyleChain(element, []),
-            style = textStylePile.getStyle(styleChain[0]);
+            style = chainToStyle(styleChain, "text");
         return /**@type{!odf.Style.TextStyle}*/(style);
     };
     /**
@@ -415,6 +520,11 @@ console.log(chain);
             pile;
         createTextStylePile();
         createParagraphStylePile();
+        stylePiles = {
+            text: textStylePile,
+            paragraph: paragraphStylePile
+        };
+        styleCache = {};
         while (e) {
             pile = getPileFromElement(e);
             if (pile && e.namespaceURI === stylens) {
@@ -438,11 +548,10 @@ console.log(chain);
     this.update = update;
     update();
 /*
-    console.log(JSON.stringify(this.getParagraphStyle(odfroot.body.getElementsByTagName("p")[0])));
-console.log(odfroot.body);
+    console.log(JSON.stringify(this.getTextStyle(odfroot.body.getElementsByTagName("span")[0])));
     console.log(JSON.stringify(this.getParagraphStyle(odfroot.body)));
 //    console.log(JSON.stringify(this.getTextStyle("T2").text.fontWeight));
-*/
+//    */
 };
 /**@typedef{{
     fontWeight:!string,
