@@ -237,6 +237,9 @@ gui.EventManager = function EventManager(odtDocument) {
                 runtime.clearTimeout(timer);
             } else {
                 timer = setTimeout(function () {
+                    // Try to block native selection
+                    // from appearing
+                    event.preventDefault();
                     callback({
                         clientX: touch.clientX,
                         clientY: touch.clientY,
