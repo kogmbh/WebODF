@@ -51,6 +51,7 @@ module.exports = function (config) {
             'lib/gui/AnnotationViewManager.js',
             'lib/odf/FontLoader.js',
             'lib/odf/Formatting.js',
+            'lib/odf/Style.js',
             'lib/odf/Style2CSS.js',
             'lib/gui/ZoomHelper.js',
             'lib/ops/Canvas.js',
