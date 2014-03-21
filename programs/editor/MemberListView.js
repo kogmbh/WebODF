@@ -116,7 +116,12 @@ define("webodf/editor/MemberListView",
                     caret.toggleHandleVisibility();
                 }
             };
-            memberListDiv.appendChild(avatarDiv);
+
+            if (memberId === editorSession.getLocalMemberId()){
+                memberListDiv.insertBefore(avatarDiv, memberListDiv.firstChild);
+            } else {
+                memberListDiv.appendChild(avatarDiv);
+            }
         }
 
         /**

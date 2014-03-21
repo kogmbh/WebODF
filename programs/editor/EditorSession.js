@@ -562,6 +562,14 @@ define("webodf/editor/EditorSession", [
         };
 
         /**
+         * 
+         * @return {!string}
+         */
+        this.getLocalMemberId = function(){
+            return localMemberId;
+        };
+
+        /**
          * @param {!string} memberId
          * @return {?ops.Member}
          */
