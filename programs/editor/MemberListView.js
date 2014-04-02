@@ -117,7 +117,7 @@ define("webodf/editor/MemberListView",
                 }
             };
 
-            if (memberId === editorSession.getLocalMemberId()){
+            if (memberId === editorSession.sessionController.getInputMemberId()){
                 memberListDiv.insertBefore(avatarDiv, memberListDiv.firstChild);
             } else {
                 memberListDiv.appendChild(avatarDiv);
