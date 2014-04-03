@@ -146,7 +146,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             return false;
         }
     }
-    
+
     /**
      * Test cursor iteration over a document fragment. Each supported cursor position should be indicated in
      * the fragment using the pipe character ('|'). This exercises both forwards and backwards iteration.
@@ -545,6 +545,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         testCursorPositions("<text:p>|<text:tab>    </text:tab>|<text:s> </text:s>|<text:s> </text:s>|</text:p>");
         testCursorPositions("<text:p>|<text:tab>    </text:tab>| |<text:s> </text:s>|</text:p>");
         testCursorPositions("<text:p>|a| | <text:s> </text:s>|   </text:p>");
+        testCursorPositions("<text:p><e:editinfo></e:editinfo><text:span></text:span>|a|<text:s> </text:s>|<text:s> </text:s>|<text:span></text:span><text:span></text:span></text:p>");
     }
     function testAvailablePositions_DrawElements() {
         testCursorPositions("<text:p>|<draw:frame text:anchor-type=\"as-char\"><draw:image><office:binary-data>data</office:binary-data></draw:image></draw:frame>|</text:p>");
