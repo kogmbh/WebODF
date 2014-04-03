@@ -158,17 +158,21 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             serializer = new xmldom.LSSerializer(),
             cursorSerialized = /<c:cursor[^>]*><\/c:cursor>/,
             position,
-            step = 0;
+            step = 0,
+            documentRoot;
 
         serializer.filter = new OdfOrCursorNodeFilter();
         runtime.log("Scenario: " + documentString);
         t.segmentCount = segments.length;
         r.shouldBe(t, "t.segmentCount > 1", "true");
-        createOdtDocument(segments.join(""));
+        documentRoot = createOdtDocument(segments.join(""));
+        t.documentLength = t.odtDocument.convertDomPointToCursorStep(documentRoot, documentRoot.childNodes.length);
 
         // Test iteration forward
         for (position = 1; position < segments.length; position += 1) {
             setCursorPosition(step);
+            t.currentDocLength = t.odtDocument.convertDomPointToCursorStep(documentRoot, documentRoot.childNodes.length);
+            r.shouldBe(t, "t.currentDocLength", "t.documentLength");
             t.lastValidStep = step;
             t.expected = "<office:text>" +
                 segments.slice(0, position).join("") + "|" + segments.slice(position, segments.length).join("") +
@@ -186,6 +190,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         // Test iteration backward
         for (position = segments.length - 1; position > 0; position -= 1) {
             setCursorPosition(step);
+            r.shouldBe(t, "t.currentDocLength", "t.documentLength");
             t.expected = "<office:text>" +
                 segments.slice(0, position).join("") + "|" + segments.slice(position, segments.length).join("") +
                 "</office:text>";
