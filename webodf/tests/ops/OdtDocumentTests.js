@@ -52,7 +52,8 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             office: odf.Namespaces.namespaceMap.office,
             draw: odf.Namespaces.namespaceMap.draw,
             e: "urn:webodf:names:editinfo",
-            c: "urn:webodf:names:cursor"
+            c: "urn:webodf:names:cursor",
+            html: "http://www.w3.org/1999/xhtml"
         };
 
     /**
@@ -68,7 +69,9 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
          * @return {!number}
          */
         this.acceptNode = function (node) {
-            if (node.namespaceURI === prefixToNamespace.c || node.namespaceURI === prefixToNamespace.e) {
+            if (node.namespaceURI === prefixToNamespace.c ||
+                node.namespaceURI === prefixToNamespace.e ||
+                node.namespaceURI === prefixToNamespace.html) {
                 return NodeFilter.FILTER_ACCEPT;
             }
             return odfFilter.acceptNode(node);
@@ -553,9 +556,13 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
     }
     function testAvailablePositions_Annotations() {
         testCursorPositions('<text:p>|a|b|<office:annotation><text:list><text:list-item><text:p>|</text:p></text:list-item></text:list></office:annotation>|c|d|<office:annotation-end></office:annotation-end>1|2|</text:p>');
+        testCursorPositions('<text:p>|a|<office:annotation><text:list><text:list-item><text:p>|b|</text:p></text:list-item></text:list></office:annotation>|c|<office:annotation-end></office:annotation-end>1|2|</text:p>');
+        testCursorPositions('<text:p>|a|<office:annotation><text:list><text:list-item><text:p>|b|</text:p></text:list-item></text:list></office:annotation>|<office:annotation-end></office:annotation-end>1|2|</text:p>');
     }
     function testAvailablePositions_BetweenAnnotationAndSpan() {
-        testCursorPositions('<text:p>|a|b|<office:annotation><text:list><text:list-item><text:p>|</text:p></text:list-item></text:list></office:annotation><text:span>c|d|e|</text:span><office:annotation-end></office:annotation-end>1|2|</text:p>');
+        testCursorPositions('<text:p>|a|b|<office:annotation><text:list><text:list-item><text:p>|</text:p></text:list-item></text:list></office:annotation><text:span>|c|d|</text:span><office:annotation-end></office:annotation-end>1|2|</text:p>');
+        testCursorPositions('<text:p>|a|<html:div class="annotationWrapper"><office:annotation><text:list><text:list-item><text:p>|b|</text:p></text:list-item></text:list></office:annotation></html:div><html:span class="webodf-annotationHighlight">|c|</html:span><office:annotation-end></office:annotation-end>1|2|</text:p>');
+        testCursorPositions('<text:p>|a|<html:div class="annotationWrapper"><office:annotation><text:list><text:list-item><text:p>|b|</text:p></text:list-item></text:list></office:annotation></html:div><html:span class="webodf-annotationHighlight">|</html:span><office:annotation-end></office:annotation-end>1|2|</text:p>');
     }
 
 

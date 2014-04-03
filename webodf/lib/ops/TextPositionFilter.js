@@ -62,8 +62,10 @@ ops.TextPositionFilter = function TextPositionFilter(getRootNode) {
         var r, firstPos, rightOfChar;
         // accept if there is a character immediately to the left
         if (leftNode) {
-            // Disallow positions to the right of an inline root (like an annotation) andto the left of a grouping element (like an annotaiton highlight span)
             if (odfUtils.isInlineRoot(leftNode) && odfUtils.isGroupingElement(rightNode)) {
+                // Move first position after inline root inside trailing grouping element (part 1)
+                // Disallow positions to the right of an inline root (like an annotation) and
+                // to the left of a grouping element (like an annotation highlight span)
                 return FILTER_REJECT;
             }
             r = odfUtils.lookLeftForCharacter(leftNode);
@@ -73,6 +75,14 @@ ops.TextPositionFilter = function TextPositionFilter(getRootNode) {
             if (r === 2 && (odfUtils.scanRightForAnyCharacter(rightNode)
                 || odfUtils.scanRightForAnyCharacter(odfUtils.nextNode(container)))) {
                 // significant whitespace is ok, if not in trailing whitesp
+                return FILTER_ACCEPT;
+            }
+        } else {
+            // Note, cant use OdfUtils.previousNode here as that function automatically dives to the previous
+            // elements first child (if it has one)
+            if (odfUtils.isInlineRoot(container.previousSibling) && odfUtils.isGroupingElement(container)) {
+                // Move first position after inline root inside trailing grouping element (part 2)
+                // Allow the first position inside the first grouping element trailing an annotation
                 return FILTER_ACCEPT;
             }
         }
