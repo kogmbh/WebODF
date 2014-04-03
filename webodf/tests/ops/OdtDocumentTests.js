@@ -44,7 +44,16 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
     var r = runner,
         t,
         testarea,
-        inputMemberId = "Joe";
+        inputMemberId = "Joe",
+        prefixToNamespace = {
+            fo: odf.Namespaces.namespaceMap.fo,
+            text: odf.Namespaces.namespaceMap.text,
+            style: odf.Namespaces.namespaceMap.style,
+            office: odf.Namespaces.namespaceMap.office,
+            draw: odf.Namespaces.namespaceMap.draw,
+            e: "urn:webodf:names:editinfo",
+            c: "urn:webodf:names:cursor"
+        };
 
     /**
      * Class that filters runtime specific nodes from the DOM.
@@ -59,7 +68,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
          * @return {!number}
          */
         this.acceptNode = function (node) {
-            if (node.namespaceURI === "urn:webodf:names:cursor") {
+            if (node.namespaceURI === prefixToNamespace.c || node.namespaceURI === prefixToNamespace.e) {
                 return NodeFilter.FILTER_ACCEPT;
             }
             return odfFilter.acceptNode(node);
@@ -81,7 +90,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
     }
     function createOdtDocument(xml) {
         var domDocument = testarea.ownerDocument,
-            doc = core.UnitTest.createOdtDocument("<office:text>" + xml + "</office:text>", odf.Namespaces.namespaceMap),
+            doc = core.UnitTest.createOdtDocument("<office:text>" + xml + "</office:text>", prefixToNamespace),
             node = /**@type{!Element}*/(domDocument.importNode(doc.documentElement, true));
 
         testarea.appendChild(node);
@@ -147,7 +156,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
     function testCursorPositions(documentString) {
         var segments = documentString.split("|"),
             serializer = new xmldom.LSSerializer(),
-            cursorSerialized = /<ns\d:cursor[^>]*><\/ns\d:cursor>/,
+            cursorSerialized = /<c:cursor[^>]*><\/c:cursor>/,
             position,
             step = 0;
 
@@ -164,7 +173,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             t.expected = "<office:text>" +
                 segments.slice(0, position).join("") + "|" + segments.slice(position, segments.length).join("") +
                 "</office:text>";
-            t.result = serializer.writeToString(t.root.firstChild, odf.Namespaces.namespaceMap);
+            t.result = serializer.writeToString(t.root.firstChild, prefixToNamespace);
             t.result = t.result.replace(cursorSerialized, "|");
             r.shouldBe(t, "t.result", "t.expected");
             step += 1;
@@ -180,7 +189,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             t.expected = "<office:text>" +
                 segments.slice(0, position).join("") + "|" + segments.slice(position, segments.length).join("") +
                 "</office:text>";
-            t.result = serializer.writeToString(t.root.firstChild, odf.Namespaces.namespaceMap);
+            t.result = serializer.writeToString(t.root.firstChild, prefixToNamespace);
             t.result = t.result.replace(cursorSerialized, "|");
             r.shouldBe(t, "t.result", "t.expected");
             step -= 1;
