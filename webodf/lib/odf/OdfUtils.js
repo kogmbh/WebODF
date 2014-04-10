@@ -995,4 +995,70 @@ odf.OdfUtils = function OdfUtils() {
         return fontFamilyName;
     };
     /*jslint regexp: false*/
+    /**
+     * Convert a unit in a string to number of pixels at 96 dpi.
+     * If the input value has unit 'px' or is a number, the number is taken as
+     * is. Other allowed unit: cm, mm, pt, pc.
+     * @param {!string|!number} val
+     * @return {!number}
+     */
+    function convertToPx(val) {
+        var n = -1, length, unit;
+        if (typeof val === "number") {
+            n = val;
+        } else {
+            length = parseLength(val);
+            unit = length && length.unit;
+            if (unit === "px") {
+                n = length.value;
+            } else if (unit === "cm") {
+                n = length.value / 2.54 * 96;
+            } else if (unit === "mm") {
+                n = length.value / 25.4 * 96;
+            } else if (unit === "in") {
+                n = length.value * 96;
+            } else if (unit === "pt") {
+                n = length.value / 0.75;
+            } else if (unit === "pc") {
+                n = length.value * 16;
+            } else {
+                // TODO: handle catching of this exception in the callers
+                throw "Unit " + unit + " not supported by this function.";
+            }
+        }
+        return n;
+    }
+    this.convertToPx = convertToPx;
+    /**
+     * @param {!string|!number} a
+     * @param {!string|!number} b
+     * @return {!number}
+     */
+    this.sumLengths = function (a, b) {
+        var an = convertToPx(a),
+            bn = convertToPx(b);
+        return an + bn;
+    };
+    /**
+     * Find the page, slide or spreadsheet for a node and return the rect for it.
+     * The page, slide or spreadsheet should be an ancestor to the node.
+     * @param {!Element} node
+     * @return {?odf.OdfRect}
+     */
+    this.getPageRect = function (node) {
+        var p = node;
+        while (p && !((p.namespaceURI === odf.Namespaces.officens
+                          && (p.localName === "body"
+                              || p.localName === "spreadsheet"))
+                       || (p.namespaceURI === odf.Namespaces.drawns
+                           && p.localName === "page"))) {
+            p = p.parentElement;
+        }
+        p = p || node;
+        return p.getBoundingClientRect();
+    };
 };
+/**
+ * @typedef{!ClientRect|!{top:!number,left:!number,right:!number,bottom:!number,width:!number,height:!number}}
+ */
+odf.OdfRect;

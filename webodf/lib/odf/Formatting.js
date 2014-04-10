@@ -52,10 +52,6 @@ odf.Formatting = function Formatting() {
         /**@const*/
         stylens = odf.Namespaces.stylens,
         /**@const*/
-        textns = odf.Namespaces.textns,
-        /**@const*/
-        numberns = odf.Namespaces.numberns,
-        /**@const*/
         fons = odf.Namespaces.fons,
         odfUtils = new odf.OdfUtils(),
         domUtils = new core.DomUtils(),
@@ -219,38 +215,10 @@ odf.Formatting = function Formatting() {
      * @return {Element}
      */
     function getStyleElement(styleName, family, styleElements) {
-        var node,
-            nodeStyleName,
-            styleListElement,
-            i;
-
-        styleElements = styleElements || [odfContainer.rootElement.automaticStyles, odfContainer.rootElement.styles];
-        for (i = 0; i < styleElements.length; i += 1) {
-            styleListElement = /**@type{!Element}*/(styleElements[i]);
-            node = styleListElement.firstElementChild;
-            while (node) {
-                nodeStyleName = node.getAttributeNS(stylens, 'name');
-                if (node.namespaceURI === stylens
-                        && node.localName === "style"
-                        && node.getAttributeNS(stylens, 'family') === family
-                        && nodeStyleName === styleName) {
-                    return node;
-                }
-                if (family === "list-style"
-                        && node.namespaceURI === textns
-                        && node.localName === "list-style"
-                        && nodeStyleName === styleName) {
-                    return node;
-                }
-                if (family === "data"
-                        && node.namespaceURI === numberns
-                        && nodeStyleName === styleName) {
-                    return node;
-                }
-                node = node.nextElementSibling;
-            }
-        }
-        return null;
+        return styleInfo.getStyleElement(styleName, family, styleElements || [
+            odfContainer.rootElement.automaticStyles,
+            odfContainer.rootElement.styles
+        ]);
     }
     this.getStyleElement = getStyleElement;
 

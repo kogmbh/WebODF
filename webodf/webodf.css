@@ -51,6 +51,7 @@ office|text {
   text-align: left;
   overflow: visible;
   word-wrap: break-word;
+  position: relative;
 }
 
 office|text::selection {

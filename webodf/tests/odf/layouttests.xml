@@ -4,40 +4,51 @@
     xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
     xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
     xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+    xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
     xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
 >
  <!-- Use CamelCase naming for value names which have a hyphen in it.
       E.g. "margin-left" becomes "marginLeft"
       Workaround for a bug(?) in Firefox which only provides those
       attributes by the camelCase name, not the original name,
       even with bracket notation. -->
+ <commonInput>
+  <!-- Styles here are used in all test documents. -->
+  <office:document-styles>
+   <office:styles>
+    <style:style style:name="commonFrame" style:family="graphic">
+     <style:graphic-properties fo:background-color="#eeeeee" style:background-transparency="0%" draw:fill="solid" fo:padding="0mm" fo:border="1mm solid #000000" style:shadow="none" draw:fill-color="#eeeeee"/>
+    </style:style>
+   </office:styles>
+   <office:automatic-styles>
+    <style:style style:name="onecol" style:family="section">
+     <style:section-properties>
+      <style:columns fo:column-count="1"/>
+     </style:section-properties>
+    </style:style>
+    <style:style style:name="pageFromTopPageFromLeftFrame" style:family="graphic" style:parent-style-name="commonFrame">
+     <style:graphic-properties style:vertical-pos="from-top" style:vertical-rel="page" style:horizontal-pos="from-left" style:horizontal-rel="page"/>
+    </style:style>
+    <style:style style:name="pageTopPageLeftFrame" style:family="graphic" style:parent-style-name="commonFrame">
+     <style:graphic-properties style:vertical-pos="top" style:vertical-rel="page" style:horizontal-pos="left" style:horizontal-rel="page"/>
+    </style:style>
+    <style:page-layout style:name="onecol">
+     <style:page-layout-properties
+      fo:page-width="10cm" fo:page-height="20cm"
+      fo:margin-top="1cm" fo:margin-bottom="4cm" fo:margin-left="2cm"
+      fo:margin-right="3cm">
+      <style:columns fo:column-count="1"/>
+     </style:page-layout-properties>
+    </style:page-layout>
+   </office:automatic-styles>
+   <office:master-styles>
+    <style:master-page style:name="Standard" style:page-layout-name="onecol" />
+   </office:master-styles>
+  </office:document-styles>
+ </commonInput>
  <test name="simple">
   <input>
-   <office:document-styles>
-    <office:automatic-styles>
-     <style:style style:name="onecol" style:family="section">
-      <style:section-properties>
-       <style:columns fo:column-count="1"/>
-      </style:section-properties>
-     </style:style>
-     <style:page-layout style:name="onecol">
-      <style:page-layout-properties
-       fo:page-width="10cm" fo:page-height="20cm" fo:margin="2cm"
-       fo:margin-top="2cm" fo:margin-bottom="2cm" fo:margin-left="2cm"
-       fo:margin-right="2cm">
-       <style:columns fo:column-count="1">
-        <style:column style:rel-width="1*" fo:start-indent="0cm"
-         fo:end-indent="5mm" />
-        <style:column style:rel-width="1*" fo:start-indent="5mm"
-         fo:end-indent="0cm" />
-       </style:columns>
-      </style:page-layout-properties>
-     </style:page-layout>
-    </office:automatic-styles>
-    <office:master-styles>
-     <style:master-page style:name="Standard" style:page-layout-name="onecol" />
-    </office:master-styles>
-   </office:document-styles>
    <office:text>
     <text:p>Lorem ipsum.</text:p>
    </office:text>
@@ -48,57 +59,31 @@
    </check>
    <check xpath=".//office:text">
     <marginLeft value="2cm"/>
-    <marginRight value="2cm"/>
-    <width value="6cm"/>
+    <marginRight value="3cm"/>
+    <width value="5cm"/>
    </check>
    <check xpath=".//text:p">
-    <clientWidth value="6cm"/>
-    <width value="6cm"/>
+    <clientWidth value="5cm"/>
+    <width value="5cm"/>
     <fontVariant value="normal"/>
    </check>
   </layoutchecks>
  </test>
  <test name="simpleFrame">
   <input>
-   <office:document-styles>
-    <office:automatic-styles>
-     <style:style style:name="onecol" style:family="section"/>
-     <style:page-layout style:name="onecol">
-      <style:page-layout-properties
-       fo:page-width="10cm" fo:page-height="20cm" fo:margin="2cm"
-       fo:margin-top="2cm" fo:margin-bottom="2cm" fo:margin-left="2cm"
-       fo:margin-right="2cm"/>
-     </style:page-layout>
-    </office:automatic-styles>
-    <office:master-styles>
-     <style:master-page style:name="Standard" style:page-layout-name="onecol" />
-    </office:master-styles>
-   </office:document-styles>
    <office:text>
-    <text:p><draw:frame text:anchor-type="paragraph" draw:z-index="0" svg:width="4cm" svg:height="2cm" svg:x="1cm" svg:y="1cm">
-     <draw:text-box>
-      <text:p>frame</text:p>
-     </draw:text-box>
-    </draw:frame></text:p>
+    <text:p>
+     <draw:frame draw:style-name="pageFromTopPageFromLeftFrame" text:anchor-type="paragraph" draw:z-index="0" svg:width="4cm" svg:height="2cm" svg:x="1cm" svg:y="1cm">
+      <draw:text-box/>
+     </draw:frame>
+    </text:p>
    </office:text>
   </input>
   <layoutchecks>
-   <check xpath="office:body">
-    <width value="10cm"/>
-   </check>
    <check xpath=".//draw:frame">
     <width value="4cm"/>
     <height value="2cm"/>
-   </check>
-   <check xpath=".//office:text">
-    <marginLeft value="2cm"/>
-    <marginRight value="2cm"/>
-    <width value="6cm"/>
-   </check>
-   <check xpath=".//office:text/text:p">
-    <clientWidth value="6cm"/>
-    <width value="6cm"/>
-    <fontVariant value="normal"/>
+    <backgroundColor value="rgb(238, 238, 238)"/>
    </check>
   </layoutchecks>
  </test>
@@ -314,6 +299,70 @@
    </check>
    <check xpath="(.//text:list-item)[4]">
     <marginLeft value="3.175cm"/>
+   </check>
+  </layoutchecks>
+ </test>
+ <test name="frame01">
+  <input>
+   <office:text>
+    <text:p>
+     <draw:frame draw:style-name="pageFromTopPageFromLeftFrame" text:anchor-type="char" svg:x="10mm" svg:y="11mm" svg:width="12mm" svg:height="13mm">
+      <draw:text-box/>
+     </draw:frame>
+    </text:p>
+   </office:text>
+  </input>
+  <layoutchecks>
+   <check xpath=".//draw:frame">
+    <pageX value="10mm"/>
+    <pageY value="11mm"/>
+   </check>
+  </layoutchecks>
+ </test>
+ <test name="frame02">
+  <input>
+   <office:text>
+    <draw:frame draw:style-name="pageFromTopPageFromLeftFrame" text:anchor-type="char" svg:x="10mm" svg:y="11mm" svg:width="12mm" svg:height="13mm">
+     <draw:text-box/>
+    </draw:frame>
+   </office:text>
+  </input>
+  <layoutchecks>
+   <check xpath=".//draw:frame">
+    <pageX value="10mm"/>
+    <pageY value="11mm"/>
+   </check>
+  </layoutchecks>
+ </test>
+ <test name="frame03">
+  <input>
+   <office:text>
+    <draw:frame draw:style-name="pageTopPageLeftFrame" svg:width="12mm" svg:height="13mm">
+     <draw:text-box/>
+    </draw:frame>
+   </office:text>
+  </input>
+  <layoutchecks>
+   <check xpath=".//draw:frame">
+    <pageX value="10mm"/>
+    <pageY value="11mm"/>
+   </check>
+  </layoutchecks>
+ </test>
+ <test name="frame-as-char01">
+  <input>
+   <office:text>
+    <text:p>
+     <draw:frame draw:style-name="commonFrame" svg:width="12mm" svg:height="13mm" text:anchor-type="as-char">
+      <draw:text-box/>
+     </draw:frame>
+    </text:p>
+   </office:text>
+  </input>
+  <layoutchecks>
+   <check xpath=".//draw:frame">
+    <pageX value="20mm"/>
+    <pageY value="10mm"/>
    </check>
   </layoutchecks>
  </test>
