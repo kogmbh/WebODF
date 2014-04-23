@@ -899,6 +899,111 @@ odf.StyleInfo = function StyleInfo() {
         }
     };
 
+    /**
+     * Fetch style element associated with the requested name and family
+     * @param {!string} styleName
+     * @param {!string} family
+     * @param {!Array.<!Element>} styleElements Specific style trees to search. If unspecified will search both automatic
+     *  and user-created styles
+     * @return {Element}
+     */
+    function getStyleElement(styleName, family, styleElements) {
+        var node,
+            nodeStyleName,
+            styleListElement,
+            i;
+
+        for (i = 0; i < styleElements.length; i += 1) {
+            styleListElement = /**@type{!Element}*/(styleElements[i]);
+            node = styleListElement.firstElementChild;
+            while (node) {
+                nodeStyleName = node.getAttributeNS(stylens, 'name');
+                if (node.namespaceURI === stylens
+                        && node.localName === "style"
+                        && node.getAttributeNS(stylens, 'family') === family
+                        && nodeStyleName === styleName) {
+                    return node;
+                }
+                if (family === "list-style"
+                        && node.namespaceURI === textns
+                        && node.localName === "list-style"
+                        && nodeStyleName === styleName) {
+                    return node;
+                }
+                if (family === "data"
+                        && node.namespaceURI === numberns
+                        && nodeStyleName === styleName) {
+                    return node;
+                }
+                node = node.nextElementSibling;
+            }
+        }
+        return null;
+    }
+    this.getStyleElement = getStyleElement;
+
+    /**
+     * @param {!Element} styleElement
+     * @param {!Object.<!string,!Object.<!string,?string>>} properties
+     * @return {undefined}
+     */
+    function getProperties(styleElement, properties) {
+        var c = styleElement.firstElementChild, p, ns,
+            /**@type{!string}*/
+            prefix,
+            /**@type{!string}*/
+            n;
+        while (c) {
+            for (prefix in properties) {
+                if (properties.hasOwnProperty(prefix)) {
+                    p = properties[prefix];
+                    ns = /**@type{!string}*/(odf.Namespaces.namespaceMap[prefix]);
+                    for (n in p) {
+                        if (p.hasOwnProperty(n) && p[n] === null && c.hasAttributeNS(ns, n)) {
+                            p[n] = c.getAttributeNS(ns, n);
+                        }
+                    }
+                }
+            }
+            c = c.nextElementSibling;
+        }
+    }
+
+    /**
+     * Get specific style properties from a style element.
+     *
+     * @param {!Element} styles
+     * @param {!Element} automaticStyles
+     * @param {!string} styleName
+     * @param {!string} styleFamily
+     * @param {!Object.<!string,!Object.<!string,?string>>} properties
+     * @return {!Object.<!string,!Object.<!string,?string>>}
+     */
+    function getStyleProperties(styles, automaticStyles, styleName,
+            styleFamily, properties) {
+        var s;
+        do {
+            s = getStyleElement(styleName, styleFamily, [automaticStyles]);
+            if (s) {
+                getProperties(s, properties);
+                styleName = s.getAttributeNS(stylens, "parent-style-name");
+            } else {
+                styleName = "";
+            }
+        } while (styleName !== "");
+        while (styleName !== "") {
+            s = getStyleElement(styleName, styleFamily, [styles]);
+            if (s) {
+                getProperties(s, properties);
+                styleName = s.getAttributeNS(stylens, "parent-style-name");
+            } else {
+                styleName = "";
+            }
+        }
+        return properties;
+    }
+    this.getStyleProperties = getStyleProperties;
+
     this.hasDerivedStyles = hasDerivedStyles;
     this.prefixStyleNames = prefixStyleNames;
     this.removePrefixFromStyleNames = removePrefixFromStyleNames;
