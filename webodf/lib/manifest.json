@@ -73,10 +73,6 @@
     "gui.Clipboard": [
         "gui.MimeDataExporter"
     ],
-    "gui.DirectFormattingController": [
-        "gui.StyleSummary",
-        "ops.Session"
-    ],
     "gui.EditInfoHandle": [
         "core.Destroyable"
     ],
@@ -86,6 +82,10 @@
     ],
     "gui.EventManager": [
         "ops.OdtDocument"
+    ],
+    "gui.FormattingController": [
+        "gui.StyleSummary",
+        "ops.Session"
     ],
     "gui.HyperlinkClickHandler": [
         "core.Destroyable",
@@ -142,7 +142,7 @@
     "gui.SessionController": [
         "gui.AnnotationController",
         "gui.Clipboard",
-        "gui.DirectFormattingController",
+        "gui.FormattingController",
         "gui.HyperlinkClickHandler",
         "gui.HyperlinkController",
         "gui.IOSSafariSupport",

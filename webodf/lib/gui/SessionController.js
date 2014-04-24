@@ -91,9 +91,9 @@ gui.SessionControllerOptions = function () {
             eventManager = new gui.EventManager(odtDocument),
             annotationsEnabled = args.annotationsEnabled,
             annotationController = new gui.AnnotationController(session, inputMemberId),
-            directFormattingController = new gui.DirectFormattingController(session, inputMemberId, objectNameGenerator, args.directParagraphStylingEnabled),
-            createCursorStyleOp = /**@type {function (!number, !number, !boolean):ops.Operation}*/ (directFormattingController.createCursorStyleOp),
-            createParagraphStyleOps = /**@type {function (!number):!Array.<!ops.Operation>}*/ (directFormattingController.createParagraphStyleOps),
+            formattingController = new gui.FormattingController(session, inputMemberId, objectNameGenerator, args.directParagraphStylingEnabled),
+            createCursorStyleOp = /**@type {function (!number, !number, !boolean):ops.Operation}*/ (formattingController.createCursorStyleOp),
+            createParagraphStyleOps = /**@type {function (!number):!Array.<!ops.Operation>}*/ (formattingController.createParagraphStyleOps),
             textController = new gui.TextController(session, inputMemberId, createCursorStyleOp, createParagraphStyleOps),
             imageController = new gui.ImageController(session, inputMemberId, objectNameGenerator),
             imageSelector = new gui.ImageSelector(odtDocument.getOdfCanvas()),
@@ -846,26 +846,26 @@ gui.SessionControllerOptions = function () {
 
             if (isMacOS) {
                 keyDownHandler.bind(keyCode.Clear, modifier.None, textController.removeCurrentSelection);
-                keyDownHandler.bind(keyCode.B, modifier.Meta, rangeSelectionOnly(directFormattingController.toggleBold));
-                keyDownHandler.bind(keyCode.I, modifier.Meta, rangeSelectionOnly(directFormattingController.toggleItalic));
-                keyDownHandler.bind(keyCode.U, modifier.Meta, rangeSelectionOnly(directFormattingController.toggleUnderline));
-                keyDownHandler.bind(keyCode.L, modifier.MetaShift, rangeSelectionOnly(directFormattingController.alignParagraphLeft));
-                keyDownHandler.bind(keyCode.E, modifier.MetaShift, rangeSelectionOnly(directFormattingController.alignParagraphCenter));
-                keyDownHandler.bind(keyCode.R, modifier.MetaShift, rangeSelectionOnly(directFormattingController.alignParagraphRight));
-                keyDownHandler.bind(keyCode.J, modifier.MetaShift, rangeSelectionOnly(directFormattingController.alignParagraphJustified));
+                keyDownHandler.bind(keyCode.B, modifier.Meta, rangeSelectionOnly(formattingController.toggleBold));
+                keyDownHandler.bind(keyCode.I, modifier.Meta, rangeSelectionOnly(formattingController.toggleItalic));
+                keyDownHandler.bind(keyCode.U, modifier.Meta, rangeSelectionOnly(formattingController.toggleUnderline));
+                keyDownHandler.bind(keyCode.L, modifier.MetaShift, rangeSelectionOnly(formattingController.alignParagraphLeft));
+                keyDownHandler.bind(keyCode.E, modifier.MetaShift, rangeSelectionOnly(formattingController.alignParagraphCenter));
+                keyDownHandler.bind(keyCode.R, modifier.MetaShift, rangeSelectionOnly(formattingController.alignParagraphRight));
+                keyDownHandler.bind(keyCode.J, modifier.MetaShift, rangeSelectionOnly(formattingController.alignParagraphJustified));
                 if (annotationsEnabled) {
                     keyDownHandler.bind(keyCode.C, modifier.MetaShift, annotationController.addAnnotation);
                 }
                 keyDownHandler.bind(keyCode.Z, modifier.Meta, undo);
                 keyDownHandler.bind(keyCode.Z, modifier.MetaShift, redo);
             } else {
-                keyDownHandler.bind(keyCode.B, modifier.Ctrl, rangeSelectionOnly(directFormattingController.toggleBold));
-                keyDownHandler.bind(keyCode.I, modifier.Ctrl, rangeSelectionOnly(directFormattingController.toggleItalic));
-                keyDownHandler.bind(keyCode.U, modifier.Ctrl, rangeSelectionOnly(directFormattingController.toggleUnderline));
-                keyDownHandler.bind(keyCode.L, modifier.CtrlShift, rangeSelectionOnly(directFormattingController.alignParagraphLeft));
-                keyDownHandler.bind(keyCode.E, modifier.CtrlShift, rangeSelectionOnly(directFormattingController.alignParagraphCenter));
-                keyDownHandler.bind(keyCode.R, modifier.CtrlShift, rangeSelectionOnly(directFormattingController.alignParagraphRight));
-                keyDownHandler.bind(keyCode.J, modifier.CtrlShift, rangeSelectionOnly(directFormattingController.alignParagraphJustified));
+                keyDownHandler.bind(keyCode.B, modifier.Ctrl, rangeSelectionOnly(formattingController.toggleBold));
+                keyDownHandler.bind(keyCode.I, modifier.Ctrl, rangeSelectionOnly(formattingController.toggleItalic));
+                keyDownHandler.bind(keyCode.U, modifier.Ctrl, rangeSelectionOnly(formattingController.toggleUnderline));
+                keyDownHandler.bind(keyCode.L, modifier.CtrlShift, rangeSelectionOnly(formattingController.alignParagraphLeft));
+                keyDownHandler.bind(keyCode.E, modifier.CtrlShift, rangeSelectionOnly(formattingController.alignParagraphCenter));
+                keyDownHandler.bind(keyCode.R, modifier.CtrlShift, rangeSelectionOnly(formattingController.alignParagraphRight));
+                keyDownHandler.bind(keyCode.J, modifier.CtrlShift, rangeSelectionOnly(formattingController.alignParagraphJustified));
                 if (annotationsEnabled) {
                     keyDownHandler.bind(keyCode.C, modifier.CtrlAlt, annotationController.addAnnotation);
                 }
@@ -989,10 +989,10 @@ gui.SessionControllerOptions = function () {
         };
 
         /**
-         * @return {!gui.DirectFormattingController}
+         * @return {!gui.FormattingController}
          */
-        this.getDirectFormattingController = function () {
-            return directFormattingController;
+        this.getFormattingController = function () {
+            return formattingController;
         };
 
         /**
@@ -1084,7 +1084,7 @@ gui.SessionControllerOptions = function () {
             var destroyCallbacks = [
                 drawShadowCursorTask.destroy,
                 redrawRegionSelectionTask.destroy,
-                directFormattingController.destroy,
+                formattingController.destroy,
                 inputMethodEditor.destroy,
                 eventManager.destroy,
                 hyperlinkClickHandler.destroy,

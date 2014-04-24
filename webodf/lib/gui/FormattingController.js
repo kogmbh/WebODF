@@ -47,7 +47,7 @@
  * @param {!odf.ObjectNameGenerator} objectNameGenerator
  * @param {!boolean} directParagraphStylingEnabled
  */
-gui.DirectFormattingController = function DirectFormattingController(session, inputMemberId, objectNameGenerator, directParagraphStylingEnabled) {
+gui.FormattingController = function FormattingController(session, inputMemberId, objectNameGenerator, directParagraphStylingEnabled) {
     "use strict";
 
     var self = this,
@@ -55,8 +55,8 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
         utils = new core.Utils(),
         odfUtils = new odf.OdfUtils(),
         eventNotifier = new core.EventNotifier([
-            gui.DirectFormattingController.textStylingChanged,
-            gui.DirectFormattingController.paragraphStylingChanged
+            gui.FormattingController.textStylingChanged,
+            gui.FormattingController.paragraphStylingChanged
         ]),
         /**@const*/
         textns = odf.Namespaces.textns,
@@ -154,11 +154,11 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
         selectionStylesSummary = newSelectionStylesSummary;
 
         if (Object.keys(textStyleDiff).length > 0) {
-            eventNotifier.emit(gui.DirectFormattingController.textStylingChanged, textStyleDiff);
+            eventNotifier.emit(gui.FormattingController.textStylingChanged, textStyleDiff);
         }
 
         if (Object.keys(paragraphStyleDiff).length > 0) {
-            eventNotifier.emit(gui.DirectFormattingController.paragraphStylingChanged, paragraphStyleDiff);
+            eventNotifier.emit(gui.FormattingController.paragraphStylingChanged, paragraphStyleDiff);
         }
     }
 
@@ -693,7 +693,7 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
         }
 
         paragraphNode = /**@type{!Element}*/(odtDocument.getParagraphElement(endNode));
-        runtime.assert(Boolean(paragraphNode), "DirectFormattingController: Cursor outside paragraph");
+        runtime.assert(Boolean(paragraphNode), "FormattingController: Cursor outside paragraph");
         if (!isSelectionAtTheEndOfLastParagraph(range, paragraphNode)) {
             return operations;
         }
@@ -804,11 +804,11 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
     init();
 };
 
-/**@const*/gui.DirectFormattingController.textStylingChanged = "textStyling/changed";
-/**@const*/gui.DirectFormattingController.paragraphStylingChanged = "paragraphStyling/changed";
+/**@const*/gui.FormattingController.textStylingChanged = "textStyling/changed";
+/**@const*/gui.FormattingController.paragraphStylingChanged = "paragraphStyling/changed";
 
 (function () {
     "use strict";
-    return gui.DirectFormattingController;
+    return gui.FormattingController;
 }());
 

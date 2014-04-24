@@ -103,7 +103,7 @@ module.exports = function (config) {
             'lib/gui/MimeDataExporter.js',
             'lib/gui/Clipboard.js',
             'lib/gui/StyleSummary.js',
-            'lib/gui/DirectFormattingController.js',
+            'lib/gui/FormattingController.js',
             'lib/gui/KeyboardHandler.js',
             'lib/gui/HyperlinkClickHandler.js',
             'lib/gui/HyperlinkController.js',
