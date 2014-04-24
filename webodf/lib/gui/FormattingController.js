@@ -206,6 +206,34 @@ gui.FormattingController = function FormattingController(session, inputMemberId,
     }
 
     /**
+     * Generates an OpSetParagraphStyle instance initialized
+     * for the given paragraph and stylename.
+     * @param {!Element} paragraphElement
+     * @param {string} styleName
+     * @return {!ops.OpSetParagraphStyle}
+     */
+    function createOpSetParagraphStyle(paragraphElement, styleName) {
+        var paragraphRange,
+            op = new ops.OpSetParagraphStyle();
+
+        paragraphRange = odtDocument.convertDomToCursorRange({
+            anchorNode: paragraphElement,
+            anchorOffset: 0,
+            focusNode: paragraphElement,
+            focusOffset: paragraphElement.childNodes.length
+        });
+
+        op.init({
+            memberid: inputMemberId,
+            styleName: styleName,
+            position: paragraphRange.position,
+            length: paragraphRange.length
+        });
+
+        return op;
+    }
+
+    /**
      * Apply the supplied text properties to the current range. If no range is selected,
      * this styling will be applied to the next character entered.
      * @param {!Object} textProperties
@@ -450,15 +478,6 @@ gui.FormattingController = function FormattingController(session, inputMemberId,
     };
 
     /**
-     * Round the step up to the next step
-     * @param {!number} step
-     * @return {!boolean}
-     */
-    function roundUp(step) {
-        return step === ops.OdtStepsTranslator.NEXT_STEP;
-    }
-
-    /**
      * @param {!Object.<string,string>} obj
      * @param {string} key
      * @return {string|undefined}
@@ -466,6 +485,30 @@ gui.FormattingController = function FormattingController(session, inputMemberId,
     function getOwnProperty(obj, key) {
         return obj.hasOwnProperty(key) ? obj[key] : undefined;
     }
+
+    /**
+     * Applies a given style to the current paragraph.
+     * @param {string} styleName
+     * @return {undefined}
+     */
+    function applyParagraphStyle(styleName) {
+        var range = odtDocument.getCursor(inputMemberId).getSelectedRange(),
+            paragraphs = odfUtils.getParagraphElements(range),
+            operations = [];
+
+        paragraphs.forEach(function (paragraph) {
+            var paragraphStyleName = paragraph.getAttributeNS(odf.Namespaces.textns, "style-name"),
+                op;
+
+            if (paragraphStyleName !== styleName) {
+                op = createOpSetParagraphStyle(paragraph, styleName);
+                operations.push(op);
+            }
+        });
+
+        session.enqueue(operations);
+    }
+    this.applyParagraphStyle = applyParagraphStyle;
 
     /**
      * @param {!function(!Object) : !Object} applyDirectStyling
@@ -481,12 +524,10 @@ gui.FormattingController = function FormattingController(session, inputMemberId,
             defaultStyleName;
 
         paragraphs.forEach(function (paragraph) {
-            var paragraphStartPoint = odtDocument.convertDomPointToCursorStep(paragraph, 0, roundUp),
-                paragraphStyleName = paragraph.getAttributeNS(odf.Namespaces.textns, "style-name"),
+            var paragraphStyleName = paragraph.getAttributeNS(odf.Namespaces.textns, "style-name"),
                 /**@type{string|undefined}*/
                 newParagraphStyleName,
                 opAddStyle,
-                opSetParagraphStyle,
                 paragraphProperties;
 
             // Try and reuse an existing paragraph style if possible
@@ -520,15 +561,7 @@ gui.FormattingController = function FormattingController(session, inputMemberId,
                 operations.push(opAddStyle);
             }
 
-
-            opSetParagraphStyle = new ops.OpSetParagraphStyle();
-            opSetParagraphStyle.init({
-                memberid: inputMemberId,
-                styleName: newParagraphStyleName.toString(),
-                position: paragraphStartPoint
-            });
-
-            operations.push(opSetParagraphStyle);
+            operations.push(createOpSetParagraphStyle(paragraph, newParagraphStyleName.toString()));
         });
         session.enqueue(operations);
     }
@@ -682,7 +715,9 @@ gui.FormattingController = function FormattingController(session, inputMemberId,
             range = cursor.getSelectedRange(),
             operations = [], op,
             startNode, endNode, paragraphNode,
-            properties, parentStyleName, styleName;
+            properties, parentStyleName, styleName,
+            domPointAtPosition,
+            paragraphAtPosition;
 
         if (cursor.hasForwardSelection()) {
             startNode = cursor.getAnchorNode();
@@ -730,13 +765,12 @@ gui.FormattingController = function FormattingController(session, inputMemberId,
         });
         operations.push(op);
 
-        op = new ops.OpSetParagraphStyle();
-        op.init({
-            memberid: inputMemberId,
-            styleName: styleName,
-            position: position
-        });
-        operations.push(op);
+        domPointAtPosition = odtDocument.convertCursorStepToDomPoint(position);
+        paragraphAtPosition = odtDocument.getParagraphElement(domPointAtPosition.node);
+        if (paragraphAtPosition) {
+            op = createOpSetParagraphStyle(paragraphAtPosition, styleName);
+            operations.push(op);
+        }
 
         return operations;
     };

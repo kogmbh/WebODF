@@ -249,6 +249,16 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     this.getIteratorAtPosition = getIteratorAtPosition;
 
     /**
+     * Converts the requested step number from root into the equivalent DOM node & offset
+     * pair. If the step is outside the bounds of the document, a RangeError will be thrown.
+     * @param {!number} step
+     * @return {!{node: !Node, offset: !number}}
+     */
+    this.convertCursorStepToDomPoint = function (step) {
+        return stepsTranslator.convertStepsToDomPoint(step);
+    };
+
+    /**
      * @param {!Node} node
      * @param {!number} offset
      * @param {function(!number, !Node, !number):!boolean=} roundDirection if the node & offset

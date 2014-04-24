@@ -877,6 +877,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
                 memberid: removeStyleSpec.memberid,
                 timestamp: removeStyleSpec.timestamp,
                 position: setParagraphStyleSpec.position,
+                length: setParagraphStyleSpec.length,
                 styleName: ""
             };
             removeStyleSpecResult.unshift(helperOpspec);

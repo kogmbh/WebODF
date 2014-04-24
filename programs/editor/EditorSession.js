@@ -319,39 +319,6 @@ define("webodf/editor/EditorSession", [
             return step === ops.OdtStepsTranslator.NEXT_STEP;
         }
 
-        /**
-         * Applies the paragraph style with the given
-         * style name to all the paragraphs within
-         * the cursor selection.
-         * @param {!string} styleName
-         * @return {undefined}
-         */
-        this.setCurrentParagraphStyle = function (styleName) {
-            var range = odtDocument.getCursor(localMemberId).getSelectedRange(),
-                paragraphs = odfUtils.getParagraphElements(range),
-                opQueue = [];
-
-            paragraphs.forEach(function (paragraph) {
-                var paragraphStartPoint = odtDocument.convertDomPointToCursorStep(paragraph, 0, roundUp),
-                    paragraphStyleName = paragraph.getAttributeNS(odf.Namespaces.textns, "style-name"),
-                    opSetParagraphStyle;
-
-                if (paragraphStyleName !== styleName) {
-                    opSetParagraphStyle = new ops.OpSetParagraphStyle();
-                    opSetParagraphStyle.init({
-                        memberid: localMemberId,
-                        styleName: styleName,
-                        position: paragraphStartPoint
-                    });
-                    opQueue.push(opSetParagraphStyle);
-                }
-            });
-
-            if (opQueue.length > 0) {
-                session.enqueue(opQueue);
-            }
-        };
-
         this.insertTable = function (initialRows, initialColumns, tableStyleName, tableColumnStyleName, tableCellStyleMatrix) {
             var op = new ops.OpInsertTable();
             op.init({

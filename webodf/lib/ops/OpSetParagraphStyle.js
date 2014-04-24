@@ -36,7 +36,7 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops*/
+/*global odf, ops*/
 
 /**
  * @constructor
@@ -45,8 +45,14 @@
 ops.OpSetParagraphStyle = function OpSetParagraphStyle() {
     "use strict";
 
-    var memberid, timestamp, position, styleName,
-        textns = "urn:oasis:names:tc:opendocument:xmlns:text:1.0";
+    var memberid, timestamp,
+        /**@type{!number}*/
+        position,
+        /**@type{!number}*/
+        length,
+        styleName,
+        textns = "urn:oasis:names:tc:opendocument:xmlns:text:1.0",
+        odfUtils = new odf.OdfUtils();
 
     /**
      * @param {!ops.OpSetParagraphStyle.InitSpec} data
@@ -54,7 +60,8 @@ ops.OpSetParagraphStyle = function OpSetParagraphStyle() {
     this.init = function (data) {
         memberid = data.memberid;
         timestamp = data.timestamp;
-        position = data.position;
+        position = parseInt(data.position, 10);
+        length = parseInt(data.length, 10);
         styleName = data.styleName;
     };
 
@@ -66,28 +73,43 @@ ops.OpSetParagraphStyle = function OpSetParagraphStyle() {
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document),
-            iterator,
-            paragraphNode;
+            domPosition,
+            paragraphNode,
+            paragraphEndPos;
 
-        iterator = odtDocument.getIteratorAtPosition(position);
-        paragraphNode = odtDocument.getParagraphElement(iterator.container());
-        if (paragraphNode) {
-            if (styleName !== "") {
-                paragraphNode.setAttributeNS(textns, 'text:style-name', styleName);
-            } else {
-                paragraphNode.removeAttributeNS(textns, 'style-name');
-            }
-
-            odtDocument.getOdfCanvas().refreshSize();
-            odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
-                paragraphElement: paragraphNode,
-                timeStamp: timestamp,
-                memberId: memberid
-            });
-
-            odtDocument.getOdfCanvas().rerenderAnnotations();
-            return true;
+        if (isNaN(position) || isNaN(length)) {
+            return false;
         }
+
+        domPosition = odtDocument.convertCursorStepToDomPoint(position);
+        paragraphNode = odfUtils.getParagraphElement(domPosition.node);
+        // Only accept this (position, length) pair if the dom range
+        // represented by it contains just the paragraph and nothing else.
+        if (odfUtils.isParagraph(paragraphNode)) {
+            paragraphEndPos = odtDocument.convertDomPointToCursorStep(
+                /**@type{!Element}*/(paragraphNode),
+                paragraphNode.childNodes.length
+            );
+
+            if (paragraphEndPos === position + length) {
+                if (styleName !== "") {
+                    paragraphNode.setAttributeNS(textns, 'text:style-name', styleName);
+                } else {
+                    paragraphNode.removeAttributeNS(textns, 'style-name');
+                }
+
+                odtDocument.getOdfCanvas().refreshSize();
+                odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
+                    paragraphElement: paragraphNode,
+                    timeStamp: timestamp,
+                    memberId: memberid
+                });
+
+                odtDocument.getOdfCanvas().rerenderAnnotations();
+                return true;
+            }
+        }
+
         return false;
     };
 
@@ -100,6 +122,7 @@ ops.OpSetParagraphStyle = function OpSetParagraphStyle() {
             memberid: memberid,
             timestamp: timestamp,
             position: position,
+            length: length,
             styleName: styleName
         };
     };
@@ -109,6 +132,7 @@ ops.OpSetParagraphStyle = function OpSetParagraphStyle() {
     memberid:string,
     timestamp:number,
     position:number,
+    length: number,
     styleName:string
 }}*/
 ops.OpSetParagraphStyle.Spec;
@@ -116,6 +140,7 @@ ops.OpSetParagraphStyle.Spec;
     memberid:string,
     timestamp:(number|undefined),
     position:number,
+    length: number,
     styleName:string
 }}*/
 ops.OpSetParagraphStyle.InitSpec;

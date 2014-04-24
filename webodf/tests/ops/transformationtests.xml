@@ -932,7 +932,7 @@
    <op optype="RemoveStyle" styleName="SD" styleFamily="paragraph"/>
   </opsA>
   <opsB>
-   <op optype="SetParagraphStyle" position="0" styleName="SD"/>
+   <op optype="SetParagraphStyle" position="0" length="0" styleName="SD"/>
   </opsB>
   <after>
    <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
