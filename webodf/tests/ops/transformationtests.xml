@@ -939,6 +939,88 @@
    <office:text><text:p/></office:text>
   </after>
  </test>
+ <test name="InsertTextSetParagraphStyle_before">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="InsertText" position="3" text="X"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abcX</text:p><text:p text:style-name="S">def</text:p></office:text>
+  </after>
+ </test>
+ <test name="InsertTextSetParagraphStyle_onLeftBoundary">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="InsertText" position="4" text="X"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S">Xdef</text:p></office:text>
+  </after>
+ </test>
+ <test name="InsertTextSetParagraphStyle_within">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="InsertText" position="5" text="XYZ"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S">dXYZef</text:p></office:text>
+  </after>
+ </test>
+ <test name="InsertTextSetParagraphStyle_onRightBoundary">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="InsertText" position="7" text="X"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S">defX</text:p><text:p>ghi</text:p></office:text>
+  </after>
+ </test>
+ <test name="InsertTextSetParagraphStyle_after">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="InsertText" position="8" text="X"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S">def</text:p><text:p>Xghi</text:p></office:text>
+  </after>
+ </test>
+
+
 
  <test name="MoveCursorRemoveText_XA__C">
   <before>
