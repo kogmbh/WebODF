@@ -1148,6 +1148,47 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
+     * @param {!ops.OpSetParagraphStyle.Spec} setParagraphStyleSpec
+     * @param {!ops.OpSplitParagraph.Spec} splitParagraphSpec
+     * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
+     */
+    function transformSetParagraphStyleSplitParagraph(setParagraphStyleSpec, splitParagraphSpec) {
+        var resultA = [],
+            resultB = [splitParagraphSpec],
+            secondSetParagraphStyleSpec,
+            originalParagraphLength = setParagraphStyleSpec.length;
+
+        if (splitParagraphSpec.position < setParagraphStyleSpec.position) {
+            // ...V...(...)
+            setParagraphStyleSpec.position += 1;
+            resultA.push(setParagraphStyleSpec);
+        } else if (splitParagraphSpec.position >= setParagraphStyleSpec.position
+                && splitParagraphSpec.position <= setParagraphStyleSpec.position + setParagraphStyleSpec.length) {
+            // ...(V...)... or ...(.V.)... or ...(..V)...
+            // Two SetParagraphStyle operations must be sent to the client
+            // who split the paragraph, so that both resulting paragraphs
+            // get the paragraph style.
+            setParagraphStyleSpec.length = splitParagraphSpec.position - setParagraphStyleSpec.position;
+            secondSetParagraphStyleSpec = {
+                optype: "SetParagraphStyle",
+                memberid: setParagraphStyleSpec.memberid,
+                timestamp: setParagraphStyleSpec.timestamp,
+                position: splitParagraphSpec.position + 1,
+                length: originalParagraphLength - setParagraphStyleSpec.length,
+                styleName: setParagraphStyleSpec.styleName
+            };
+            resultA.push(setParagraphStyleSpec, secondSetParagraphStyleSpec);
+        } else {
+            resultA.push(setParagraphStyleSpec);
+        }
+
+        return {
+            opSpecsA: resultA,
+            opSpecsB: resultB
+        };
+    }
+
+    /**
      * Does an OT on the two passed opspecs, where they are not modified at all,
      * and so simply returns them in the result arrays.
      * @param {!Object} opSpecA
@@ -1317,7 +1358,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
         },
         "SetParagraphStyle": {
             "SetParagraphStyle":    transformSetParagraphStyleSetParagraphStyle,
-            // TODO:"SetParagraphStyle":    transformSetParagraphStyleSplitParagraph,
+            "SplitParagraph":       transformSetParagraphStyleSplitParagraph,
             "UpdateMember":         passUnchanged,
             "UpdateMetadata":       passUnchanged,
             "UpdateParagraphStyle": passUnchanged

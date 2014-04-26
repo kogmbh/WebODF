@@ -1270,6 +1270,103 @@
   </after>
  </test>
 
+ <test name="SetParagraphStyleSplitParagraph_before">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsA>
+  <opsB>
+   <op optype="SplitParagraph" position="2"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>ab</text:p><text:p>c</text:p><text:p text:style-name="S">def</text:p></office:text>
+  </after>
+ </test>
+ <test name="SetParagraphStyleSplitParagraph_leftBoundary">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsA>
+  <opsB>
+   <op optype="SplitParagraph" position="4"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S"></text:p><text:p text:style-name="S">def</text:p></office:text>
+  </after>
+ </test>
+ <test name="SetParagraphStyleSplitParagraph_within">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsA>
+  <opsB>
+   <op optype="SplitParagraph" position="6"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S">de</text:p><text:p text:style-name="S">f</text:p></office:text>
+  </after>
+ </test>
+ <test name="SetParagraphStyleSplitParagraph_rightBoundary">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsA>
+  <opsB>
+   <op optype="SplitParagraph" position="7"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S">def</text:p><text:p text:style-name="S"></text:p></office:text>
+  </after>
+ </test>
+ <test name="SetParagraphStyleSplitParagraph_emptyParagraph">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p/><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="SetParagraphStyle" position="4" length="0" styleName="S"/>
+  </opsA>
+  <opsB>
+   <op optype="SplitParagraph" position="4"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S"/><text:p text:style-name="S"/><text:p>ghi</text:p></office:text>
+  </after>
+ </test>
+ <test name="SetParagraphStyleSplitParagraph_after">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsA>
+  <opsB>
+   <op optype="SplitParagraph" position="9"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S">def</text:p><text:p>g</text:p><text:p>hi</text:p></office:text>
+  </after>
+ </test>
+
  <test name="MoveCursorRemoveText_XA__C">
   <before>
    <office:text><text:p>ABCD</text:p></office:text>
