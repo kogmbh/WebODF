@@ -1024,6 +1024,63 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
 
     /**
      * @param {!ops.OpRemoveText.Spec} removeTextSpec
+     * @param {!ops.OpSetParagraphStyle.Spec} setParagraphStyleSpec
+     * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
+     */
+    function transformRemoveTextSetParagraphStyle(removeTextSpec, setParagraphStyleSpec) {
+        var removeTextAStart = removeTextSpec.position,
+            removeTextAEnd = removeTextSpec.position + removeTextSpec.length,
+            setStyleBStart = setParagraphStyleSpec.position,
+            setStyleBEnd = setParagraphStyleSpec.position + setParagraphStyleSpec.length,
+            resultA = [],
+            resultB = [];
+
+        if (removeTextAEnd < setStyleBStart) {
+            // [...]...(...)
+            setParagraphStyleSpec.position -= removeTextSpec.length;
+            resultA.push(removeTextSpec);
+            resultB.push(setParagraphStyleSpec);
+        } else if (removeTextAEnd >= setStyleBStart
+                && removeTextAEnd <= setStyleBEnd
+                && removeTextAStart < setStyleBStart) {
+            // [...(...]...) or [...(...]) or [...(]...)
+            // If the 2nd paragraph's style is being set, then make it a no-op
+            // since the paragraph that is more 'static' should win in OT.
+            resultA.push(removeTextSpec);
+        } else if (removeTextAEnd > setStyleBEnd
+                && removeTextAStart < setStyleBStart) {
+            // [...(...)..]
+            resultA.push(removeTextSpec);
+        } else if (removeTextAStart >= setStyleBStart
+                && removeTextAStart <= setStyleBEnd
+                && removeTextAEnd > setStyleBEnd) {
+            // (...[...)...] or ([...)...] or (...[)...]
+            // This is perhaps not the best behavior, ideally
+            // the set paragraph style should win over the style
+            // specified by RemoveText... but there is no way to
+            // know the bounds of an additional SetParagraphStyle
+            // for the merged paragraph, so we go with this for now.
+            resultA.push(removeTextSpec);
+        } else if (removeTextAStart >= setStyleBStart
+                && removeTextAEnd <= setStyleBEnd) {
+            // (...[...]...) or ([...])
+            setParagraphStyleSpec.length -= removeTextSpec.length;
+            resultA.push(removeTextSpec);
+            resultB.push(setParagraphStyleSpec);
+        } else {
+            // (...)...[...]
+            resultA.push(removeTextSpec);
+            resultB.push(setParagraphStyleSpec);
+        }
+
+        return {
+            opSpecsA:   resultA,
+            opSpecsB:   resultB
+        };
+    }
+
+    /**
+     * @param {!ops.OpRemoveText.Spec} removeTextSpec
      * @param {!ops.OpSplitParagraph.Spec} splitParagraphSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
@@ -1223,7 +1280,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
         },
         "RemoveText": {
             "RemoveText":           transformRemoveTextRemoveText,
-            // TODO:"SetParagraphStyle":    transformRemoveTextSetParagraphStyle,
+            "SetParagraphStyle":    transformRemoveTextSetParagraphStyle,
             "SplitParagraph":       transformRemoveTextSplitParagraph,
             "UpdateMember":         passUnchanged,
             "UpdateMetadata":       passUnchanged,

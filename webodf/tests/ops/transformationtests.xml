@@ -1020,7 +1020,202 @@
   </after>
  </test>
 
-
+<test name="RemoveTextSetParagraphStyle_before">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveText" position="1" length="2" mergedParagraphStyleName="S1"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p text:style-name="S1">a</text:p><text:p text:style-name="S">def</text:p><text:p>ghi</text:p></office:text>
+  </after>
+ </test>
+<test name="RemoveTextSetParagraphStyle_intersectLeft_leftBoundary">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveText" position="1" length="3" mergedParagraphStyleName="S1"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p text:style-name="S1">adef</text:p><text:p>ghi</text:p></office:text>
+  </after>
+ </test>
+<test name="RemoveTextSetParagraphStyle_intersectLeft_within">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveText" position="1" length="5" mergedParagraphStyleName="S1"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p text:style-name="S1">af</text:p><text:p>ghi</text:p></office:text>
+  </after>
+ </test>
+<test name="RemoveTextSetParagraphStyle_intersectLeft_rightBoundary">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveText" position="1" length="6" mergedParagraphStyleName="S1"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p text:style-name="S1">a</text:p><text:p>ghi</text:p></office:text>
+  </after>
+ </test>
+ <test name="RemoveTextSetParagraphStyle_within1">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveText" position="1" length="7"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>aghi</text:p></office:text>
+  </after>
+ </test>
+ <test name="RemoveTextSetParagraphStyle_intersectRight_leftBoundary">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveText" position="4" length="5" mergedParagraphStyleName="S1"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S1">hi</text:p></office:text>
+  </after>
+ </test>
+ <test name="RemoveTextSetParagraphStyle_intersectRight_within">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveText" position="5" length="5" mergedParagraphStyleName="S1"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S1">di</text:p></office:text>
+  </after>
+ </test>
+ <test name="RemoveTextSetParagraphStyle_intersectRight_rightBoundary">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveText" position="7" length="3" mergedParagraphStyleName="S1"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S1">defi</text:p></office:text>
+  </after>
+ </test>
+ <test name="RemoveTextSetParagraphStyle_within2">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveText" position="5" length="1"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S">df</text:p><text:p>ghi</text:p></office:text>
+  </after>
+ </test>
+ <test name="RemoveTextSetParagraphStyle_sameRange">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveText" position="4" length="3"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S"></text:p><text:p>ghi</text:p></office:text>
+  </after>
+ </test>
+ <test name="RemoveTextSetParagraphStyle_after">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveText" position="9" length="2"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S">def</text:p><text:p>g</text:p></office:text>
+  </after>
+ </test>
 
  <test name="MoveCursorRemoveText_XA__C">
   <before>
