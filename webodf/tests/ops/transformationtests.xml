@@ -1217,6 +1217,59 @@
   </after>
  </test>
 
+ <test name="SetParagraphStyleSetParagraphStyle_differentPositions">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="0" length="3" styleName="S1"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p text:style-name="S1">abc</text:p><text:p text:style-name="S">def</text:p><text:p>ghi</text:p></office:text>
+  </after>
+ </test>
+ <test name="SetParagraphStyleSetParagraphStyle_samePosition_differentStyles">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S1"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:styles><style:style style:name="S1" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S1">def</text:p><text:p>ghi</text:p></office:text>
+  </after>
+ </test>
+ <test name="SetParagraphStyleSetParagraphStyle_samePosition_sameStyle">
+  <before>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p>def</text:p><text:p>ghi</text:p></office:text>
+  </before>
+  <opsA>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsA>
+  <opsB>
+   <op optype="SetParagraphStyle" position="4" length="3" styleName="S"/>
+  </opsB>
+  <after>
+   <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
+   <office:text><text:p>abc</text:p><text:p text:style-name="S">def</text:p><text:p>ghi</text:p></office:text>
+  </after>
+ </test>
+
  <test name="MoveCursorRemoveText_XA__C">
   <before>
    <office:text><text:p>ABCD</text:p></office:text>

@@ -1119,6 +1119,35 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
+     * @param {!ops.OpSetParagraphStyle.Spec} setParagraphStyleSpecA
+     * @param {!ops.OpSetParagraphStyle.Spec} setParagraphStyleSpecB
+     * @param {!boolean} hasAPriority
+     * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
+     */
+    function transformSetParagraphStyleSetParagraphStyle(setParagraphStyleSpecA, setParagraphStyleSpecB, hasAPriority) {
+        var resultA = [],
+            resultB = [];
+
+        if (setParagraphStyleSpecA.position === setParagraphStyleSpecB.position) {
+            if (setParagraphStyleSpecA.styleName !== setParagraphStyleSpecB.styleName) {
+                if (hasAPriority) {
+                    resultA.push(setParagraphStyleSpecA);
+                } else {
+                    resultB.push(setParagraphStyleSpecB);
+                }
+            }
+        } else {
+            resultA.push(setParagraphStyleSpecA);
+            resultB.push(setParagraphStyleSpecB);
+        }
+
+        return {
+            opSpecsA:   resultA,
+            opSpecsB:   resultB
+        };
+    }
+
+    /**
      * Does an OT on the two passed opspecs, where they are not modified at all,
      * and so simply returns them in the result arrays.
      * @param {!Object} opSpecA
@@ -1287,7 +1316,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
             "UpdateParagraphStyle": passUnchanged
         },
         "SetParagraphStyle": {
-            // TODO:"SetParagraphStyle":    transformSetParagraphStyleSetParagraphStyle,
+            "SetParagraphStyle":    transformSetParagraphStyleSetParagraphStyle,
             // TODO:"SetParagraphStyle":    transformSetParagraphStyleSplitParagraph,
             "UpdateMember":         passUnchanged,
             "UpdateMetadata":       passUnchanged,
