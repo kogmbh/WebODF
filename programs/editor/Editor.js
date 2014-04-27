@@ -517,7 +517,7 @@ define("webodf/editor/Editor", [
                     documentns = document.documentElement.namespaceURI,
                     //
                     collabEditing = Boolean(server),
-                    directParagraphStylingEnabled = (! collabEditing) || args.unstableFeaturesEnabled,
+                    directParagraphStylingEnabled = true,
                     imageInsertingEnabled = (! collabEditing) || args.unstableFeaturesEnabled,
                     hyperlinkEditingEnabled = (! collabEditing) || args.unstableFeaturesEnabled,
                     // annotations not yet properly supported for OT

@@ -1116,7 +1116,7 @@
    <office:text><text:p/></office:text>
   </before>
   <ops>
-   <op optype="SetParagraphStyle" position="0" styleName="S"/>
+   <op optype="SetParagraphStyle" position="0" length="0" styleName="S"/>
   </ops>
   <after>
    <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>
@@ -1129,7 +1129,7 @@
    <office:text><text:p text:style-name="SB"/></office:text>
   </before>
   <ops>
-   <op optype="SetParagraphStyle" position="0" styleName="S"/>
+   <op optype="SetParagraphStyle" position="0" length="0" styleName="S"/>
   </ops>
   <after>
    <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/><style:style style:name="SB" style:family="paragraph" style:class="text"/></office:styles>
@@ -1142,7 +1142,7 @@
    <office:text><text:p text:style-name="S"/></office:text>
   </before>
   <ops>
-   <op optype="SetParagraphStyle" position="0" styleName=""/>
+   <op optype="SetParagraphStyle" position="0" length="0" styleName=""/>
   </ops>
   <after>
    <office:styles><style:style style:name="S" style:family="paragraph" style:class="text"/></office:styles>

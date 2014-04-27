@@ -47,6 +47,7 @@ define("webodf/editor/widgets/toolbarWidgets/currentStyle",
     return function CurrentStyle(callback) {
         var self = this,
             editorSession,
+            formattingController,
             paragraphStyles;
 
         function selectParagraphStyle(info) {
@@ -59,7 +60,7 @@ define("webodf/editor/widgets/toolbarWidgets/currentStyle",
 
         function setParagraphStyle() {
             if (editorSession) {
-                editorSession.setCurrentParagraphStyle(paragraphStyles.value());
+                formattingController.applyParagraphStyle(paragraphStyles.value());
             }
             self.onToolDone();
         }
@@ -80,6 +81,7 @@ define("webodf/editor/widgets/toolbarWidgets/currentStyle",
         }
 
         this.setEditorSession = function(session) {
+            formattingController = session && session.sessionController.getFormattingController();
             if (editorSession) {
                 editorSession.unsubscribe(EditorSession.signalParagraphChanged, selectParagraphStyle);
             }

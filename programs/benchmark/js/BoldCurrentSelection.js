@@ -56,7 +56,7 @@ define(["BenchmarkAction"], function(BenchmarkAction) {
         this.start = function(context) {
             context.recordDistanceFromCurrentSelection(state);
             action.start();
-            context.sessionController.getDirectFormattingController().setBold(true);
+            context.sessionController.getFormattingController().setBold(true);
             action.stop();
             action.complete(true);
         };

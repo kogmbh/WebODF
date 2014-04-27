@@ -47,7 +47,7 @@
  * @param {!odf.ObjectNameGenerator} objectNameGenerator
  * @param {!boolean} directParagraphStylingEnabled
  */
-gui.DirectFormattingController = function DirectFormattingController(session, inputMemberId, objectNameGenerator, directParagraphStylingEnabled) {
+gui.FormattingController = function FormattingController(session, inputMemberId, objectNameGenerator, directParagraphStylingEnabled) {
     "use strict";
 
     var self = this,
@@ -55,8 +55,8 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
         utils = new core.Utils(),
         odfUtils = new odf.OdfUtils(),
         eventNotifier = new core.EventNotifier([
-            gui.DirectFormattingController.textStylingChanged,
-            gui.DirectFormattingController.paragraphStylingChanged
+            gui.FormattingController.textStylingChanged,
+            gui.FormattingController.paragraphStylingChanged
         ]),
         /**@const*/
         textns = odf.Namespaces.textns,
@@ -154,11 +154,11 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
         selectionStylesSummary = newSelectionStylesSummary;
 
         if (Object.keys(textStyleDiff).length > 0) {
-            eventNotifier.emit(gui.DirectFormattingController.textStylingChanged, textStyleDiff);
+            eventNotifier.emit(gui.FormattingController.textStylingChanged, textStyleDiff);
         }
 
         if (Object.keys(paragraphStyleDiff).length > 0) {
-            eventNotifier.emit(gui.DirectFormattingController.paragraphStylingChanged, paragraphStyleDiff);
+            eventNotifier.emit(gui.FormattingController.paragraphStylingChanged, paragraphStyleDiff);
         }
     }
 
@@ -203,6 +203,34 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
     function toggle(predicate, toggleMethod) {
         toggleMethod(!predicate());
         return true;
+    }
+
+    /**
+     * Generates an OpSetParagraphStyle instance initialized
+     * for the given paragraph and stylename.
+     * @param {!Element} paragraphElement
+     * @param {string} styleName
+     * @return {!ops.OpSetParagraphStyle}
+     */
+    function createOpSetParagraphStyle(paragraphElement, styleName) {
+        var paragraphRange,
+            op = new ops.OpSetParagraphStyle();
+
+        paragraphRange = odtDocument.convertDomToCursorRange({
+            anchorNode: paragraphElement,
+            anchorOffset: 0,
+            focusNode: paragraphElement,
+            focusOffset: paragraphElement.childNodes.length
+        });
+
+        op.init({
+            memberid: inputMemberId,
+            styleName: styleName,
+            position: paragraphRange.position,
+            length: paragraphRange.length
+        });
+
+        return op;
     }
 
     /**
@@ -450,15 +478,6 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
     };
 
     /**
-     * Round the step up to the next step
-     * @param {!number} step
-     * @return {!boolean}
-     */
-    function roundUp(step) {
-        return step === ops.OdtStepsTranslator.NEXT_STEP;
-    }
-
-    /**
      * @param {!Object.<string,string>} obj
      * @param {string} key
      * @return {string|undefined}
@@ -466,6 +485,30 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
     function getOwnProperty(obj, key) {
         return obj.hasOwnProperty(key) ? obj[key] : undefined;
     }
+
+    /**
+     * Applies a given style to the current paragraph.
+     * @param {string} styleName
+     * @return {undefined}
+     */
+    function applyParagraphStyle(styleName) {
+        var range = odtDocument.getCursor(inputMemberId).getSelectedRange(),
+            paragraphs = odfUtils.getParagraphElements(range),
+            operations = [];
+
+        paragraphs.forEach(function (paragraph) {
+            var paragraphStyleName = paragraph.getAttributeNS(odf.Namespaces.textns, "style-name"),
+                op;
+
+            if (paragraphStyleName !== styleName) {
+                op = createOpSetParagraphStyle(paragraph, styleName);
+                operations.push(op);
+            }
+        });
+
+        session.enqueue(operations);
+    }
+    this.applyParagraphStyle = applyParagraphStyle;
 
     /**
      * @param {!function(!Object) : !Object} applyDirectStyling
@@ -481,12 +524,10 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
             defaultStyleName;
 
         paragraphs.forEach(function (paragraph) {
-            var paragraphStartPoint = odtDocument.convertDomPointToCursorStep(paragraph, 0, roundUp),
-                paragraphStyleName = paragraph.getAttributeNS(odf.Namespaces.textns, "style-name"),
+            var paragraphStyleName = paragraph.getAttributeNS(odf.Namespaces.textns, "style-name"),
                 /**@type{string|undefined}*/
                 newParagraphStyleName,
                 opAddStyle,
-                opSetParagraphStyle,
                 paragraphProperties;
 
             // Try and reuse an existing paragraph style if possible
@@ -520,15 +561,7 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
                 operations.push(opAddStyle);
             }
 
-
-            opSetParagraphStyle = new ops.OpSetParagraphStyle();
-            opSetParagraphStyle.init({
-                memberid: inputMemberId,
-                styleName: newParagraphStyleName.toString(),
-                position: paragraphStartPoint
-            });
-
-            operations.push(opSetParagraphStyle);
+            operations.push(createOpSetParagraphStyle(paragraph, newParagraphStyleName.toString()));
         });
         session.enqueue(operations);
     }
@@ -682,7 +715,9 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
             range = cursor.getSelectedRange(),
             operations = [], op,
             startNode, endNode, paragraphNode,
-            properties, parentStyleName, styleName;
+            properties, parentStyleName, styleName,
+            domPointAtPosition,
+            paragraphAtPosition;
 
         if (cursor.hasForwardSelection()) {
             startNode = cursor.getAnchorNode();
@@ -693,7 +728,7 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
         }
 
         paragraphNode = /**@type{!Element}*/(odtDocument.getParagraphElement(endNode));
-        runtime.assert(Boolean(paragraphNode), "DirectFormattingController: Cursor outside paragraph");
+        runtime.assert(Boolean(paragraphNode), "FormattingController: Cursor outside paragraph");
         if (!isSelectionAtTheEndOfLastParagraph(range, paragraphNode)) {
             return operations;
         }
@@ -730,13 +765,12 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
         });
         operations.push(op);
 
-        op = new ops.OpSetParagraphStyle();
-        op.init({
-            memberid: inputMemberId,
-            styleName: styleName,
-            position: position
-        });
-        operations.push(op);
+        domPointAtPosition = odtDocument.convertCursorStepToDomPoint(position);
+        paragraphAtPosition = odtDocument.getParagraphElement(domPointAtPosition.node);
+        if (paragraphAtPosition) {
+            op = createOpSetParagraphStyle(paragraphAtPosition, styleName);
+            operations.push(op);
+        }
 
         return operations;
     };
@@ -804,11 +838,11 @@ gui.DirectFormattingController = function DirectFormattingController(session, in
     init();
 };
 
-/**@const*/gui.DirectFormattingController.textStylingChanged = "textStyling/changed";
-/**@const*/gui.DirectFormattingController.paragraphStylingChanged = "paragraphStyling/changed";
+/**@const*/gui.FormattingController.textStylingChanged = "textStyling/changed";
+/**@const*/gui.FormattingController.paragraphStylingChanged = "paragraphStyling/changed";
 
 (function () {
     "use strict";
-    return gui.DirectFormattingController;
+    return gui.FormattingController;
 }());
 
