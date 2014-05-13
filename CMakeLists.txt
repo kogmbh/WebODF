@@ -243,34 +243,6 @@ if(WIN32)
     )
 endif(WIN32)
 
-# Ant
-# Required for building Android applications
-if(WIN32)
-    # Ant is not generally installed on Windows systems
-    ExternalProject_Add(
-        AntBin
-        DOWNLOAD_DIR ${EXTERNALS_DOWNLOAD_DIR}
-        URL "http://archive.apache.org/dist/ant/binaries/apache-ant-1.8.4-bin.zip"
-        URL_MD5 ca632528c35b8a335edd4e2064f7129e
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ""
-    )
-    set(ANT ${CMAKE_BINARY_DIR}/AntBin-prefix/src/AntBin/bin/ant.bat)
-endif()
-if (NOT ANT)
-  find_file(ANT NAMES ant ant.exe /usr/bin /usr/local/bin)
-endif(NOT ANT)
-
-# Android
-if (NOT ANDROID_SDK_DIR)
-  if(WIN32)
-    find_path(ANDROID_SDK_DIR platform-tools/aapt.exe)
-  else()
-    find_path(ANDROID_SDK_DIR platform-tools/aapt)
-  endif()
-endif(NOT ANDROID_SDK_DIR)
-
 
 ##############################
 ## Define custom macros
