@@ -1,4 +1,0 @@
-# Unset behaviour for some text-like files, as this is just a copy of original files,
-# with obviously DOS line endings
-
-* binary
