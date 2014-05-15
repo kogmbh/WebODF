@@ -1685,12 +1685,12 @@ var webodf = {};
 (function () {
     "use strict";
     /**
-     * @return {string}
+     * @return {!string}
      */
     function getWebODFVersion() {
         var version = (String(typeof webodf_version) !== "undefined"
             ? webodf_version
-            : "From Source"
+            : "<unknown (From Source)>"
         );
         return version;
     }
