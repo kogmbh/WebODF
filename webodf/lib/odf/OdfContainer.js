@@ -319,7 +319,7 @@
      * a url and loaded from that url.
      *
      * @constructor
-     * @param {!string|!odf.OdfContainer.DocumentType} urlOrType
+     * @param {!string|!odf.OdfContainer.DocumentType|{type: odf.OdfContainer.DocumentType, files: Object.<!string|!Uint8Array>}} urlOrType
      * @param {?function(!odf.OdfContainer)=} onstatereadychange
      * @return {?}
      */
@@ -331,7 +331,8 @@
             /**@type {?Element}*/
             contentElement,
             /**@type{!string}*/
-            url = "";
+            url = "",
+            urlobject = {};
 
         // NOTE each instance of OdfContainer has a copy of the private functions
         // it would be better to have a class OdfContainerPrivate where the
@@ -1188,6 +1189,29 @@
         }
 
         /**
+         * @param {{type: odf.OdfContainer.DocumentType, files: Object.<!string|!Uint8Array>}} ooxData
+         * @return {!core.Zip}
+         */
+        function createOoxDocument(ooxData) {
+            var ooxzip = new core.Zip("", null),
+                files = ooxData.files,
+                /**@type{string}*/
+                fullPath,
+                /**@type{!Uint8Array}*/
+                filedata;
+            for (fullPath in files) {
+                if (files.hasOwnProperty(fullPath)) {
+                    if (typeof files[fullPath] === 'string') {
+                        filedata = runtime.byteArrayFromString(/**@type{string}*/(files[fullPath]), "utf8");
+                    } else {
+                        filedata = /**@type{!Uint8Array}*/(files[fullPath]);
+                    }
+                    ooxzip.save(fullPath, filedata, false, new Date());
+                }
+            }
+            return ooxzip;
+        }
+        /**
          * Fill the zip with current data.
          * @return {undefined}
          */
@@ -1299,20 +1323,26 @@
         } else if (urlOrType === odf.OdfContainer.DocumentType.SPREADSHEET) {
             zip = createEmptyDocument("spreadsheet");
         } else {
-            url = /**@type{!string}*/(urlOrType);
-            zip = new core.Zip(url, function (err, zipobject) {
-                zip = zipobject;
-                if (err) {
-                    loadFromXML(url, function (xmlerr) {
-                        if (err) {
-                            zip.error = err + "\n" + xmlerr;
-                            setState(OdfContainer.INVALID);
-                        }
-                    });
-                } else {
-                    loadComponents();
-                }
-            });
+            urlobject = /**@type{{type: odf.OdfContainer.DocumentType, files: Object.<!string|!Uint8Array>}}*/(urlOrType);
+            if (urlobject.type === odf.OdfContainer.DocumentType.OOX) {
+                zip = createOoxDocument(urlobject);
+                loadComponents();
+            } else {
+                url = /**@type{!string}*/(urlOrType);
+                zip = new core.Zip(url, function (err, zipobject) {
+                    zip = zipobject;
+                    if (err) {
+                        loadFromXML(url, function (xmlerr) {
+                            if (err) {
+                                zip.error = err + "\n" + xmlerr;
+                                setState(OdfContainer.INVALID);
+                            }
+                        });
+                    } else {
+                        loadComponents();
+                    }
+                });
+            }
         }
     };
     odf.OdfContainer.EMPTY = 0;
@@ -1335,5 +1365,6 @@
 odf.OdfContainer.DocumentType = {
     TEXT:         1,
     PRESENTATION: 2,
-    SPREADSHEET:  3
+    SPREADSHEET:  3,
+    OOX: 4
 };
