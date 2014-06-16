@@ -190,7 +190,6 @@ var webodfEditor = (function () {
         if (args.reviewModeEnabled === true) {
             editorOptions.reviewModeEnabled = true;
             editorOptions.directParagraphStylingEnabled = false;
-            editorOptions.hyperlinkEditingEnabled = false;
             editorOptions.imageEditingEnabled = false;
             editorOptions.paragraphStyleSelectingEnabled = false;
             editorOptions.paragraphStyleEditingEnabled = false;

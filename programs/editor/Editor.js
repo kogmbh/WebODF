@@ -586,7 +586,8 @@ define("webodf/editor/Editor", [
                     paragraphStyleSelectingEnabled = isEnabled(args.paragraphStyleSelectingEnabled),
                     paragraphStyleEditingEnabled = isEnabled(args.paragraphStyleEditingEnabled),
                     imageEditingEnabled = isEnabled(args.imageEditingEnabled, FEATURE.COLLAB_UNSTABLE),
-                    hyperlinkEditingEnabled = isEnabled(args.hyperlinkEditingEnabled, FEATURE.COLLAB_UNSTABLE),
+                    // TODO: temporarily disabled because of at least the issues #490 and #650 (see github issue tracker)
+                    hyperlinkEditingEnabled = false, // isEnabled(args.hyperlinkEditingEnabled, FEATURE.COLLAB_UNSTABLE),
                     reviewModeEnabled = isEnabled(args.reviewModeEnabled, FEATURE.COLLAB_UNSTABLE),
                     // annotations not yet properly supported for OT
                     annotationsEnabled = reviewModeEnabled || isEnabled(args.annotationsEnabled, FEATURE.COLLAB_UNSTABLE),
