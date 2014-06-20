@@ -25,6 +25,7 @@
 /*global runtime, core, gui, Node, ops, odf */
 
 /**
+ * WARNING: do not use, currently there are at least the issues #490 and #650 (see github issue tracker)
  * @constructor
  * @implements {core.Destroyable}
  * @param {!ops.Session} session
