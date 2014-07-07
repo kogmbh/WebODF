@@ -195,6 +195,7 @@ draw|image {
   background-repeat: no-repeat;
   background-size: 100% 100%;
   -moz-background-size: 100% 100%;
+  background-color: #CCC;
 }
 /* only show the first image in frame */
 draw|frame > draw|image:nth-of-type(n+2) {

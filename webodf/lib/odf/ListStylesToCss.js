@@ -170,9 +170,9 @@
             var selector = 'text|list[text|style-name="' + name + '"]',
                 level = node.getAttributeNS(textns, "level"),
                 listItemRule,
-                listLevelProps = /**@type{!Element}*/(node.getElementsByTagNameNS(stylens, "list-level-properties")[0]),
-                listLevelPositionSpaceMode = listLevelProps.getAttributeNS(textns, "list-level-position-and-space-mode"),
-                listLevelLabelAlign = /**@type{!Element}*/(listLevelProps.getElementsByTagNameNS(stylens, "list-level-label-alignment")[0]),
+                listLevelProps,
+                listLevelPositionSpaceMode,
+                listLevelLabelAlign,
                 listIndent,
                 textAlign,
                 bulletWidth,
@@ -190,7 +190,35 @@
 
             // TODO: fo:text-align is only an optional attribute with <style:list-level-properties>,
             // needs to be found what should be done if not present. For now falling back to "left"
-            textAlign = listLevelProps.getAttributeNS(fons, "text-align") || "left";
+            listLevelProps = /**@type{!Element}*/(node.getElementsByTagNameNS(stylens, "list-level-properties")[0]);
+            if (listLevelProps) {
+                listLevelPositionSpaceMode = listLevelProps.getAttributeNS(textns, "list-level-position-and-space-mode");
+                textAlign = listLevelProps.getAttributeNS(fons, "text-align") || "left";
+                // get relevant properties from the style based on the list label positioning mode
+                if (listLevelPositionSpaceMode === "label-alignment") {
+                    // TODO: fetch the margin and indent from the paragraph style if it is defined there
+                    // http://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part1.html#element-style_list-level-label-alignment
+                    // for now just fallback to "0px" if not defined on <style:list-level-label-alignment>
+                    listLevelLabelAlign = /**@type{!Element}*/(listLevelProps.getElementsByTagNameNS(stylens, "list-level-label-alignment")[0]);
+                    listIndent = listLevelLabelAlign.getAttributeNS(fons, "margin-left") || "0px";
+                    bulletIndent = listLevelLabelAlign.getAttributeNS(fons, "text-indent") || "0px";
+                    followedBy = listLevelLabelAlign.getAttributeNS(textns, "label-followed-by");
+                    leftOffset = convertToPxValue(listIndent);
+                } else {
+                    // this block is entered if list-level-position-and-space-mode
+                    // has the value label-width-and-position or is not present
+                    // TODO: fallback values should be read from parent styles or (system) defaults
+                    listIndent = listLevelProps.getAttributeNS(textns, "space-before") || "0px";
+                    bulletWidth = listLevelProps.getAttributeNS(textns, "min-label-width") || "0px";
+                    labelDistance = listLevelProps.getAttributeNS(textns, "min-label-distance") || "0px";
+                    leftOffset = convertToPxValue(listIndent) + convertToPxValue(bulletWidth);
+                }
+            } else {
+                listIndent = "0px";
+                bulletWidth = "0px";
+                labelDistance = "0px";
+                leftOffset = convertToPxValue(listIndent) + convertToPxValue(bulletWidth);
+            }
             // convert the start and end text alignments to left and right as
             // IE does not support the start and end values for text alignment
             switch (textAlign) {
@@ -200,26 +228,6 @@
                 case "start":
                     textAlign = "left";
                     break;
-            }
-
-            // get relevant properties from the style based on the list label positioning mode
-            if (listLevelPositionSpaceMode === "label-alignment") {
-                // TODO: fetch the margin and indent from the paragraph style if it is defined there
-                // http://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part1.html#element-style_list-level-label-alignment
-                // for now just fallback to "0px" if not defined on <style:list-level-label-alignment>
-                listIndent = listLevelLabelAlign.getAttributeNS(fons, "margin-left") || "0px";
-                bulletIndent = listLevelLabelAlign.getAttributeNS(fons, "text-indent") || "0px";
-                followedBy = listLevelLabelAlign.getAttributeNS(textns, "label-followed-by");
-                leftOffset = convertToPxValue(listIndent);
-
-            } else {
-                // this block is entered if list-level-position-and-space-mode
-                // has the value label-width-and-position or is not present
-                // TODO: fallback values should be read from parent styles or (system) defaults
-                listIndent = listLevelProps.getAttributeNS(textns, "space-before") || "0px";
-                bulletWidth = listLevelProps.getAttributeNS(textns, "min-label-width") || "0px";
-                labelDistance = listLevelProps.getAttributeNS(textns, "min-label-distance") || "0px";
-                leftOffset = convertToPxValue(listIndent) + convertToPxValue(bulletWidth);
             }
 
             listItemRule = selector + ' > text|list-item';
