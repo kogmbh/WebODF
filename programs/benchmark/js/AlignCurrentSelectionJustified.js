@@ -22,7 +22,9 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-define(["BenchmarkAction"], function(BenchmarkAction) {
+/*global define*/
+
+define(["BenchmarkAction"], function (BenchmarkAction) {
     "use strict";
 
     /**
@@ -40,13 +42,13 @@ define(["BenchmarkAction"], function(BenchmarkAction) {
          * @param {!OdfBenchmarkContext} context
          * @return {undefined}
          */
-        this.start = function(context) {
+        this.start = function (context) {
             context.recordDistanceFromCurrentSelection(state);
             action.start();
             context.sessionController.getDirectFormattingController().alignParagraphJustified();
             action.stop();
             action.complete(true);
-        }
+        };
     }
 
     return AlignCurrentSelectionJustified;

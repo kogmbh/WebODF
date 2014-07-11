@@ -22,6 +22,8 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
+/*global define*/
+
 define(["BenchmarkAction"], function(BenchmarkAction) {
     'use strict';
 

@@ -22,7 +22,7 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global define,require,document,odf */
+/*global define, require, document, odf, runtime, gui */
 
 define("webodf/editor/widgets/editHyperlinks", [
     "webodf/editor/EditorSession",
@@ -108,12 +108,12 @@ define("webodf/editor/widgets/editHyperlinks", [
                     selectedLinkRange,
                     linksInSelection = editorSession.getSelectedHyperlinks();
 
-                if (hyperlinkData.isReadOnlyText == "true") {
+                if (hyperlinkData.isReadOnlyText === "true") {
                     if (selection && selection.collapsed && linksInSelection.length === 1) {
                         // Editing the single link the cursor is currently within
                         selectedLinkRange = selection.cloneRange();
                         selectedLinkRange.selectNode(linksInSelection[0]);
-                        selectionController.selectRange(selectedLinkRange, true)
+                        selectionController.selectRange(selectedLinkRange, true);
                     }
                     hyperlinkController.removeHyperlinks();
                     hyperlinkController.addHyperlink(hyperlinkData.linkUrl);
@@ -122,7 +122,7 @@ define("webodf/editor/widgets/editHyperlinks", [
                     linksInSelection = editorSession.getSelectedHyperlinks();
                     selectedLinkRange = selection.cloneRange();
                     selectedLinkRange.selectNode(linksInSelection[0]);
-                    selectionController.selectRange(selectedLinkRange, true)
+                    selectionController.selectRange(selectedLinkRange, true);
                 }
             }
 
@@ -150,7 +150,9 @@ define("webodf/editor/widgets/editHyperlinks", [
                 }
             };
 
+            /*jslint emptyblock: true*/
             this.onToolDone = function () {};
+            /*jslint emptyblock: false*/
 
             function init() {
                 textSerializer.filter = new odf.OdfNodeFilter();

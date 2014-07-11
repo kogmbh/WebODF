@@ -22,6 +22,8 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
+/*global define, runtime*/
+
 define(["BenchmarkAction"], function(BenchmarkAction) {
     "use strict";
 
@@ -42,10 +44,7 @@ define(["BenchmarkAction"], function(BenchmarkAction) {
         this.subscribe = action.subscribe;
         this.state = state;
 
-        /**
-         * @param {!OdfBenchmarkContext} context
-         */
-        this.start = function(context) {
+        this.start = function () {
             action.start();
             runtime.readFile(docUrl, 'binary', onDocumentDownloaded);
         };

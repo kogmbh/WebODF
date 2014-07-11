@@ -28,11 +28,9 @@ define("webodf/editor/SessionListView", [], function () {
     "use strict";
 
     return function SessionListView(sessionList, sessionListDiv, cb) {
-        var self = this,
-            memberDataChangedHandler;
 
         function createSessionDescription(sessionDetails) {
-            return " ("+sessionDetails.cursors.length+" members) ";
+            return " (" + sessionDetails.cursors.length + " members) ";
         }
 
         /**

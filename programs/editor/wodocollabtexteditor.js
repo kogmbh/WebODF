@@ -22,7 +22,9 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-var Wodo = Wodo || (function () {
+/*global Wodo: true, require, navigator, dojo, runtime, document, core, ops, gui, odf*/
+
+Wodo = Wodo || (function () {
     "use strict";
 
     var /** @type{!boolean} */
@@ -74,7 +76,7 @@ var Wodo = Wodo || (function () {
 
                 BorderContainer = BC;
                 ContentPane = CP;
-                FullWindowZoomHelper = FWZH,
+                FullWindowZoomHelper = FWZH;
                 EditorSession = ES;
                 Tools = T;
                 MemberListView = MLV;
@@ -104,9 +106,9 @@ var Wodo = Wodo || (function () {
 
                     isInitalized = true;
                     pendingInstanceCreationCalls.forEach(function (create) { create(); });
+                    return t; // return it so 't' is not unused
                 });
-            }
-        );
+            });
     }
 
     /**
@@ -125,14 +127,13 @@ var Wodo = Wodo || (function () {
         * @return {!boolean}
         */
         function isEnabled(isFeatureEnabled, isUnstable) {
-            if (isUnstable && ! editorOptions.unstableFeaturesEnabled) {
+            if (isUnstable && !editorOptions.unstableFeaturesEnabled) {
                 return false;
             }
             return editorOptions.allFeaturesEnabled ? (isFeatureEnabled !== false) : isFeatureEnabled;
         }
 
-        var self = this,
-            //
+        var //
             mainContainerElement = document.getElementById(mainContainerElementId),
             canvasElement,
             canvasContainerElement,
@@ -299,7 +300,7 @@ var Wodo = Wodo || (function () {
 
             pendingMemberId = sessionBackend.getMemberId();
             pendingEditorReadyCallback = function () {
-                // overwrite router 
+                // overwrite router
                 var opRouter = sessionBackend.createOperationRouter(odfCanvas.odfContainer(), handleOperationRouterErrors);
                 session.setOperationRouter(opRouter);
                 // forward events
@@ -381,10 +382,10 @@ var Wodo = Wodo || (function () {
             var odfContainer = odfCanvas.odfContainer();
 
             if (odfContainer) {
-                odfContainer.createByteArray(function(ba) {
+                odfContainer.createByteArray(function (ba) {
                     cb(null, ba);
-                }, function(err) {
-                    cb(err ? err : "Could not create bytearray.");
+                }, function (err) {
+                    cb(err || "Could not create bytearray.");
                 });
             } else {
                 cb("No odfContainer!");
@@ -416,7 +417,7 @@ var Wodo = Wodo || (function () {
             runtime.assert(editorSession, "editorSession should exist here.");
 
             editorSession.sessionController.getMetadataController().setMetadata(setProperties, removedProperties);
-        };
+        }
 
         /**
          * Returns the value of the requested document metadata field
@@ -428,7 +429,7 @@ var Wodo = Wodo || (function () {
             runtime.assert(editorSession, "editorSession should exist here.");
 
             return editorSession.sessionController.getMetadataController().getMetadata(property);
-        };
+        }
 
         /**
          * @return {undefined}

@@ -22,7 +22,7 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global XMLHttpRequest, runtime, core, ops*/
+/*global define, runtime, core, XMLHttpRequest*/
 
 define("webodf/editor/server/pullbox/Server", [], function () {
     "use strict";
@@ -44,7 +44,7 @@ define("webodf/editor/server/pullbox/Server", [], function () {
 
         args = args || {};
         args.url = args.url || "/WSER";
-        args.sessionStateToFileUrl = args.sessionStateToFileUrl || "/SS2F"
+        args.sessionStateToFileUrl = args.sessionStateToFileUrl || "/SS2F";
 
         this.getGenesisUrl = function (sessionId) {
             return "/session/" + sessionId + "/genesis";
@@ -75,12 +75,8 @@ define("webodf/editor/server/pullbox/Server", [], function () {
                     }
                 }
             }
-            function handleTimeout() {
-                runtime.log("Timeout on call to server.");
-                cbError(0, xhr.statusText);
-            }
 
-runtime.log("Sending message to server: "+messageString);
+            runtime.log("Sending message to server: " + messageString);
             // create body data for request from metadata and payload
 
             // do the request
@@ -96,7 +92,7 @@ runtime.log("Sending message to server: "+messageString);
             try {
                 xhr.send(messageString);
             } catch (e) {
-                runtime.log("Problem with calling server: " + e + " " + data);
+                runtime.log("Problem with calling server: " + e);
                 cbError(-1, e.message);
             }
         }

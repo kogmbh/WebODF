@@ -22,7 +22,9 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-define(["OdfBenchmarkContext"], function(OdfBenchmarkContext) {
+/*global define, runtime, core, console, odf */
+
+define(["OdfBenchmarkContext"], function (OdfBenchmarkContext) {
         "use strict";
 
         runtime.loadClass("core.EventNotifier");

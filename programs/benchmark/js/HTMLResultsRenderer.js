@@ -22,6 +22,8 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
+/*global define, document*/
+
 define(["HTMLActionResult"], function(HTMLActionResult) {
         "use strict";
 
@@ -40,8 +42,10 @@ define(["HTMLActionResult"], function(HTMLActionResult) {
                 });
             }
 
+            /*jslint emptyblock: true*/
             function onComplete() {
             }
+            /*jslint emptyblock: false*/
 
             /**
              * Set the background colour of the benchmark

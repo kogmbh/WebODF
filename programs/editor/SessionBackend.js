@@ -30,7 +30,7 @@
  * Abstracts any backend that provides a session.
  * @interface
  */
-SessionBackend = function SessionBackend() {"use strict"; };
+function SessionBackend() {"use strict"; }
 
 /**
  * Get the memberId (a unique identifier for this client) for the current session.

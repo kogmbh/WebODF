@@ -22,7 +22,9 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-define(function() {
+/*global define, document*/
+
+define(function () {
         "use strict";
 
         /**
@@ -56,8 +58,8 @@ define(function() {
 
             function toPagesPerMin(stepsPerMs) {
                 // http://anycount.com/WordCountBlog/how-many-words-in-one-page/
-                var pagesPerHr = (stepsPerMs / 3838) * 1000 * 60 * 60;
-                return formatNumber(pagesPerHr);
+                var pagesPH = (stepsPerMs / 3838) * 1000 * 60 * 60;
+                return formatNumber(pagesPH);
             }
 
             function start() {

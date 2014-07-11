@@ -22,7 +22,10 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
+/*global define, runtime, odf, document, Node*/
+
 define([], function() {
+    "use strict";
 
     runtime.loadClass("odf.OdfUtils");
 

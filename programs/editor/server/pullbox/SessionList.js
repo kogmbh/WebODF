@@ -35,13 +35,13 @@ define("webodf/editor/server/pullbox/SessionList", [], function () {
 
         function onSessionData(sessionData) {
             var i,
-                isNew = ! cachedSessionData.hasOwnProperty(sessionData.id);
+                isNew = !cachedSessionData.hasOwnProperty(sessionData.id);
 
             // extend data with download url
             sessionData.fileUrl = "/session/" + sessionData.id + "/last/" + sessionData.filename;
             // cache
             cachedSessionData[sessionData.id] = sessionData;
-            runtime.log("get session data for:"+sessionData.title+", is new:"+isNew);
+            runtime.log("get session data for:" + sessionData.title + ", is new:" + isNew);
 
             for (i = 0; i < subscribers.length; i += 1) {
                 if (isNew) {
@@ -69,7 +69,7 @@ define("webodf/editor/server/pullbox/SessionList", [], function () {
 
             server.call({
                 command: "query_sessiondata_list"
-            }, function(responseData) {
+            }, function (responseData) {
                 var response = runtime.fromJson(responseData),
                     sessionList, i,
                     unupdatedSessions = {};
@@ -91,7 +91,7 @@ define("webodf/editor/server/pullbox/SessionList", [], function () {
 
                     // add/update with all delivered sessions
                     sessionList = response.sessiondata_list;
-                    for (i = 0; i < sessionList.length; i++) {
+                    for (i = 0; i < sessionList.length; i += 1) {
                         if (unupdatedSessions.hasOwnProperty(sessionList[i].id)) {
                             delete unupdatedSessions[sessionList[i].id];
                         }
@@ -110,8 +110,8 @@ define("webodf/editor/server/pullbox/SessionList", [], function () {
                 } else {
                     runtime.log("Meh, sessionlist data broken: " + responseData);
                 }
-            }, function() {
-                // ignore error for now
+            }, function (e) {
+                runtime.log(e);
             });
         }
 
@@ -135,7 +135,7 @@ define("webodf/editor/server/pullbox/SessionList", [], function () {
         this.unsubscribe = function (subscriber) {
             var i;
 
-            for (i=0; i<subscribers.length; i+=1) {
+            for (i = 0; i < subscribers.length; i += 1) {
                 if (subscribers[i] === subscriber) {
                     break;
                 }
@@ -144,7 +144,7 @@ define("webodf/editor/server/pullbox/SessionList", [], function () {
             runtime.assert((i < subscribers.length),
                             "tried to unsubscribe when not subscribed.");
 
-            subscribers.splice(i,1);
+            subscribers.splice(i, 1);
         };
 
         this.setUpdatesEnabled = function (enabled) {

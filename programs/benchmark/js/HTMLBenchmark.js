@@ -22,6 +22,8 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
+/*global define, document, window, webodf*/
+
 define([
     "Benchmark",
     "HTMLResultsRenderer",
@@ -50,15 +52,19 @@ define([
      * @return {!Object.<!string, !string>}
      */
     function getQueryParams() {
+        /*jslint regexp: true*/
         var match,
             pl     = /\+/g,  // Regex for replacing addition symbol with a space
             search = /([^&=]+)=?([^&]*)/g,
             decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
             query  = window.location.search.substring(1),
             urlParams = {};
+        /*jslint regexp: false*/
 
-        while (match = search.exec(query)) {
+        match = search.exec(query);
+        while (match) {
             urlParams[decode(match[1])] = decode(match[2]);
+            match = search.exec(query);
         }
 
         return urlParams;

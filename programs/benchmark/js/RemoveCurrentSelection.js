@@ -22,6 +22,8 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
+/*global define*/
+
 define(["BenchmarkAction"], function(BenchmarkAction) {
     "use strict";
 
@@ -45,7 +47,7 @@ define(["BenchmarkAction"], function(BenchmarkAction) {
             context.sessionController.getTextController().removeCurrentSelection();
             action.stop();
             action.complete(true);
-        }
+        };
     }
 
     return RemoveCurrentSelection;

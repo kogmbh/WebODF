@@ -22,6 +22,8 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
+/*global require, document, runtime, Wodo, alert*/
+
 function createEditor(args) {
     "use strict";
 
@@ -51,7 +53,7 @@ function createEditor(args) {
         imageElement.src = symbolFileName;
         overlay.appendChild(imageElement);
         overlay.style.position = "absolute";
-        overlay.style.top =  24*position + "px";
+        overlay.style.top =  24 * position + "px";
         overlay.style.opacity = "0.8";
         overlay.style.display = "none";
         parentElement.appendChild(overlay);
@@ -78,20 +80,33 @@ function createEditor(args) {
     function updateLocationWithSessionId(sessionId) {
         var location = String(document.location),
             pos = location.indexOf('#');
-        if (pos != -1) {
+        if (pos !== -1) {
             location = location.substr(0, pos);
         }
         if (sessionId) {
             location = location + '#' + sessionId;
         }
-        history.replaceState( {}, "", location);
+        //history.replaceState( {}, "", location);
     }
 
+    /*jslint emptyblock: true*/
     /**
      * @return {undefined}
      */
     function onEditingStarted() {
         // nothing to do right now
+    }
+    /*jslint emptyblock: false*/
+
+    /**
+     * @return {undefined}
+     */
+    function showSessions() {
+        switchToPage("sessionListContainer");
+
+        sessionList.setUpdatesEnabled(true);
+
+        updateLocationWithSessionId("");
     }
 
     /**
@@ -99,10 +114,10 @@ function createEditor(args) {
      * @return {undefined}
      */
     function closeEditing(ignoreError) {
-        editor.leaveSession(function() {
-            server.leaveSession(currentSessionId, currentMemberId, function() {
+        editor.leaveSession(function () {
+            server.leaveSession(currentSessionId, currentMemberId, function () {
                 showSessions();
-            }, function() {
+            }, function () {
                 if (ignoreError) {
                     showSessions();
                 }
@@ -115,19 +130,8 @@ function createEditor(args) {
      * @return {undefined}
      */
     function handleEditingError(error) {
-        alert("Something went wrong:\n"+error);
+        alert("Something went wrong:\n" + error);
         closeEditing(true);
-    }
-
-    /**
-     * @return {undefined}
-     */
-    function showSessions() {
-        switchToPage("sessionListContainer");
-
-        sessionList.setUpdatesEnabled(true);
-
-        updateLocationWithSessionId("");
     }
 
     /**
@@ -142,14 +146,17 @@ function createEditor(args) {
         updateLocationWithSessionId(sessionId);
 
         currentSessionId = sessionId;
-        server.joinSession(userId, sessionId, function(memberId) {
+        server.joinSession(userId, sessionId, function (memberId) {
             currentMemberId = memberId;
 
             if (!editor) {
                 editorOptions.networkSecurityToken = token;
                 editorOptions.closeCallback = closeEditing;
-                Wodo.createCollabTextEditor('editorContainer', editorOptions, function(err, e) {
+                Wodo.createCollabTextEditor('editorContainer', editorOptions, function (err, e) {
                     var canvasContainerElement;
+                    if (err) {
+                        runtime.log(err);
+                    }
 
                     editor = e;
 
@@ -158,16 +165,16 @@ function createEditor(args) {
                     hasLocalUnsyncedOpsOverlay = addStatusOverlay(canvasContainerElement, "vcs-locally-modified.png", 0);
                     disconnectedOverlay = addStatusOverlay(canvasContainerElement, "network-disconnect.png", 1);
 
-                    editor.addEventListener(Wodo.EVENT_BEFORESAVETOFILE, function() {
+                    editor.addEventListener(Wodo.EVENT_BEFORESAVETOFILE, function () {
                         savingOverlay.style.display = "";
                     });
-                    editor.addEventListener(Wodo.EVENT_SAVEDTOFILE, function() {
+                    editor.addEventListener(Wodo.EVENT_SAVEDTOFILE, function () {
                         savingOverlay.style.display = "none";
                     });
-                    editor.addEventListener(Wodo.EVENT_HASLOCALUNSYNCEDOPERATIONSCHANGED, function(has) {
+                    editor.addEventListener(Wodo.EVENT_HASLOCALUNSYNCEDOPERATIONSCHANGED, function (has) {
                         hasLocalUnsyncedOpsOverlay.style.display = has ? "" : "none";
                     });
-                    editor.addEventListener(Wodo.EVENT_HASSESSIONHOSTCONNECTIONCHANGED, function(has) {
+                    editor.addEventListener(Wodo.EVENT_HASSESSIONHOSTCONNECTIONCHANGED, function (has) {
                         disconnectedOverlay.style.display = has ? "none" : "";
                     });
                     editor.addEventListener(Wodo.EVENT_UNKNOWNERROR, handleEditingError);
@@ -178,8 +185,9 @@ function createEditor(args) {
             } else {
                 editor.joinSession(serverFactory.createSessionBackend(sessionId, memberId, server), onEditingStarted);
             }
-        }, function() {
+        }, function (err) {
             // TODO: handle error
+            runtime.log(err);
         });
     }
 
@@ -200,10 +208,9 @@ function createEditor(args) {
      * when the user selects a session the callback is called
      * with the sessionId as parameter
      *
-     * @param {!function(!string, !string, ?string)} callback
      * @return {undefined}
      */
-    function startLoginProcess(callback) {
+    function startLoginProcess() {
         runtime.assert(editor === null, "cannot boot with instantiated editor");
 
         function loginSuccess(userData) {
@@ -227,8 +234,9 @@ function createEditor(args) {
                     } else {
                         switchToPage("sessionListContainer");
                     }
-                }
-            );
+                    // return sessionListView so it is not unused
+                    return sessionListView;
+                });
         }
 
         function loginFail(result) {

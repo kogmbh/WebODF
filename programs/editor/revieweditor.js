@@ -22,6 +22,8 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
+/*global document, runtime, FileReader, alert, Uint8Array, Blob, saveAs, Wodo*/
+
 function createReviewEditor() {
     "use strict";
 
@@ -29,11 +31,13 @@ function createReviewEditor() {
         editorOptions,
         loadedFilename;
 
+    /*jslint emptyblock: true*/
     /**
      * @return {undefined}
      */
-     function startEditing() {
-     }
+    function startEditing() {
+    }
+    /*jslint emptyblock: false*/
 
     /**
      * extract document url from the url-fragment
@@ -91,9 +95,8 @@ function createReviewEditor() {
         runtime.getFileSize = function (path, callback) {
             if (openedFiles.hasOwnProperty(path)) {
                 return callback(openedFiles[path].byteLength);
-            } else {
-                return getFileSize(path, callback);
             }
+            return getFileSize(path, callback);
         };
         runtime.registerFile = function (path, data) {
             openedFiles[path] = data;

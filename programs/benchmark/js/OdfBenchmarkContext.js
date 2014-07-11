@@ -22,7 +22,10 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
+/*global define, runtime*/
+
 define(["RangeCalculator"], function(RangeCalculator) {
+    "use strict";
     /**
      * @constructor
      */
@@ -112,7 +115,7 @@ define(["RangeCalculator"], function(RangeCalculator) {
                 runtime.assert(state.initialCursorPosition !== undefined, "Initial cursor position should first be saved with context.storeCurrentPosition");
                 finalCursorPosition = odtDocument.getCursorPosition(self.sessionController.getInputMemberId());
                 state.travelledSteps = Math.abs(state.initialCursorPosition - finalCursorPosition);
-                state.horizontalTravelPx = measureSelectionLength(state.initialCursorPosition - finalCursorPosition)
+                state.horizontalTravelPx = measureSelectionLength(state.initialCursorPosition - finalCursorPosition);
             }
         };
 

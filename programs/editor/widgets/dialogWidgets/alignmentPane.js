@@ -77,7 +77,7 @@ define("webodf/editor/widgets/dialogWidgets/alignmentPane", [], function () {
             }
         };
 
-        this.setEditorSession = function(session) {
+        this.setEditorSession = function (session) {
             editorSession = session;
         };
 
@@ -85,25 +85,24 @@ define("webodf/editor/widgets/dialogWidgets/alignmentPane", [], function () {
             require([
                 "dojo",
                 "dojo/ready",
-                "dojo/dom-construct",
                 "dijit/layout/ContentPane"],
-                function (dojo, ready, domConstruct, ContentPane) {
+                function (dojo, ready, ContentPane) {
                     var editorBase = dojo.config && dojo.config.paths &&
                             dojo.config.paths['webodf/editor'];
-                runtime.assert(editorBase, "webodf/editor path not defined in dojoConfig");
-                ready(function () {
-                    contentPane = new ContentPane({
-                        title: runtime.tr("Alignment"),
-                        href: editorBase+"/widgets/dialogWidgets/alignmentPane.html",
-                        preload: true
+                    runtime.assert(editorBase, "webodf/editor path not defined in dojoConfig");
+                    ready(function () {
+                        contentPane = new ContentPane({
+                            title: runtime.tr("Alignment"),
+                            href: editorBase + "/widgets/dialogWidgets/alignmentPane.html",
+                            preload: true
+                        });
+                        contentPane.onLoad = function () {
+                            form = dijit.byId('alignmentPaneForm');
+                            runtime.translateContent(form.domNode);
+                        };
+                        return cb();
                     });
-                    contentPane.onLoad = function () {
-                        form = dijit.byId('alignmentPaneForm');
-                        runtime.translateContent(form.domNode);
-                    };
-                    return cb();
                 });
-            });
         }
 
         init(function () {

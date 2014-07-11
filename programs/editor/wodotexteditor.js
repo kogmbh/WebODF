@@ -22,15 +22,16 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
+/*global window, document, alert, navigator, require, dojo, runtime, core, gui, ops, odf, WodoFromSource*/
+
 /**
  * Namespace of the Wodo.TextEditor
  * @namespace
  */
-var Wodo = Wodo || (function () {
+var Wodo = (function () {
     "use strict";
 
-    var installationPath = (function() {
-        "use strict";
+    function getInstallationPath() {
 
         /**
          * Sees to get the url of this script on top of the stack trace.
@@ -41,7 +42,9 @@ var Wodo = Wodo || (function () {
             var url, matches;
 
             if (typeof stack === "string" && stack) {
+                /*jslint regexp: true*/
                 matches = stack.match(/((?:http[s]?|file):\/\/[\/]?.+?\/[^:\)]*?)(?::\d+)(?::\d+)?/);
+                /*jslint regexp: false*/
                 url = matches && matches[1];
             }
             if (typeof url === "string" && url) {
@@ -56,9 +59,7 @@ var Wodo = Wodo || (function () {
          * @return {!string|undefined}
          */
         function getCurrentScriptElementSrcByTricks() {
-            var i,
-                pageUrl = window.location.href,
-                scriptElements = document.getElementsByTagName("script");
+            var scriptElements = document.getElementsByTagName("script");
 
             // if there is only one script, it must be this
             if (scriptElements.length === 1) {
@@ -68,8 +69,7 @@ var Wodo = Wodo || (function () {
             // otherwise get it from the stacktrace
             try {
                 throw new Error();
-            }
-            catch (err) {
+            } catch (err) {
                 return getScriptUrlFromStack(err.stack);
             }
         }
@@ -96,28 +96,10 @@ var Wodo = Wodo || (function () {
             alert("Could not estimate installation path of the Wodo.TextEditor.");
         }
         return path;
-    }());
+    }
 
-    window.dojoConfig = (function() {
-        var WebODFEditorDojoLocale = "C";
-
-        if (navigator && navigator.language.match(/^(de)/)) {
-            WebODFEditorDojoLocale = navigator.language.substr(0, 2);
-        }
-
-        return {
-            locale: WebODFEditorDojoLocale,
-            paths: {
-                "webodf/editor": installationPath,
-                "dijit":         installationPath + "/dijit",
-                "dojox":         installationPath + "/dojox",
-                "dojo":          installationPath + "/dojo",
-                "resources":     installationPath + "/resources"
-            }
-        };
-    }());
-
-    var /** @inner @type{!boolean} */
+    var installationPath = getInstallationPath(),
+        /** @inner @type{!boolean} */
         isInitalized = false,
         /** @inner @type{!Array.<!function():undefined>} */
         pendingInstanceCreationCalls = [],
@@ -146,6 +128,24 @@ var Wodo = Wodo || (function () {
             @type {!string} */
         EVENT_METADATACHANGED = "metadataChanged";
 
+    window.dojoConfig = (function () {
+        var WebODFEditorDojoLocale = "C";
+
+        if (navigator && navigator.language.match(/^(de)/)) {
+            WebODFEditorDojoLocale = navigator.language.substr(0, 2);
+        }
+
+        return {
+            locale: WebODFEditorDojoLocale,
+            paths: {
+                "webodf/editor": installationPath,
+                "dijit":         installationPath + "/dijit",
+                "dojox":         installationPath + "/dojox",
+                "dojo":          installationPath + "/dojo",
+                "resources":     installationPath + "/resources"
+            }
+        };
+    }());
 
     /**
      * @return {undefined}
@@ -166,7 +166,7 @@ var Wodo = Wodo || (function () {
 
                 BorderContainer = BC;
                 ContentPane = CP;
-                FullWindowZoomHelper = FWZH,
+                FullWindowZoomHelper = FWZH;
                 EditorSession = ES;
                 Tools = T;
 
@@ -198,8 +198,8 @@ var Wodo = Wodo || (function () {
                     isInitalized = true;
                     pendingInstanceCreationCalls.forEach(function (create) { create(); });
                 });
-            }
-        );
+                return t; // return t so it is not unused
+            });
     }
 
     /**
@@ -242,8 +242,7 @@ var Wodo = Wodo || (function () {
             return editorOptions.allFeaturesEnabled ? (isFeatureEnabled !== false) : isFeatureEnabled;
         }
 
-        var self = this,
-            userData,
+        var userData,
             //
             mainContainerElement = document.getElementById(mainContainerElementId),
             canvasElement,
@@ -296,7 +295,7 @@ var Wodo = Wodo || (function () {
                 EVENT_METADATACHANGED
             ]);
 
-        runtime.assert(Boolean(mainContainerElement), "No id of an existing element passed to Wodo.createTextEditor(): "+mainContainerElementId);
+        runtime.assert(Boolean(mainContainerElement), "No id of an existing element passed to Wodo.createTextEditor(): " + mainContainerElementId);
 
         /**
          * @param {!Object} changes
@@ -374,7 +373,7 @@ var Wodo = Wodo || (function () {
          * @param {!function(!Error=):undefined} callback Called once the document has been opened, passes an error object in case of error
          * @return {undefined}
          */
-        this.openDocumentFromUrl = function(docUrl, editorReadyCallback) {
+        this.openDocumentFromUrl = function (docUrl, editorReadyCallback) {
             runtime.assert(docUrl, "document should be defined here.");
             runtime.assert(!pendingEditorReadyCallback, "pendingEditorReadyCallback should not exist here.");
             runtime.assert(!editorSession, "editorSession should not exist here.");
@@ -395,7 +394,7 @@ var Wodo = Wodo || (function () {
             };
 
             odfCanvas.load(docUrl);
-        }
+        };
 
         /**
          * Closes the document, and does cleanup.
@@ -404,7 +403,7 @@ var Wodo = Wodo || (function () {
          * @param {!function(!Error=):undefined} callback  Called once the document has been closed, passes an error object in case of error
          * @return {undefined}
          */
-        this.closeDocument = function(callback) {
+        this.closeDocument = function (callback) {
             runtime.assert(session, "session should exist here.");
 
             endEditing();
@@ -437,7 +436,7 @@ var Wodo = Wodo || (function () {
                     });
                 }
             });
-        }
+        };
 
         /**
          * @name TextEditor#getDocumentAsByteArray
@@ -445,19 +444,19 @@ var Wodo = Wodo || (function () {
          * @param {!function(err:?Error, file:!Uint8Array=):undefined} callback Called with the current document as ODT file as bytearray, passes an error object in case of error
          * @return {undefined}
          */
-        this.getDocumentAsByteArray = function(callback) {
+        this.getDocumentAsByteArray = function (callback) {
             var odfContainer = odfCanvas.odfContainer();
 
             if (odfContainer) {
-                odfContainer.createByteArray(function(ba) {
+                odfContainer.createByteArray(function (ba) {
                     callback(null, ba);
-                }, function(errorString) {
-                    callback(new Error(errorString ? errorString : "Could not create bytearray from OdfContainer."));
+                }, function (errorString) {
+                    callback(new Error(errorString || "Could not create bytearray from OdfContainer."));
                 });
             } else {
                 callback(new Error("No odfContainer set!"));
             }
-        }
+        };
 
         /**
          * Sets the metadata fields from the given properties map.
@@ -479,7 +478,7 @@ var Wodo = Wodo || (function () {
          * @param {?Array.<!string>} removedProperties An array of metadata field names (prefixed).
          * @return {undefined}
          */
-        this.setMetadata = function(setProperties, removedProperties) {
+        this.setMetadata = function (setProperties, removedProperties) {
             runtime.assert(editorSession, "editorSession should exist here.");
 
             editorSession.sessionController.getMetadataController().setMetadata(setProperties, removedProperties);
@@ -520,9 +519,9 @@ var Wodo = Wodo || (function () {
          * @function
          * @return {!Object.<!string,!string>}
          */
-        this.getUserData = function() {
+        this.getUserData = function () {
             return cloneUserData(userData);
-        }
+        };
 
         /**
          * @return {undefined}
@@ -548,7 +547,7 @@ var Wodo = Wodo || (function () {
          * @param {!function(!Error=):undefined} callback Called once the destruction has been completed, passes an error object in case of error
          * @return {undefined}
          */
-        this.destroy = function(callback) {
+        this.destroy = function (callback) {
             var destroyCallbacks = [];
 
             // TODO: decide if some forced close should be done here instead of enforcing proper API usage
@@ -565,7 +564,7 @@ var Wodo = Wodo || (function () {
             ]);
 
             core.Async.destroyAll(destroyCallbacks, callback);
-        }
+        };
 
         // TODO:
         // this.openDocumentFromByteArray = openDocumentFromByteArray; see also https://github.com/kogmbh/WebODF/issues/375

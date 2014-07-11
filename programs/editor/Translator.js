@@ -22,7 +22,7 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global define, runtime, XMLHTTPRequest */
+/*global define, runtime, XMLHttpRequest */
 
 define("webodf/editor/Translator", [], function () {
     "use strict";

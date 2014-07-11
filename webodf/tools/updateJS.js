@@ -607,6 +607,7 @@ function Main(cmakeListPath) {
                 }
             }
         }
+
         // determine which license is used most often
         commonLicense = Object.keys(licenses).reduce(function (prev, current) {
             var value = licenses[current];
@@ -629,7 +630,16 @@ function main(f) {
     "use strict";
     var pathModule = require("path");
     // recursively read all the files in the lib and tests directories
-    f.readFiles(["lib", "tests"], function (name, isfile) {
+    f.readFiles(["lib", "tests", "../programs/editor", "../programs/docnosis", "../programs/benchmark"], function (name, isfile) {
+        if (name.indexOf("/dojo-deps/") !== -1) {
+            return false;
+        }
+        if (name.indexOf("programs/editor/FileSaver.js") !== -1) {
+            return false;
+        }
+        if (name.indexOf("programs/benchmark/require.js") !== -1) {
+            return false;
+        }
         // only read directories and js files
         return !isfile || name.indexOf(".js") === name.length - 3;
     }, function (contents) {

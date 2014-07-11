@@ -22,7 +22,9 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-define(["BenchmarkAction"], function(BenchmarkAction) {
+/*global define, runtime, gui, ops*/
+
+define(["BenchmarkAction"], function (BenchmarkAction) {
     "use strict";
 
     runtime.loadClass("ops.Session");
@@ -60,14 +62,15 @@ define(["BenchmarkAction"], function(BenchmarkAction) {
         /**
          * @param {!OdfBenchmarkContext} context
          */
-        this.start = function(context) {
+        this.start = function (context) {
             var session,
                 sessionConstraints,
                 sessionController,
                 shadowCursor,
                 selectionViewManager,
                 caretManager,
-                addMember = new ops.OpAddMember();
+                addMember = new ops.OpAddMember(),
+                sessionView;
 
             action.start();
 
@@ -78,7 +81,10 @@ define(["BenchmarkAction"], function(BenchmarkAction) {
             sessionController.setUndoManager(undoManager);
             caretManager = new gui.CaretManager(sessionController);
             selectionViewManager = new gui.SelectionViewManager(gui.SvgSelectionView);
-            new gui.SessionView(viewOptions, localMemberId, session, sessionConstraints, caretManager, selectionViewManager);
+            sessionView = new gui.SessionView(viewOptions, localMemberId, session, sessionConstraints, caretManager, selectionViewManager);
+            if (!sessionView) { // use sessionView so jslint does not complain
+                runtime.log("No SessionView was created.");
+            }
             selectionViewManager.registerCursor(shadowCursor, true);
 
             addMember.init({

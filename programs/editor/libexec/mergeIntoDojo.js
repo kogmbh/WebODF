@@ -43,72 +43,73 @@
  */
 
 /*global require,process */
-(function() {
-	"use strict";
-	var fs = require("fs"), args, dojo_build,
-	log=function(x) {
-		process.stderr.write(x);
-		process.stderr.write("\n");
-	},
-	mergees=[], stat,
-	tail, idx, i;
+(function () {
+    "use strict";
+    var fs = require("fs"), args, dojo_build,
+        log = function (x) {
+            process.stderr.write(x);
+            process.stderr.write("\n");
+        },
+        mergees = [], stat,
+        tail, idx, i;
 
-	args = process.argv;
+    args = process.argv;
 
-	while (args[0]) {
-		dojo_build = args.shift();
-		if (dojo_build.match(/^dojobuild=/)) {
-			break;
-		}
-	}
-	if (!dojo_build.match(/^dojobuild=/)) {
-		log("dojobuild= argument missing.");
-		return 1;
-	}
-	dojo_build = dojo_build.substr(10);
-	stat = null;
-	try {
-		stat = fs.statSync(dojo_build);
-	} catch (e) { }
-	if (!(stat && stat.isFile())) {
-		log("dojobuild= does not point to a file.");
-		return 1;
-	}
+    while (args[0]) {
+        dojo_build = args.shift();
+        if (dojo_build.match(/^dojobuild=/)) {
+            break;
+        }
+    }
+    if (!dojo_build.match(/^dojobuild=/)) {
+        log("dojobuild= argument missing.");
+        return 1;
+    }
+    dojo_build = dojo_build.substr(10);
+    stat = null;
+    try {
+        stat = fs.statSync(dojo_build);
+    } catch (ignore) {
+    }
+    if (!(stat && stat.isFile())) {
+        log("dojobuild= does not point to a file.");
+        return 1;
+    }
 
-	while (args[0]) {
-		try {
-			stat = null;
-			stat = fs.statSync(args[0]);
-			if (stat && stat.isFile()) {
-				mergees.push(args.shift());
-			} else {
-				log("skipping ["+args[0]+"] as non-file.");
-			}
-		} catch (e2) {
-			log("skipping ["+args[0]+"] as non-existent.");
-		}
-	}
+    while (args[0]) {
+        try {
+            stat = null;
+            stat = fs.statSync(args[0]);
+            if (stat && stat.isFile()) {
+                mergees.push(args.shift());
+            } else {
+                log("skipping ["+args[0]+"] as non-file.");
+            }
+        } catch (e2) {
+            log("skipping ["+args[0]+"] as non-existent.");
+        }
+    }
 
-	log("merging ["+mergees.join(",")+"] into "+dojo_build);
+    log("merging ["+mergees.join(",")+"] into "+dojo_build);
 
-	dojo_build = fs.readFileSync(dojo_build);
-	if (!dojo_build) {
-		log("dojobuild empty?");
-		return 1;
-	}
+    dojo_build = fs.readFileSync(dojo_build);
+    if (!dojo_build) {
+        log("dojobuild empty?");
+        return 1;
+    }
 
-	tail = dojo_build.slice(dojo_build.length-1000).toString();
-	idx = dojo_build.length - 1000 + tail.lastIndexOf("\n");
+    tail = dojo_build.slice(dojo_build.length-1000).toString();
+    idx = dojo_build.length - 1000 + tail.lastIndexOf("\n");
 
-	process.stdout.write(dojo_build.slice(0, idx));
+    process.stdout.write(dojo_build.slice(0, idx));
 
-	// merge the modules here
-	for (i=0; i<mergees.length; i+=1) {
-		process.stdout.write("\n// START OF "+mergees[i]+"\n");
-		process.stdout.write(fs.readFileSync(mergees[i]));
-		process.stdout.write("\n// END OF "+mergees[i]+"\n");
-	}
+    // merge the modules here
+    for (i=0; i<mergees.length; i+=1) {
+        process.stdout.write("\n// START OF "+mergees[i]+"\n");
+        process.stdout.write(fs.readFileSync(mergees[i]));
+        process.stdout.write("\n// END OF "+mergees[i]+"\n");
+    }
 
-	process.stdout.write(dojo_build.slice(idx));
+    process.stdout.write(dojo_build.slice(idx));
 
 }());

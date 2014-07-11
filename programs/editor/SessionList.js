@@ -23,12 +23,13 @@
  */
 
 /*global ops, runtime */
+/*jslint emptyblock: true, unparam: true*/
 
 /**
  * A model which provides information about sessions.
  * @interface
  */
-function SessionList() {"use strict"; };
+function SessionList() {"use strict"; }
 
 /**
  * @param {{onCreated:function(!Object),

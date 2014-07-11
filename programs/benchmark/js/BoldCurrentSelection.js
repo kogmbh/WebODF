@@ -22,7 +22,9 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-define(["BenchmarkAction"], function(BenchmarkAction) {
+/*global define, runtime, gui, ops*/
+
+define(["BenchmarkAction"], function (BenchmarkAction) {
     "use strict";
 
     /**
@@ -39,7 +41,7 @@ define(["BenchmarkAction"], function(BenchmarkAction) {
         /**
          * @param {!OdfBenchmarkContext} context
          */
-        this.start = function(context) {
+        this.start = function (context) {
             context.recordDistanceFromCurrentSelection(state);
             action.start();
             context.sessionController.getDirectFormattingController().setBold(true);

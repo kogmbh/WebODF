@@ -22,6 +22,8 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
+/*global define*/
+
 define(["BenchmarkAction"], function(BenchmarkAction) {
     "use strict";
 
@@ -50,7 +52,7 @@ define(["BenchmarkAction"], function(BenchmarkAction) {
             action.stop();
             context.recordDistanceFromPreviousPosition(state);
             action.complete(true);
-        }
+        };
     }
 
     return MoveCursorLeft;

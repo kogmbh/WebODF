@@ -23,11 +23,12 @@
  */
 
 /*global ops, SessionList*/
+/*jslint emptyblock: true, unparam: true*/
 
 /**
  * @interface
  */
-function ServerFactory() {"use strict"; };
+function ServerFactory() {"use strict"; }
 
 /**
  * @return {!ops.Server}

@@ -22,7 +22,9 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-define(function() {
+/*global define, runtime, core*/
+
+define(function () {
     "use strict";
 
     runtime.loadClass("core.EventNotifier");
@@ -36,21 +38,21 @@ define(function() {
 
         this.subscribe = events.subscribe;
 
-        this.start = function() {
+        this.start = function () {
             state.status = undefined;
             state.elapsedTime = undefined;
             events.emit("start", state);
             startedAt = new Date().getTime();
         };
 
-        this.stop = function() {
+        this.stop = function () {
             state.elapsedTime = new Date().getTime() - startedAt;
         };
 
         /**
          * @param {!boolean} result
          */
-        this.complete = function(result) {
+        this.complete = function (result) {
             state.status = result;
             events.emit("complete", state);
         };

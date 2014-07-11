@@ -22,7 +22,7 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global define,require,gui,ops */
+/*global define, require, runtime, gui, ops */
 
 define("webodf/editor/widgets/simpleStyles", [
     "webodf/editor/widgets/fontPicker",
@@ -33,7 +33,7 @@ define("webodf/editor/widgets/simpleStyles", [
     function (FontPicker, ToggleButton, NumberSpinner, EditorSession) {
         "use strict";
 
-        var SimpleStyles = function(callback) {
+        var SimpleStyles = function (callback) {
             var self = this,
                 editorSession,
                 widget = {},
@@ -100,7 +100,7 @@ define("webodf/editor/widgets/simpleStyles", [
                 showLabel: false,
                 value: 12,
                 smallDelta: 1,
-                constraints: {min:6, max:96},
+                constraints: {min: 6, max: 96},
                 intermediateChanges: true,
                 onChange: function (value) {
                     directFormattingController.setFontSize(value);
@@ -116,10 +116,12 @@ define("webodf/editor/widgets/simpleStyles", [
                 }
             });
 
+            /*jslint emptyblock: true*/
             fontPicker = new FontPicker(function () {});
+            /*jslint emptyblock: false*/
             fontPickerWidget = fontPicker.widget();
             fontPickerWidget.setAttribute('disabled', true);
-            fontPickerWidget.onChange = function(value) {
+            fontPickerWidget.onChange = function (value) {
                 directFormattingController.setFontName(value);
                 self.onToolDone();
             };
@@ -141,16 +143,16 @@ define("webodf/editor/widgets/simpleStyles", [
             function updateStyleButtons(changes) {
                 // The 3rd parameter to set(...) is false to avoid firing onChange when setting the value programmatically.
                 var updateCalls = {
-                    isBold: function(value) { boldButton.set('checked', value, false); },
-                    isItalic: function(value) { italicButton.set('checked', value, false); },
-                    hasUnderline: function(value) { underlineButton.set('checked', value, false); },
-                    hasStrikeThrough: function(value) { strikethroughButton.set('checked', value, false); },
-                    fontSize: function(value) { 
+                    isBold: function (value) { boldButton.set('checked', value, false); },
+                    isItalic: function (value) { italicButton.set('checked', value, false); },
+                    hasUnderline: function (value) { underlineButton.set('checked', value, false); },
+                    hasStrikeThrough: function (value) { strikethroughButton.set('checked', value, false); },
+                    fontSize: function (value) {
                         fontSizeSpinner.set('intermediateChanges', false); // Necessary due to https://bugs.dojotoolkit.org/ticket/11588
                         fontSizeSpinner.set('value', value, false);
                         fontSizeSpinner.set('intermediateChanges', true);
                     },
-                    fontName: function(value) { fontPickerWidget.set('value', value, false); }
+                    fontName: function (value) { fontPickerWidget.set('value', value, false); }
                 };
 
                 Object.keys(changes).forEach(function (key) {
@@ -174,7 +176,7 @@ define("webodf/editor/widgets/simpleStyles", [
                 }
             }
 
-            this.setEditorSession = function(session) {
+            this.setEditorSession = function (session) {
                 if (editorSession) {
                     editorSession.unsubscribe(EditorSession.signalCursorMoved, handleCursorMoved);
                     directFormattingController.unsubscribe(gui.DirectFormattingController.textStylingChanged, updateStyleButtons);
@@ -205,10 +207,12 @@ define("webodf/editor/widgets/simpleStyles", [
                 });
             };
 
+            /*jslint emptyblock: true*/
             this.onToolDone = function () {};
+            /*jslint emptyblock: false*/
 
             callback(widget);
         };
 
         return SimpleStyles;
-});
+    });

@@ -33,7 +33,7 @@ runtime.loadClass("xmldom.RelaxNGParser");
  * for loaded odf files.
  */
 
-function conformsToPattern(object, pattern, name) {
+function conformsToPattern(object, pattern) {
     "use strict";
     var i;
     if (object === undefined || object === null) {
@@ -43,7 +43,7 @@ function conformsToPattern(object, pattern, name) {
         if (pattern.hasOwnProperty(i)) {
             if (!(object.hasOwnProperty(i) ||
                         (i === "length" && object.length)) ||
-                    !conformsToPattern(object[i], pattern[i], i)) {
+                    !conformsToPattern(object[i], pattern[i])) {
                 return false;
             }
         }
@@ -53,7 +53,7 @@ function conformsToPattern(object, pattern, name) {
 
 function getConformingObjects(object, pattern, name) {
     "use strict";
-    var c = [], i, j;
+    var c = [], i;
     name = name || "??";
     // we do not look inside long arrays and strings atm,
     // detection of these types could be better
@@ -170,18 +170,6 @@ function UnpackJob() {
         file: { entries: [], dom: null },
         errors: { unpackErrors: [] }
     };
-    function getText(e) {
-        var str = "", c = e.firstChild;
-        while (c) {
-            if (c.nodeType === 3) {
-                str += c.nodeValue;
-            } else {
-                str += getText(c);
-            }
-            c = c.nextSibling;
-        }
-        return str;
-    }
     function loadZipEntries(input, position, callback) {
         if (position >= input.file.entries.length) {
             return callback();
@@ -200,7 +188,6 @@ function UnpackJob() {
     }
     function loadZip(input, callback) {
         var zip = new core.Zip(input.file.path, function (err, zip) {
-            var i;
             if (err) {
                 input.errors.unpackErrors.push(err);
                 callback();
@@ -209,6 +196,7 @@ function UnpackJob() {
                 loadZipEntries(input, 0, callback);
             }
         });
+        return zip;
     }
     function loadXml(input, callback) {
         input.file.dom = parseXml(input.file.data, input.errors.unpackErrors,
@@ -232,7 +220,7 @@ function UnpackJob() {
         }
     };
 }
-function MimetypeTestJob(odffile) {
+function MimetypeTestJob() {
     "use strict";
     this.inputpattern = {
         file: { entries: [], dom: null },
@@ -349,9 +337,7 @@ function VersionTestJob() {
     }
     this.run = function (input, callback) {
         input.errors.versionErrors = [];
-        var v,
-            e = input.file.entries,
-            log = input.errors.versionErrors,
+        var log = input.errors.versionErrors,
             vinfo = {
                 version: undefined,
                 needversion: null,
@@ -471,7 +457,7 @@ function RelaxNGJob() {
                 return callback();
             }
             var walker = dom.createTreeWalker(dom.firstChild, 0xFFFFFFFF, {
-                    acceptNode: function (node) {
+                    acceptNode: function () {
                         return NodeFilter.FILTER_ACCEPT;
                     }
                 }, false),
@@ -485,6 +471,9 @@ function RelaxNGJob() {
                 }
                 callback();
             });
+            if (err) {
+                runtime.log(err);
+            }
         });
     }
     function validateEntries(log, entries, position, version, callback) {
@@ -512,7 +501,6 @@ function RelaxNGJob() {
                 input.file.path, input.version, callback);
             return;
         }
-        var i, e = input.file.entries;
         validateEntries(input.errors.relaxngErrors, input.file.entries, 0,
             input.version, callback);
     };
@@ -534,11 +522,6 @@ function DataRenderer(parentelement) {
         var p = doc.createElement("p");
         p.appendChild(doc.createTextNode(text));
         div.appendChild(p);
-    }
-    function addSpan(parent, nodename, text) {
-        var e = doc.createElement(nodename);
-        e.appendChild(doc.createTextNode(text));
-        parent.appendChild(e);
     }
     function addErrors(div, e, active) {
         var i, o;
@@ -640,6 +623,9 @@ function JobRunner(datarenderer) {
     function update(ignore, callback) {
         var i, jobtype, j, inobjects, outobjects;
         todo = [];
+        if (ignore) { // avoid jslint error by using ignore
+            runtime.log(ignore);
+        }
         for (i = 0; i < jobtypes.length; i += 1) {
             jobtype = jobtypes[i];
             inobjects = getConformingObjects(data, jobtype.inputpattern);
@@ -739,6 +725,9 @@ function Docnosis(element) {
             loadingfile = new LoadingFile(file);
             openedFiles[path] = loadingfile;
             loadingfile.load(function (error, data) {
+                if (error) {
+                    runtime.log(error);
+                }
                 jobrunnerdata.push({file: {
                     path: path,
                     data: data
@@ -762,12 +751,11 @@ function Docnosis(element) {
     }
 
     function createForm() {
-        var form = doc.createElement("form"),
+        var newform = doc.createElement("form"),
             fieldset = doc.createElement("fieldset"),
             legend = doc.createElement("legend"),
             input = doc.createElement("input");
-        form = doc.createElement("form");
-        form.appendChild(fieldset);
+        newform.appendChild(fieldset);
         fieldset.appendChild(legend);
         input.setAttribute("type", "file");
         input.setAttribute("name", "fileselect[]");
@@ -776,10 +764,10 @@ function Docnosis(element) {
         fieldset.appendChild(input);
         fieldset.appendChild(doc.createTextNode("or drop files here"));
         legend.appendChild(doc.createTextNode("docnosis"));
-        form.addEventListener("dragover", dragHandler, false);
-        form.addEventListener("dragleave", dragHandler, false);
-        form.addEventListener("drop", fileSelectHandler, false);
-        return form;
+        newform.addEventListener("dragover", dragHandler, false);
+        newform.addEventListener("dragleave", dragHandler, false);
+        newform.addEventListener("drop", fileSelectHandler, false);
+        return newform;
     }
 
     function enhanceRuntime() {
@@ -788,16 +776,14 @@ function Docnosis(element) {
         runtime.read = function (path, offset, length, callback) {
             if (openedFiles.hasOwnProperty(path)) {
                 return openedFiles[path].read(offset, length, callback);
-            } else {
-                return read(path, offset, length, callback);
             }
+            return read(path, offset, length, callback);
         };
         runtime.getFileSize = function (path, callback) {
             if (openedFiles.hasOwnProperty(path)) {
                 return callback(openedFiles[path].file.size);
-            } else {
-                return getFileSize(path, callback);
             }
+            return getFileSize(path, callback);
         };
     }
 
