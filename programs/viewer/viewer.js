@@ -491,12 +491,12 @@ function Viewer(viewerPlugin) {
     }
 
     function blankOut(value) {
-        if (blanked.style.display == "block") {
-          blanked.style.display = "none";
+        if (blanked.style.display == 'block') {
+          blanked.style.display = 'none';
           blanked.style.cursor = 'initial';
         } else {
             if (presentationMode || isFullScreen) {
-                blanked.style.display = "block";
+                blanked.style.display = 'block';
                 blanked.style.backgroundColor = value;
                 titlebar.classList.remove('viewer-touched');
                 toolbar.classList.remove('viewer-touched');
@@ -618,11 +618,11 @@ function Viewer(viewerPlugin) {
                     break;
                 case 66:  // key 'b' blanks page (to black)
                 case 190: // and so does the key '.' (dot)
-                    blankOut("#000");
+                    blankOut('#000');
                     break;
                 case 87:  // key 'w' blanks page (to white)
                 case 188: // and so does the key ',' (comma)
-                    blankOut("#FFF");
+                    blankOut('#FFF');
                     break;
                 case 36: // key 'Home' goes to first page
                     self.showPage(0);
