@@ -688,6 +688,18 @@ html[dir='rtl'] .dropdownToolbarButton {
     opacity: 0.5;
 }
 
+#blanked {
+    display: none;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width:100%;
+    height:100%;
+    z-index: 3;
+    background-color: black;
+    opacity: 1;
+}
+
 @media only screen and (max-device-width: 800px) and (max-device-height: 800px) {
     #canvasContainer {
         top: 0;
