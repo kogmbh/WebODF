@@ -653,7 +653,7 @@
      * This is primarily used in testing or during interactive diagnostics
      * @type {!boolean}
      */
-    ops.StepsCache.ENABLE_CACHE_VERIFICATION = false;
+    ops.StepsCache.ENABLE_CACHE_VERIFICATION = true;
 
     /*jslint emptyblock: true, unparam: true*/
     /**
