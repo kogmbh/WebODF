@@ -1,45 +1,39 @@
 /**
- * Copyright (C) 2012-2014 KO GmbH <copyright@kogmbh.com>
+ * @license
+ * Copyright (C) 2013 KO GmbH <copyright@kogmbh.com>
  *
  * @licstart
- * This file is part of WebODF.
- *
- * WebODF is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Affero General Public License (GNU AGPL)
- * as published by the Free Software Foundation, either version 3 of
- * the License, or (at your option) any later version.
- *
- * WebODF is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ * The JavaScript code in this page is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU Affero General Public License
+ * (GNU AGPL) as published by the Free Software Foundation, either version 3 of
+ * the License, or (at your option) any later version.  The code is distributed
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU AGPL for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with WebODF.  If not, see <http://www.gnu.org/licenses/>.
- * @licend
+ * along with this code.  If not, see <http://www.gnu.org/licenses/>.
  *
+ * As additional permission under GNU AGPL version 3 section 7, you
+ * may distribute non-source (e.g., minimized or compacted) forms of
+ * that code without the copy of the GNU GPL normally required by
+ * section 4, provided you include this license notice and a URL
+ * through which recipients can access the Corresponding Source.
+ *
+ * As a special exception to the AGPL, any HTML file which merely makes function
+ * calls to this code, and for that purpose includes it by reference shall be
+ * deemed a separate work for copyright law purposes. In addition, the copyright
+ * holders of this code give you permission to combine this code with free
+ * software libraries that are released under the GNU LGPL. You may copy and
+ * distribute such a system following the terms of the GNU AGPL for this code
+ * and the LGPL for the libraries. If you modify this code, you may extend this
+ * exception to your version of the code, but you are not obligated to do so.
+ * If you do not wish to do so, delete this exception statement from your
+ * version.
+ *
+ * This license applies to this entire compilation.
+ * @licend
  * @source: http://www.webodf.org/
  * @source: https://github.com/kogmbh/WebODF/
- */
-
-/*
- * This file is a derivative from a part of Mozilla's PDF.js project. The
- * original license header follows.
- */
-
-/* Copyright 2012 Mozilla Foundation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 /*global document, window*/
@@ -66,7 +60,7 @@ function Viewer(viewerPlugin) {
         pageSwitcher = document.getElementById('toolbarLeft'),
         zoomWidget = document.getElementById('toolbarMiddleContainer'),
         scaleSelector = document.getElementById('scaleSelect'),
-        dialogOverlay = document.getElementById('dialogOverlay'),
+        overlay = document.getElementById('overlay'),
         toolbarRight = document.getElementById('toolbarRight'),
         aboutDialog,
         filename,
@@ -79,7 +73,7 @@ function Viewer(viewerPlugin) {
         UI_FADE_DURATION = 5000;
 
     function initializeAboutInformation() {
-        var aboutDialogCentererTable, aboutDialogCentererCell, aboutButton, pluginName, pluginVersion, pluginURL;
+        var basedOnDiv, aboutButton, pluginName, pluginVersion, pluginURL;
 
         if (viewerPlugin) {
             pluginName = viewerPlugin.getPluginName();
@@ -88,26 +82,30 @@ function Viewer(viewerPlugin) {
         }
 
         // Create dialog
-        aboutDialogCentererTable = document.createElement('div');
-        aboutDialogCentererTable.id = "aboutDialogCentererTable";
-        aboutDialogCentererCell = document.createElement('div');
-        aboutDialogCentererCell.id = "aboutDialogCentererCell";
         aboutDialog = document.createElement('div');
         aboutDialog.id = "aboutDialog";
         aboutDialog.innerHTML =
-            "<h1>ViewerJS</h1>" +
-            "<p>Open Source document viewer for webpages, built with HTML and JavaScript.</p>" +
-            "<p>Learn more and get your own copy on the <a href=\"http://viewerjs.org/\" target=\"_blank\">ViewerJS website</a>.</p>" +
+            "<h1><a href = \"http://viewerjs.org\" target=\"_blank\">ViewerJS</a></h1>" +
+            "<p><a href = \"http://nlnet.nl\" target=\"_blank\"><img src=\"images\/nlnet.png\" width=\"160\" height=\"60\"></img></a></p>" +
+            "<p><a href = \"http://kogmbh.com\" target=\"_blank\"><img src=\"images\/kogmbh.png\" width=\"172\" height=\"40\"></img></a></p>" +
             (viewerPlugin ? ("<p>Using the <a href = \""+ pluginURL + "\" target=\"_blank\">" + pluginName + "</a> " +
                             "(<span id = \"pluginVersion\">" + pluginVersion + "</span>) " +
                             "plugin to show you this document.</p>")
                          : "") +
-            "<p>Supported by <a href=\"http://nlnet.nl\" target=\"_blank\"><br><img src=\"images\/nlnet.png\" width=\"160\" height=\"60\" alt=\"NLnet Foundation\"></a></p>" +
-            "<p>Made by <a href=\"http://kogmbh.com\" target=\"_blank\"><br><img src=\"images\/kogmbh.png\" width=\"172\" height=\"40\" alt=\"KO GmbH\"></a></p>" +
+            "<p>Made by <a href = \"http://kogmbh.com\" target=\"_blank\">KO GmbH</a>.</p>" +
             "<button id = \"aboutDialogCloseButton\" class = \"toolbarButton textButton\">Close</button>";
-        dialogOverlay.appendChild(aboutDialogCentererTable);
-        aboutDialogCentererTable.appendChild(aboutDialogCentererCell);
-        aboutDialogCentererCell.appendChild(aboutDialog);
+        viewerElement.appendChild(aboutDialog);
+
+        // Create "based on" line
+        basedOnDiv = document.createElement('div');
+        basedOnDiv.id = "basedOn";
+        basedOnDiv.innerHTML =
+            "Based on " +
+            "<a href = \"http://webodf.org\" target=\"_blank\">WebODF</a>" +
+            " by " +
+            "<a href = \"http://kogmbh.com\" target=\"_blank\">KO</a>";
+
+        toolbarRight.appendChild(basedOnDiv);
 
         // Create button to open dialog that says "ViewerJS"
         aboutButton = document.createElement('button');
@@ -128,11 +126,13 @@ function Viewer(viewerPlugin) {
     }
 
     function showAboutDialog() {
-        dialogOverlay.style.display = "block";
+        aboutDialog.style.display = 'block';
+        overlay.style.visibility = "visible";
     }
 
     function hideAboutDialog() {
-        dialogOverlay.style.display = "none";
+        aboutDialog.style.display = "none";
+        overlay.style.visibility = "hidden";
     }
 
     function selectScaleOption(value) {
@@ -262,8 +262,8 @@ function Viewer(viewerPlugin) {
 
             isSlideshow = viewerPlugin.isSlideshow();
             if (isSlideshow) {
-                // Slideshow pages should be centered
-                canvasContainer.classList.add("slideshow");
+                // No padding for slideshows
+                canvasContainer.style.padding = 0;
                 // Show page nav controls only for presentations
                 pageSwitcher.style.visibility = 'visible';
             } else {
@@ -374,7 +374,7 @@ function Viewer(viewerPlugin) {
         if (!presentationMode) {
             titlebar.style.display = toolbar.style.display = 'none';
             overlayCloseButton.style.display = 'block';
-            canvasContainer.classList.add('presentationMode');
+            canvasContainer.className = 'presentationMode';
             isSlideshow = true;
             canvasContainer.onmousedown = function (event) {
                 event.preventDefault();
@@ -394,7 +394,7 @@ function Viewer(viewerPlugin) {
         } else {
             titlebar.style.display = toolbar.style.display = 'block';
             overlayCloseButton.style.display = 'none';
-            canvasContainer.classList.remove('presentationMode');
+            canvasContainer.className = '';
             canvasContainer.onmouseup = function () {};
             canvasContainer.oncontextmenu = function () {};
             canvasContainer.onmousedown = function () {};
@@ -487,6 +487,21 @@ function Viewer(viewerPlugin) {
             hideToolbars();
         } else {
             showToolbars();
+        }
+    }
+
+    function blankOut(value) {
+        if (blanked.style.display == 'block') {
+          blanked.style.display = 'none';
+          blanked.style.cursor = 'initial';
+        } else {
+            if (presentationMode || isFullScreen) {
+                blanked.style.display = 'block';
+                blanked.style.backgroundColor = value;
+                titlebar.classList.remove('viewer-touched');
+                toolbar.classList.remove('viewer-touched');
+                blanked.style.cursor = 'none';
+            }
         }
     }
 
@@ -584,18 +599,36 @@ function Viewer(viewerPlugin) {
                     shiftKey = evt.shiftKey;
 
                 switch (key) {
+                case 8: // backspace
                 case 33: // pageUp
-                case 38: // up
-                case 37: // left
+                case 37: // left arrow
+                case 38: // up arrow
+                case 80: // key 'p'
                     self.showPreviousPage();
                     break;
+                case 13: // enter
                 case 34: // pageDown
-                case 40: // down
-                case 39: // right
+                case 39: // right arrow
+                case 40: // down arrow
+                case 78: // key 'n'
                     self.showNextPage();
                     break;
                 case 32: // space
                     shiftKey ? self.showPreviousPage() : self.showNextPage();
+                    break;
+                case 66:  // key 'b' blanks page (to black)
+                case 190: // and so does the key '.' (dot)
+                    blankOut('#000');
+                    break;
+                case 87:  // key 'w' blanks page (to white)
+                case 188: // and so does the key ',' (comma)
+                    blankOut('#FFF');
+                    break;
+                case 36: // key 'Home' goes to first page
+                    self.showPage(0);
+                    break;
+                case 35: // key 'End' goes to last page
+                    self.showPage(pages.length);
                     break;
                 }
             });
