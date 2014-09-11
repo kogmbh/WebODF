@@ -43,7 +43,7 @@ add_custom_command(
 add_custom_target(viewer-minimized.js-target DEPENDS viewer-minimized.js)
 
 add_custom_command(
-    OUTPUT ${VIEWERBUILDDIR}
+    OUTPUT ${VIEWERBUILDDIR}/webodf.js
 	COMMAND ${CMAKE_COMMAND} -E remove_directory ${VIEWERBUILDDIR}
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${VIEWERBUILDDIR}
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/images ${VIEWERBUILDDIR}/images
@@ -67,7 +67,7 @@ add_custom_command(
         webodf.js-target
         viewer-minimized.js-target
 )
-add_custom_target(build-viewerjsdir DEPENDS ${VIEWERBUILDDIR})
+add_custom_target(build-viewerjsdir DEPENDS ${VIEWERBUILDDIR}/webodf.js)
 
 add_custom_target(test-viewerjsdir DEPENDS webodf.js-tests)
 

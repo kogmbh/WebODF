@@ -220,7 +220,7 @@ endif(NOT APPLE)
 add_custom_target(webodf.js-tests DEPENDS syntaxcheck simplenodetest)
 
 add_custom_command(
-    OUTPUT ${WEBODFJS_DIR}
+    OUTPUT ${WEBODFJS_ZIP}
 
     # clear working dir
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${WEBODFJS_DIR}
@@ -245,7 +245,7 @@ add_custom_command(
         webodf-debug.js-target
         ${LIBJSLICENSEFILE}
 )
-add_custom_target(build-library DEPENDS ${WEBODFJS_DIR} )
+add_custom_target(build-library DEPENDS ${WEBODFJS_ZIP} )
 
 add_custom_target(test-library DEPENDS webodf.js-tests)
 
