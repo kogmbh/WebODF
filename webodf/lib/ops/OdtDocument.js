@@ -79,7 +79,9 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         /**@const*/ SHOW_ALL = NodeFilter.SHOW_ALL,
         blacklistedNodes = new gui.BlacklistNamespaceNodeFilter(["urn:webodf:names:cursor", "urn:webodf:names:editinfo"]),
         odfTextBodyFilter = new gui.OdfTextBodyNodeFilter(),
-        defaultNodeFilter = new core.NodeFilterChain([blacklistedNodes, odfTextBodyFilter]);
+        defaultNodeFilter = new core.NodeFilterChain([blacklistedNodes, odfTextBodyFilter]),
+        /**@type{!Array.<!function():undefined>}*/
+        pendingSignals = [];
 
     /**
      *
@@ -890,12 +892,18 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     };
 
     /**
+     * Emit a signal to interested subscribers. Note, signals are not emitted
+     * until *after* the current operation has completed execution in order to
+     * ensure operation atomicity.
+     *
      * @param {!string} eventid
      * @param {*} args
      * @return {undefined}
      */
     this.emit = function (eventid, args) {
-        eventNotifier.emit(eventid, args);
+        pendingSignals.push(function() {
+            eventNotifier.emit(eventid, args);
+        });
     };
 
     /**
@@ -942,14 +950,46 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     };
 
     /**
+     * Process steps being inserted into the document. Will emit a steps inserted signal on
+     * behalf of the caller
+     * @param {!{position: !number}} args
+     * @return {undefined}
+     */
+    this.handleStepsInserted = function(args) {
+        stepsTranslator.handleStepsInserted(args);
+        self.emit(ops.OdtDocument.signalStepsInserted, args);
+    };
+
+    /**
+     * Process steps being removed from the document. Will emit a steps removed signal on
+     * behalf of the caller
+     * @param {!{position: !number}} args
+     * @return {undefined}
+     */
+    this.handleStepsRemoved = function(args) {
+        stepsTranslator.handleStepsRemoved(args);
+        self.emit(ops.OdtDocument.signalStepsRemoved, args);
+    };
+
+    /**
+     * Process all signals queued up during operation execution
+     * @return {undefined}
+     */
+    this.processPendingSignals = function() {
+        var signal = pendingSignals.shift();
+        while (signal) {
+            signal();
+            signal = pendingSignals.shift();
+        }
+    };
+
+    /**
      * @return {undefined}
      */
     function init() {
         filter = new ops.TextPositionFilter();
         stepUtils = new odf.StepUtils();
         stepsTranslator = new ops.OdtStepsTranslator(getRootNode, createPositionIterator, filter, 500);
-        eventNotifier.subscribe(ops.OdtDocument.signalStepsInserted, stepsTranslator.handleStepsInserted);
-        eventNotifier.subscribe(ops.OdtDocument.signalStepsRemoved, stepsTranslator.handleStepsRemoved);
         eventNotifier.subscribe(ops.OdtDocument.signalOperationEnd, handleOperationExecuted);
         eventNotifier.subscribe(ops.OdtDocument.signalProcessingBatchEnd, core.Task.processTasks);
     }

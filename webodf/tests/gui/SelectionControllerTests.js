@@ -69,7 +69,10 @@ gui.SelectionControllerTests = function SelectionControllerTests(runner) {
 
         this.enqueue = function(ops) {
             self.operations.push.apply(self.operations, ops);
-            ops.forEach(function(op) { op.execute(odtDocument); });
+            ops.forEach(function(op) {
+                op.execute(odtDocument);
+                odtDocument.processPendingSignals();
+            });
         };
 
         this.reset = function() {
@@ -97,6 +100,7 @@ gui.SelectionControllerTests = function SelectionControllerTests(runner) {
         t.rangeToSelection = t.selectionController.rangeToSelection;
         t.cursor = new ops.OdtCursor(inputMemberId, t.odtDocument);
         t.odtDocument.addCursor(t.cursor);
+        t.odtDocument.processPendingSignals();
         return node;
     }
 

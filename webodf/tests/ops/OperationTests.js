@@ -293,6 +293,7 @@ ops.OperationTests = function OperationTests(runner) {
             if (metabefore) {
                 t.odtDocument.emit(ops.OdtDocument.signalOperationEnd, op);
             }
+            t.odtDocument.processPendingSignals();
             checkForEmptyTextNodes(t.odtDocument.getCanvas().getElement());
         }
 

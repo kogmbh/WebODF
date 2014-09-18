@@ -88,6 +88,7 @@ gui.MetadataControllerTests = function MetadataControllerTests(runner) {
                 if (timedOp.execute(odtDocument)) {
                     odtDocument.emit(ops.OdtDocument.signalOperationEnd, timedOp);
                 }
+                odtDocument.processPendingSignals();
             });
         };
 
