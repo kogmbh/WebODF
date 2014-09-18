@@ -942,14 +942,34 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     };
 
     /**
+     * Process steps being inserted into the document. Will emit a steps inserted signal on
+     * behalf of the caller
+     * @param {!{position: !number}} args
+     * @return {undefined}
+     */
+    this.handleStepsInserted = function(args) {
+        stepsTranslator.handleStepsInserted(args);
+        self.emit(ops.OdtDocument.signalStepsInserted, args);
+    };
+
+    /**
+     * Process steps being removed from the document. Will emit a steps removed signal on
+     * behalf of the caller
+     * @param {!{position: !number}} args
+     * @return {undefined}
+     */
+    this.handleStepsRemoved = function(args) {
+        stepsTranslator.handleStepsRemoved(args);
+        self.emit(ops.OdtDocument.signalStepsRemoved, args);
+    };
+
+    /**
      * @return {undefined}
      */
     function init() {
         filter = new ops.TextPositionFilter();
         stepUtils = new odf.StepUtils();
         stepsTranslator = new ops.OdtStepsTranslator(getRootNode, createPositionIterator, filter, 500);
-        eventNotifier.subscribe(ops.OdtDocument.signalStepsInserted, stepsTranslator.handleStepsInserted);
-        eventNotifier.subscribe(ops.OdtDocument.signalStepsRemoved, stepsTranslator.handleStepsRemoved);
         eventNotifier.subscribe(ops.OdtDocument.signalOperationEnd, handleOperationExecuted);
         eventNotifier.subscribe(ops.OdtDocument.signalProcessingBatchEnd, core.Task.processTasks);
     }
