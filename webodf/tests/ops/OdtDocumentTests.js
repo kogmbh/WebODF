@@ -624,6 +624,56 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         r.shouldBe(t, "t.domPosition.textNode.previousSibling.localName", "'cursor'");
     }
 
+    function emitSignals_AggregatedDuringOpExecution_MaintainsOrder() {
+        createOdtDocument("<text:p/>");
+        t.emitCalls = [];
+        t.odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, function(args) {t.emitCalls.push(args); });
+
+        t.odtDocument.beginOperation();
+        t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "call1");
+        t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "call2");
+
+        r.shouldBe(t, "t.emitCalls.length", "0");
+
+        t.odtDocument.endOperation();
+        r.shouldBe(t, "t.emitCalls", "['call1', 'call2']");
+    }
+
+    /**
+     * Test ensures that if new signals are added while processing the outstanding signals, these are added to the back
+     * of the current signal queue, rather than being immediately executed out of order.
+     */
+    function emitSignals_NewEmitDuringEndOp_MaintainsOrder() {
+        createOdtDocument("<text:p/>");
+        t.emitCalls = [];
+        t.odtDocument.subscribe(ops.OdtDocument.signalTableAdded, function(args) {
+            t.emitCalls.push(args);
+            t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "call4");
+        });
+        t.odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, function(args) { t.emitCalls.push(args); });
+
+        t.odtDocument.beginOperation();
+        t.odtDocument.emit(ops.OdtDocument.signalTableAdded, "call1");
+        t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "call2");
+        t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "call3");
+
+        r.shouldBe(t, "t.emitCalls.length", "0");
+
+        t.odtDocument.endOperation();
+        r.shouldBe(t, "t.emitCalls", "['call1', 'call2', 'call3', 'call4']");
+    }
+
+    function emitSignals_WhenNotExecutingOp_EmitsImmediately() {
+        createOdtDocument("<text:p/>");
+        t.emitCalls = [];
+        t.odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, function(args) {t.emitCalls.push(args); });
+
+        t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "call1");
+        t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "call2");
+
+        r.shouldBe(t, "t.emitCalls", "['call1', 'call2']");
+    }
+
     this.setUp = function () {
         var doc, stylesElement;
         testarea = core.UnitTest.provideTestAreaDiv();
@@ -679,7 +729,11 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             getTextNodeAtStep_At1_PutsTargetMemberCursor_BeforeTextNode,
             getTextNodeAtStep_At4_PutsTargetMemberCursor_BeforeTextNode,
             getTextNodeAtStep_AfterNonText_PutsTargetMemberCursor_BeforeTextNode,
-            getTextNodeAtStep_EmptyP_MovesAllCursors_BeforeTextNode
+            getTextNodeAtStep_EmptyP_MovesAllCursors_BeforeTextNode,
+
+            emitSignals_AggregatedDuringOpExecution_MaintainsOrder,
+            emitSignals_NewEmitDuringEndOp_MaintainsOrder,
+            emitSignals_WhenNotExecutingOp_EmitsImmediately
         ]);
     };
     this.asyncTests = function () {

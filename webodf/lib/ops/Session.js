@@ -81,12 +81,20 @@ ops.Session = function Session(odfCanvas) {
         operationRouter.subscribe(ops.OperationRouter.signalProcessingBatchStart, forwardBatchStart);
         operationRouter.subscribe(ops.OperationRouter.signalProcessingBatchEnd, forwardBatchEnd);
         opRouter.setPlaybackFunction(function (op) {
+            var result = false;
             odtDocument.emit(ops.OdtDocument.signalOperationStart, op);
-            if (op.execute(odtDocument)) {
-                odtDocument.emit(ops.OdtDocument.signalOperationEnd, op);
-                return true;
+            odtDocument.beginOperation();
+            try {
+                if (op.execute(odtDocument)) {
+                    odtDocument.emit(ops.OdtDocument.signalOperationEnd, op);
+                    result = true;
+                }
+                odtDocument.endOperation();
+            } catch(/**@type{!Error}*/e) {
+                odtDocument.endOperation();
+                throw e;
             }
-            return false;
+            return result;
         });
         opRouter.setOperationFactory(operationFactory);
     };

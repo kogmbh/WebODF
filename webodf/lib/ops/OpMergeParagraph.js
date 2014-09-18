@@ -241,7 +241,7 @@ ops.OpMergeParagraph = function OpMergeParagraph() {
         collapseRules.mergeChildrenIntoParent(sourceParagraph);
 
         // Merging removes a single step between the boundary of the two paragraphs
-        odtDocument.emit(ops.OdtDocument.signalStepsRemoved, {position: sourceStartPosition - 1});
+        odtDocument.handleStepsRemoved({position: sourceStartPosition - 1});
 
         // Downgrade trailing spaces at the end of the destination paragraph, and the beginning of the source paragraph.
         // These are the only two places that might need downgrading as a result of the merge.
