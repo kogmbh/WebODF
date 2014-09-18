@@ -89,10 +89,7 @@ gui.DirectFormattingControllerTests = function DirectFormattingControllerTests(r
 
         this.enqueue = function(ops) {
             self.operations.push.apply(self.operations, ops);
-            ops.forEach(function(op) {
-                op.execute(odtDocument);
-                odtDocument.processPendingSignals();
-            });
+            ops.forEach(function(op) { op.execute(odtDocument); });
         };
 
         this.reset = function() {
@@ -145,7 +142,6 @@ gui.DirectFormattingControllerTests = function DirectFormattingControllerTests(r
             });
             t.odtDocument.emit(ops.Document.signalCursorMoved, t.cursor);
         }
-        t.odtDocument.processPendingSignals();
         return node;
     }
 

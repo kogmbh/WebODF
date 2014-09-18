@@ -81,7 +81,8 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         odfTextBodyFilter = new gui.OdfTextBodyNodeFilter(),
         defaultNodeFilter = new core.NodeFilterChain([blacklistedNodes, odfTextBodyFilter]),
         /**@type{!Array.<!function():undefined>}*/
-        pendingSignals = [];
+        pendingSignals = [],
+        isExecutingOp = false;
 
     /**
      *
@@ -892,18 +893,22 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     };
 
     /**
-     * Emit a signal to interested subscribers. Note, signals are not emitted
-     * until *after* the current operation has completed execution in order to
-     * ensure operation atomicity.
+     * Emit a signal to interested subscribers. Note, if an operation is executing,
+     * signals will not be emitted until *after* the current operation has completed
+     * execution in order to ensure operation atomicity.
      *
      * @param {!string} eventid
      * @param {*} args
      * @return {undefined}
      */
     this.emit = function (eventid, args) {
-        pendingSignals.push(function() {
+        if (isExecutingOp) {
+            pendingSignals.push(function() {
+                eventNotifier.emit(eventid, args);
+            });
+        } else {
             eventNotifier.emit(eventid, args);
-        });
+        }
     };
 
     /**
@@ -972,15 +977,26 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     };
 
     /**
-     * Process all signals queued up during operation execution
+     * Indicate an operation is being executed. This will queue up any emitted signals until after endOperation is
+     * called.
      * @return {undefined}
      */
-    this.processPendingSignals = function() {
-        var signal = pendingSignals.shift();
+    this.beginOperation = function() {
+        isExecutingOp = true;
+    };
+
+    /**
+     * Indicate an operation has been completed. Process all signals queued up during operation execution
+     * @return {undefined}
+     */
+    this.endOperation = function() {
+        var signal;
+        signal = pendingSignals.shift();
         while (signal) {
             signal();
             signal = pendingSignals.shift();
         }
+        isExecutingOp = false;
     };
 
     /**

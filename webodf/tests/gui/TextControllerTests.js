@@ -72,10 +72,7 @@ gui.TextControllerTests = function TextControllerTests(runner) {
 
         this.enqueue = function(ops) {
             self.operations.push.apply(self.operations, ops);
-            ops.forEach(function(op) {
-                op.execute(odtDocument);
-                odtDocument.processPendingSignals();
-            });
+            ops.forEach(function(op) { op.execute(odtDocument); });
         };
 
         this.reset = function() {
@@ -135,7 +132,6 @@ gui.TextControllerTests = function TextControllerTests(runner) {
             range.setEndAfter(node.getElementsByTagNameNS(testns, "end")[0]);
             t.cursor.setSelectedRange(range, true);
         }
-        t.odtDocument.processPendingSignals();
         return node;
     }
 
