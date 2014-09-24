@@ -239,20 +239,8 @@ ops.TransformationTests = function TransformationTests(runner) {
         for (i = 0; i < n; i += 1) {
             att = atts.item(i);
             value = att.value;
-            switch(att.localName) {
-                case "length":
-                case "number":
-                case "position":
-                case "fontSize":
-                case "topMargin":
-                case "bottomMargin":
-                case "leftMargin":
-                case "rightMargin":
-                case "sourceParagraphPosition":
-                case "destinationStartPosition":
-                case "sourceStartPosition":
-                    value = parseInt(value, 10);
-                    break;
+            if (/(length|position)/i.test(att.localName)) {
+                value = parseInt(value, 10);
             }
             op[att.nodeName] = value;
         }

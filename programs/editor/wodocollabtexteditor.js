@@ -177,6 +177,7 @@ var Wodo = Wodo || (function () {
             paragraphStyleEditingEnabled = isEnabled(editorOptions.paragraphStyleEditingEnabled),
             imageEditingEnabled = isEnabled(editorOptions.imageEditingEnabled, true),
             hyperlinkEditingEnabled = isEnabled(editorOptions.hyperlinkEditingEnabled, true),
+            listEditingEnabled = isEnabled(editorOptions.listEditingEnabled, true),
             reviewModeEnabled = isEnabled(editorOptions.reviewModeEnabled, true),
             annotationsEnabled = reviewModeEnabled || isEnabled(editorOptions.annotationsEnabled, true),
             undoRedoEnabled = false, // no proper mechanism yet for collab
@@ -224,6 +225,7 @@ var Wodo = Wodo || (function () {
                 paragraphStyleEditingEnabled: paragraphStyleEditingEnabled,
                 imageEditingEnabled: imageEditingEnabled,
                 hyperlinkEditingEnabled: hyperlinkEditingEnabled,
+                listEditingEnabled: listEditingEnabled,
                 annotationsEnabled: annotationsEnabled,
                 zoomingEnabled: zoomingEnabled,
                 reviewModeEnabled: reviewModeEnabled
@@ -567,6 +569,7 @@ var Wodo = Wodo || (function () {
                 paragraphStyleEditingEnabled: paragraphStyleEditingEnabled,
                 imageInsertingEnabled: imageEditingEnabled,
                 hyperlinkEditingEnabled: hyperlinkEditingEnabled,
+                listEditingEnabled: listEditingEnabled,
                 annotationsEnabled: annotationsEnabled,
                 undoRedoEnabled: undoRedoEnabled,
                 zoomingEnabled: zoomingEnabled

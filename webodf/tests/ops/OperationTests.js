@@ -102,8 +102,13 @@ ops.OperationTests = function OperationTests(runner) {
         for (i = 0; i < n; i += 1) {
             att = atts.item(i);
             value = att.value;
-            if (/^(length|number|position|fo:font-size|fo:margin-right)$/.test(att.localName)) {
+            // find integer values
+            if (/(length|position)/i.test(att.localName)) {
                 value = parseInt(value, 10);
+            }
+            // find boolean values
+            if (/^(is|moveCursor)/.test(att.localName)) {
+                value = JSON.parse(value);
             }
             op[att.nodeName] = value;
         }
