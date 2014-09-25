@@ -2119,4 +2119,294 @@
     <office:text><text:p><text:span>A<c:anchor c:memberId="Joe"/></text:span><text:span text:style-name="auto63350368_0">B</text:span><text:span text:style-name="auto63350368_0">C<text:s> </text:s><text:s> </text:s>D<text:s> </text:s>E<c:cursor c:memberId="Joe"/></text:span><text:s> </text:s></text:p></office:text>
   </after>
  </test>
+
+ <test name="AddList_Simple">
+  <before>
+   <office:text>
+    <text:p>Sample Text</text:p>
+   </office:text>
+  </before>
+  <ops>
+   <op optype="AddList" startParagraphPosition="0" endParagraphPosition="0"/>
+  </ops>
+  <after>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddList_MultipleParagraphs">
+  <before>
+   <office:text>
+    <text:p>Sample Text</text:p>
+    <text:p/>
+    <text:p>Sample Text</text:p>
+   </office:text>
+  </before>
+  <ops>
+   <op optype="AddList" startParagraphPosition="0" endParagraphPosition="13"/>
+  </ops>
+  <after>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p/>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddList_PreserveDocumentOrder">
+  <before>
+   <office:text>
+    <text:p>Sample1 Text</text:p>
+    <text:p/>
+    <text:p>Sample2 Text</text:p>
+    <text:p>Sample3 Text</text:p>
+    <text:p>Sample4 Text</text:p>
+   </office:text>
+  </before>
+  <ops>
+   <op optype="AddList" startParagraphPosition="13" endParagraphPosition="14"/>
+  </ops>
+  <after>
+   <office:text>
+    <text:p>Sample1 Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p/>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample2 Text</text:p>
+     </text:list-item>
+    </text:list>
+    <text:p>Sample3 Text</text:p>
+    <text:p>Sample4 Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddList_SetsListStyle">
+  <before>
+   <office:text>
+    <text:p>Sample Text</text:p>
+   </office:text>
+  </before>
+  <ops>
+   <op optype="AddList" startParagraphPosition="0" endParagraphPosition="0" styleName="TestStyle"/>
+  </ops>
+  <after>
+   <office:text>
+    <text:list text:style-name="TestStyle">
+     <text:list-item>
+      <text:p>Sample Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddList_HeaderParagraphs">
+  <before>
+   <office:text>
+    <text:h>Sample Text</text:h>
+    <text:p>Sample Text</text:p>
+   </office:text>
+  </before>
+  <ops>
+   <op optype="AddList" startParagraphPosition="0" endParagraphPosition="12"/>
+  </ops>
+  <after>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:h>Sample Text</text:h>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddList_NestedElementsInParagraphs">
+  <before>
+   <office:text>
+    <text:p>Sample<text:span>Text</text:span></text:p>
+   </office:text>
+  </before>
+  <ops>
+   <op optype="AddList" startParagraphPosition="0" endParagraphPosition="0"/>
+  </ops>
+  <after>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample<text:span>Text</text:span></text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddList_PreserveForeignElements">
+  <before>
+   <office:text>
+    <text:p>Sample Text<foreign:foo foreign:baz="bar"/></text:p>
+   </office:text>
+  </before>
+  <ops>
+   <op optype="AddList" startParagraphPosition="0" endParagraphPosition="0"/>
+  </ops>
+  <after>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample Text<foreign:foo foreign:baz="bar"/></text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+
+ <test name="RemoveList_Simple">
+  <before>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <ops>
+   <op optype="RemoveList" firstParagraphPosition="0"/>
+  </ops>
+  <after>
+   <office:text>
+    <text:p>Sample Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveList_MultipleParagraphs">
+  <before>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <ops>
+   <op optype="RemoveList" firstParagraphPosition="0"/>
+  </ops>
+  <after>
+   <office:text>
+    <text:p>Sample Text</text:p>
+    <text:p>Sample Text</text:p>
+    <text:p>Sample Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveList_MultiLevelList">
+  <before>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample Text</text:p>
+      <text:list>
+       <text:list-item>
+        <text:p>Sample Text</text:p>
+       </text:list-item>
+      </text:list>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample Text</text:p>
+      <text:list>
+       <text:list-item>
+        <text:p>Sample Text</text:p>
+       </text:list-item>
+      </text:list>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample Text</text:p>
+      <text:list>
+       <text:list-item>
+        <text:p>Sample Text</text:p>
+       </text:list-item>
+      </text:list>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <ops>
+   <op optype="RemoveList" firstParagraphPosition="0"/>
+  </ops>
+  <after>
+   <office:text>
+    <text:p>Sample Text</text:p>
+    <text:p>Sample Text</text:p>
+    <text:p>Sample Text</text:p>
+    <text:p>Sample Text</text:p>
+    <text:p>Sample Text</text:p>
+    <text:p>Sample Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveList_PreserveDocumentOrder">
+  <before>
+   <office:text>
+    <text:p>Sample Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>List Text</text:p>
+     </text:list-item>
+    </text:list>
+    <text:p>Sample Text</text:p>
+   </office:text>
+  </before>
+  <ops>
+   <op optype="RemoveList" firstParagraphPosition="12"/>
+  </ops>
+  <after>
+   <office:text>
+    <text:p>Sample Text</text:p>
+    <text:p>List Text</text:p>
+    <text:p>Sample Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveList_PreserveForeignElements">
+  <before>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p><foreign:foo foreign:baz="bar"/>Sample Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <ops>
+   <op optype="RemoveList" firstParagraphPosition="0"/>
+  </ops>
+  <after>
+   <office:text>
+    <text:p><foreign:foo foreign:baz="bar"/>Sample Text</text:p>
+   </office:text>
+  </after>
+ </test>
 </tests>

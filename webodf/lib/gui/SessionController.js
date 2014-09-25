@@ -90,6 +90,7 @@ gui.SessionControllerOptions = function () {
             createParagraphStyleOps = /**@type {function (!number):!Array.<!ops.Operation>}*/ (directFormattingController.createParagraphStyleOps),
             textController = new gui.TextController(session, sessionConstraints, sessionContext, inputMemberId, createCursorStyleOp, createParagraphStyleOps),
             imageController = new gui.ImageController(session, sessionConstraints, sessionContext, inputMemberId, objectNameGenerator),
+            listController = new gui.ListController(session, sessionConstraints, sessionContext, inputMemberId),
             imageSelector = new gui.ImageSelector(odtDocument.getOdfCanvas()),
             shadowCursorIterator = odtDocument.createPositionIterator(odtDocument.getRootNode()),
             /**@type{!core.ScheduledTask}*/
@@ -1027,6 +1028,13 @@ gui.SessionControllerOptions = function () {
         };
 
         /**
+         * @return {!gui.ListController}
+         */
+        this.getListController = function () {
+            return listController;
+        };
+
+        /**
          * @return {!gui.HyperlinkClickHandler}
          */
         this.getHyperlinkClickHandler = function () {
@@ -1123,6 +1131,7 @@ gui.SessionControllerOptions = function () {
                 metadataController.destroy,
                 selectionController.destroy,
                 textController.destroy,
+                listController.destroy,
                 destroy
             ];
 

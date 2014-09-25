@@ -32,6 +32,7 @@ define("webodf/editor/Tools", [
     "dijit/form/DropDownButton",
     "dijit/Toolbar",
     "webodf/editor/widgets/paragraphAlignment",
+    "webodf/editor/widgets/toggleLists",
     "webodf/editor/widgets/simpleStyles",
     "webodf/editor/widgets/undoRedoMenu",
     "webodf/editor/widgets/toolbarWidgets/currentStyle",
@@ -42,7 +43,7 @@ define("webodf/editor/Tools", [
     "webodf/editor/widgets/zoomSlider",
     "webodf/editor/widgets/aboutDialog",
     "webodf/editor/EditorSession"],
-    function (ready, MenuItem, DropDownMenu, Button, DropDownButton, Toolbar, ParagraphAlignment, SimpleStyles, UndoRedoMenu, CurrentStyle, AnnotationControl, EditHyperlinks, ImageInserter, ParagraphStylesDialog, ZoomSlider, AboutDialog, EditorSession) {
+    function (ready, MenuItem, DropDownMenu, Button, DropDownButton, Toolbar, ParagraphAlignment, ToggleLists, SimpleStyles, UndoRedoMenu, CurrentStyle, AnnotationControl, EditHyperlinks, ImageInserter, ParagraphStylesDialog, ZoomSlider, AboutDialog, EditorSession) {
         "use strict";
 
         return function Tools(toolbarElementId, args) {
@@ -59,6 +60,7 @@ define("webodf/editor/Tools", [
                 undoRedoMenu,
                 editorSession,
                 paragraphAlignment,
+                toggleLists,
                 imageInserter,
                 annotationControl,
                 editHyperlinks,
@@ -170,6 +172,9 @@ define("webodf/editor/Tools", [
 
                 // Paragraph direct alignment buttons
                 paragraphAlignment = createTool(ParagraphAlignment, args.directParagraphStylingEnabled);
+
+                // Numbered and bulleted list toggle buttons
+                toggleLists = createTool(ToggleLists, args.listEditingEnabled);
 
                 // Paragraph Style Selector
                 currentStyle = createTool(CurrentStyle, args.paragraphStyleSelectingEnabled);

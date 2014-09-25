@@ -1989,4 +1989,924 @@
    <office:meta><meta:creation-date>2013-08-05T12:34:07.061Z</meta:creation-date></office:meta><office:text></office:text>
   </after>
  </test>
+
+ <test name="AddListAddList" isFailing="true">
+  <before>
+   <office:text>
+    <text:p>SampleText</text:p>
+    <text:p>SampleText</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="0" endParagraphPosition="12"/>
+  </opsA>
+  <opsB>
+   <op optype="AddList" memberid="Bob" startParagraphPosition="0" endParagraphPosition="12"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>SampleText</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>SampleText</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListInsertText_BeforeList">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="12" endParagraphPosition="24"/>
+  </opsA>
+  <opsB>
+   <op optype="InsertText" memberid="Bob" position="11" text="FOO"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1TextFOO</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListInsertText_ListStart">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="12" endParagraphPosition="24"/>
+  </opsA>
+  <opsB>
+   <op optype="InsertText" memberid="Bob" position="12" text="FOO"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>FOOSample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListInsertText_ListEnd">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="12" endParagraphPosition="24"/>
+  </opsA>
+  <opsB>
+   <op optype="InsertText" memberid="Bob" position="24" text="FOO"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>FOOSample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListInsertText_AfterList">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="12" endParagraphPosition="24"/>
+  </opsA>
+  <opsB>
+   <op optype="InsertText" memberid="Bob" position="25" text="FOO"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>SFOOample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListMergeParagraph_BeforeList">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+    <text:p>Sample4Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="24" endParagraphPosition="36"/>
+  </opsA>
+  <opsB>
+   <op optype="MergeParagraph" memberid="Bob" destinationStartPosition="0" sourceStartPosition="12"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1TextSample2Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample4Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListMergeParagraph_ListStartIsMergeSource" isFailing="true">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+    <text:p>Sample4Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="26" endParagraphPosition="39"/>
+  </opsA>
+  <opsB>
+   <op optype="MergeParagraph" memberid="Bob" destinationStartPosition="13" sourceStartPosition="26"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2TextSample3Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample4Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListMergeParagraph_ListStartListEnd" isFailing="true">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="12" endParagraphPosition="12"/>
+  </opsA>
+  <opsB>
+   <op optype="MergeParagraph" memberid="Bob" destinationStartPosition="0" sourceStartPosition="12"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample1TextSample2Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListMergeParagraph_InsideList">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+    <text:p>Sample4Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="12" endParagraphPosition="36"/>
+  </opsA>
+  <opsB>
+   <op optype="MergeParagraph" memberid="Bob" destinationStartPosition="12" sourceStartPosition="24"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2TextSample3Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample4Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListMergeParagraph_ListEndIsMergeSource">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+    <text:p>Sample4Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="12" endParagraphPosition="36"/>
+  </opsA>
+  <opsB>
+   <op optype="MergeParagraph" memberid="Bob" destinationStartPosition="24" sourceStartPosition="36"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample3TextSample4Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListMergeParagraph_AfterList">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+    <text:p>Sample4Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="0" endParagraphPosition="12"/>
+  </opsA>
+  <opsB>
+   <op optype="MergeParagraph" memberid="Bob" destinationStartPosition="24" sourceStartPosition="36"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample1Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+    </text:list>
+    <text:p>Sample3TextSample4Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListRemoveText_BeforeList">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="12" endParagraphPosition="24"/>
+  </opsA>
+  <opsB>
+   <op optype="RemoveText" memberid="Bob" position="6" length="5"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListRemoveText_ListStart">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="12" endParagraphPosition="24"/>
+  </opsA>
+  <opsB>
+   <op optype="RemoveText" memberid="Bob" position="12" length="7"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListRemoveText_ListEnd">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="12" endParagraphPosition="24"/>
+  </opsA>
+  <opsB>
+   <op optype="RemoveText" memberid="Bob" position="24" length="7"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListRemoveText_AfterList">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="12" endParagraphPosition="24"/>
+  </opsA>
+  <opsB>
+   <op optype="RemoveText" memberid="Bob" position="25" length="10"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>S</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListSplitParagraph_BeforeList">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+    <text:p>Sample4Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="24" endParagraphPosition="36"/>
+  </opsA>
+  <opsB>
+   <op optype="SplitParagraph" memberid="Bob" sourceParagraphPosition="0" position="7"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1</text:p>
+    <text:p>Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample4Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListSplitParagraph_ListStartIsSplitSource">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+    <text:p>Sample4Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="12" endParagraphPosition="36"/>
+  </opsA>
+  <opsB>
+   <op optype="SplitParagraph" memberid="Bob" sourceParagraphPosition="12" position="19"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample4Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListSplitParagraph_ListStartListEnd">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="12" endParagraphPosition="12"/>
+  </opsA>
+  <opsB>
+   <op optype="SplitParagraph" memberid="Bob" sourceParagraphPosition="12" position="19"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+ <test name="AddListSplitParagraph_ListEndIsSplitSource">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="AddList" memberid="Alice" startParagraphPosition="0" endParagraphPosition="12"/>
+  </opsA>
+  <opsB>
+   <op optype="SplitParagraph" memberid="Bob" sourceParagraphPosition="12" position="19"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample1Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample2</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </after>
+ </test>
+
+ <test name="RemoveListRemoveList_SameList">
+  <before>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>SampleText</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveList" memberid="Alice" firstParagraphPosition="0"/>
+  </opsA>
+  <opsB>
+   <op optype="RemoveList" memberid="Bob" firstParagraphPosition="0"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>SampleText</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveListRemoveList_DifferentList">
+  <before>
+   <office:text>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample1Text</text:p>
+     </text:list-item>
+    </text:list>
+    <text:p>Sample2Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveList" memberid="Alice" firstParagraphPosition="0"/>
+  </opsA>
+  <opsB>
+   <op optype="RemoveList" memberid="Bob" firstParagraphPosition="24"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveListInsertText_BeforeList">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveList" firstParagraphPosition="12"/>
+  </opsA>
+  <opsB>
+   <op optype="InsertText" memberid="Bob" position="11" text="FOO"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1TextFOO</text:p>
+    <text:p>Sample2Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveListInsertText_ListStart">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveList" firstParagraphPosition="12"/>
+  </opsA>
+  <opsB>
+   <op optype="InsertText" memberid="Bob" position="12" text="FOO"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>FOOSample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveListInsertText_ListEnd">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveList" firstParagraphPosition="12"/>
+  </opsA>
+  <opsB>
+   <op optype="InsertText" memberid="Bob" position="24" text="FOO"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>FOOSample3Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveListMergeParagraph_BeforeList">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveList" firstParagraphPosition="24"/>
+  </opsA>
+  <opsB>
+   <op optype="MergeParagraph" memberid="Bob" sourceStartPosition="12" destinationStartPosition="0"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1TextSample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveListMergeParagraph_ListStartIsMergeSource" isFailing="true">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveList" firstParagraphPosition="12"/>
+  </opsA>
+  <opsB>
+   <op optype="MergeParagraph" memberid="Bob" sourceStartPosition="12" destinationStartPosition="0"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1TextSample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveListMergeParagraph_ListEndIsMergeSource">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveList" firstParagraphPosition="12"/>
+  </opsA>
+  <opsB>
+   <op optype="MergeParagraph" memberid="Bob" sourceStartPosition="24" destinationStartPosition="12"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2TextSample3Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveListRemoveText_BeforeList">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveList" firstParagraphPosition="12"/>
+  </opsA>
+  <opsB>
+   <op optype="RemoveText" memberid="Bob" position="0" length="7"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Text</text:p>
+    <text:p>Sample2Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveListRemoveText_ListStart">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveList" firstParagraphPosition="12"/>
+  </opsA>
+  <opsB>
+   <op optype="RemoveText" memberid="Bob" position="12" length="7"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Text</text:p>
+    <text:p>Sample3Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveListRemoveText_ListEnd">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveList" firstParagraphPosition="12"/>
+  </opsA>
+  <opsB>
+   <op optype="RemoveText" memberid="Bob" position="24" length="7"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveListSplitParagraph_BeforeList">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveList" firstParagraphPosition="12"/>
+  </opsA>
+  <opsB>va
+   <op optype="SplitParagraph" memberid="Bob" sourceParagraphPosition="0" position="7"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1</text:p>
+    <text:p>Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveListSplitParagraph_ListStartIsSplitSource">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveList" firstParagraphPosition="12"/>
+  </opsA>
+  <opsB>va
+   <op optype="SplitParagraph" memberid="Bob" sourceParagraphPosition="12" position="19"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2</text:p>
+    <text:p>Text</text:p>
+    <text:p>Sample3Text</text:p>
+   </office:text>
+  </after>
+ </test>
+ <test name="RemoveListSplitParagraph_ListEndIsSplitSource">
+  <before>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:list>
+     <text:list-item>
+      <text:p>Sample2Text</text:p>
+     </text:list-item>
+     <text:list-item>
+      <text:p>Sample3Text</text:p>
+     </text:list-item>
+    </text:list>
+   </office:text>
+  </before>
+  <opsA>
+   <op optype="RemoveList" firstParagraphPosition="12"/>
+  </opsA>
+  <opsB>va
+   <op optype="SplitParagraph" memberid="Bob" sourceParagraphPosition="24" position="31"/>
+  </opsB>
+  <after>
+   <office:text>
+    <text:p>Sample1Text</text:p>
+    <text:p>Sample2Text</text:p>
+    <text:p>Sample3</text:p>
+    <text:p>Text</text:p>
+   </office:text>
+  </after>
+ </test>
 </tests>

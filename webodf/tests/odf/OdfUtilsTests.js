@@ -393,6 +393,34 @@ odf.OdfUtilsTests = function OdfUtilsTests(runner) {
         testFontFamilyNameNormalizing("'serif'", "'serif'");
         testFontFamilyNameNormalizing("\"serif\"", "\"serif\"");
     }
+
+    function isListItemElement_ListItemOrListHeaderElements() {
+        t.doc = createDocument("<text:list><text:list-header><text:p>HeaderText</text:p></text:list-header><text:list-item><text:p>TestText</text:p></text:list-item></text:list>");
+        t.isListItem1 = t.odfUtils.isListItemOrListHeaderElement(t.doc);
+        t.isListItem2 = t.odfUtils.isListItemOrListHeaderElement(t.doc.childNodes[0]);
+        t.isListItem3 = t.odfUtils.isListItemOrListHeaderElement(t.doc.childNodes[0].childNodes[0]);
+        t.isListItem4 = t.odfUtils.isListItemOrListHeaderElement(t.doc.childNodes[1]);
+        t.isListItem5 = t.odfUtils.isListItemOrListHeaderElement(t.doc.childNodes[1].childNodes[0]);
+
+
+        r.shouldBe(t, t.isListItem1, "false");
+        r.shouldBe(t, t.isListItem2, "true");
+        r.shouldBe(t, t.isListItem3, "false");
+        r.shouldBe(t, t.isListItem4, "true");
+        r.shouldBe(t, t.isListItem5, "false");
+    }
+
+    function isListElement_ListElements() {
+        t.doc = createDocument("<text:list><text:list-item><text:p>TestText</text:p></text:list-item></text:list>");
+        t.isList1 = t.odfUtils.isListElement(t.doc);
+        t.isList2 = t.odfUtils.isListElement(t.doc.childNodes[0]);
+        t.isList3 = t.odfUtils.isListElement(t.doc.childNodes[0].childNodes[0]);
+
+        r.shouldBe(t, t.isList1, "true");
+        r.shouldBe(t, t.isList2, "false");
+        r.shouldBe(t, t.isList3, "false");
+    }
+
     this.tests = function () {
         return r.name([
             isAnchoredAsCharacterElement_ReturnTrueForTab,
@@ -402,6 +430,9 @@ odf.OdfUtilsTests = function OdfUtilsTests(runner) {
             isAnchoredAsCharacterElement_ReturnTrueForAnnotation,
             isAnchoredAsCharacterElement_ReturnTrueForAnnotationWrapper,
             isAnchoredAsCharacterElement_ReturnFalseForNonCharacterFrame,
+
+            isListElement_ListElements,
+            isListItemElement_ListItemOrListHeaderElements,
 
             getTextElements_EncompassedWithinParagraph,
             getTextElements_EncompassedWithinSpan_And_Paragraph,

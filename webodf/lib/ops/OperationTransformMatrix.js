@@ -30,6 +30,13 @@
 ops.OperationTransformMatrix = function OperationTransformMatrix() {
     "use strict";
 
+    var /**@const*/
+        INCLUSIVE = true,
+        /**@const*/
+        EXCLUSIVE = false,
+        /**@type {!Object.<string,!Object.<string,function(!Object,!Object,boolean=):?{opSpecsA:!Array.<!{optype:string}>, opSpecsB:!Array.<!{optype:string}>}>>}*/
+        transformations;
+
     /* Utility methods */
 
     /**
@@ -269,9 +276,186 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
         return result;
     }
 
+    /**
+     * Checks whether the given position is within the range of the add list operation.
+     * This range check is always inclusive of the start paragraph position
+     * @param {!number} position
+     * @param {!ops.OpAddList.Spec} spec
+     * @param {!boolean} isInclusiveEndPosition Range check is inclusive of the end paragraph position
+     * @return {!boolean}
+     */
+    function isWithinRange(position, spec, isInclusiveEndPosition) {
+        var withinEnd;
 
+        withinEnd = isInclusiveEndPosition ? position <= spec.endParagraphPosition : position < spec.endParagraphPosition;
+
+        return position >= spec.startParagraphPosition && withinEnd;
+    }
 
     /* Transformation methods */
+
+    /**
+     * @param {!ops.OpAddList.Spec} addListSpecA
+     * @param {!ops.OpAddList.Spec} addListSpecB
+     * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
+     */
+    function transformAddListAddList(addListSpecA, addListSpecB) {
+        var opSpecsA = [addListSpecA],
+            opSpecsB = [addListSpecB];
+
+        //TODO: consider style names. This can't be resolved currently as there is no op to set a style on a list after creation.
+        // same range so this becomes a no-op
+        if (addListSpecA.startParagraphPosition === addListSpecB.startParagraphPosition &&
+            addListSpecA.endParagraphPosition === addListSpecB.endParagraphPosition) {
+            opSpecsA = [];
+            opSpecsB = [];
+        }
+
+        // ranges intersect
+        if (isWithinRange(addListSpecA.startParagraphPosition, addListSpecB, INCLUSIVE) ||
+            isWithinRange(addListSpecA.endParagraphPosition, addListSpecB, INCLUSIVE)) {
+            //TODO: do something useful here once we get list merge ops and solve the conflict by merging the lists
+            return null;
+        }
+
+        return {
+            opSpecsA: opSpecsA,
+            opSpecsB: opSpecsB
+        };
+    }
+
+    /**
+     * @param {!ops.OpAddList.Spec} addListSpec
+     * @param {!ops.OpInsertText.Spec} insertTextSpec
+     * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
+     */
+    function transformAddListInsertText(addListSpec, insertTextSpec) {
+        // insert text is before the add list range so adjust the start position and end position
+        if (insertTextSpec.position < addListSpec.startParagraphPosition) {
+            addListSpec.startParagraphPosition += insertTextSpec.text.length;
+            addListSpec.endParagraphPosition += insertTextSpec.text.length;
+        } else if (isWithinRange(insertTextSpec.position, addListSpec, EXCLUSIVE)) {
+            // otherwise insert text is within the add list range so only shift the end of the range
+            addListSpec.endParagraphPosition += insertTextSpec.text.length;
+        }
+
+        return {
+            opSpecsA: [addListSpec],
+            opSpecsB: [insertTextSpec]
+        };
+    }
+
+    /**
+     * @param {!ops.OpAddList.Spec} addListSpec
+     * @param {!ops.OpMergeParagraph.Spec} mergeParagraphSpec
+     * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
+     */
+    function transformAddListMergeParagraph(addListSpec, mergeParagraphSpec) {
+        if (mergeParagraphSpec.sourceStartPosition === addListSpec.startParagraphPosition) {
+            // TODO: handle this properly once we have Merge/Split list ops as merge paragraph pulls the paragraph out of the list
+            return null;
+        }
+
+        if (mergeParagraphSpec.sourceStartPosition < addListSpec.startParagraphPosition) {
+            // merge op source paragraph is before the list range so adjust the start and the end
+            addListSpec.startParagraphPosition -= 1;
+            addListSpec.endParagraphPosition -= 1;
+        } else if (isWithinRange(mergeParagraphSpec.sourceStartPosition, addListSpec, EXCLUSIVE)) {
+            // merge op is fully contained in list range so just shift the end of the list range
+            addListSpec.endParagraphPosition -= 1;
+        } else if (mergeParagraphSpec.sourceStartPosition === addListSpec.endParagraphPosition) {
+            // merge op source paragraph is the same as the end of the list range so shift
+            // the end of the list range up to the merge op destination paragraph
+            addListSpec.endParagraphPosition = mergeParagraphSpec.destinationStartPosition;
+        }
+
+        return {
+            opSpecsA: [addListSpec],
+            opSpecsB: [mergeParagraphSpec]
+        };
+    }
+
+    /**
+     * @param {!ops.OpAddList.Spec} addListSpec
+     * @param {!ops.OpRemoveList.Spec} removeListSpec
+     * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
+     */
+    function transformAddListRemoveList(addListSpec, removeListSpec) {
+        // This should never happen as a client must ensure it does not add a list where one already exists
+        // and remove a list that does not exist in the document.
+        // This does not detect an overlap where the range of the add list operation occurs after the start position of the
+        // removed list as we don't know the end position of the removed list.
+        if (isWithinRange(removeListSpec.firstParagraphPosition, addListSpec, INCLUSIVE)) {
+            return null;
+        }
+
+        return {
+            opSpecsA: [addListSpec],
+            opSpecsB: [removeListSpec]
+        };
+    }
+
+    /**
+     * @param {!ops.OpAddList.Spec} addListSpec
+     * @param {!ops.OpRemoveText.Spec} removeTextSpec
+     * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
+     */
+    function transformAddListRemoveText(addListSpec, removeTextSpec) {
+        // remove text is before the add list range so adjust the start position and end position
+        if (removeTextSpec.position < addListSpec.startParagraphPosition) {
+            addListSpec.startParagraphPosition -= removeTextSpec.length;
+            addListSpec.endParagraphPosition -= removeTextSpec.length;
+        } else if (isWithinRange(removeTextSpec.position, addListSpec, EXCLUSIVE)) {
+            // otherwise remove text is within the add list range so only shift the end of the range
+            addListSpec.endParagraphPosition -= removeTextSpec.length;
+        }
+
+        return {
+            opSpecsA: [addListSpec],
+            opSpecsB: [removeTextSpec]
+        };
+    }
+
+    /**
+     * @param {!ops.OpAddList.Spec} addListSpec
+     * @param {!ops.OpSplitParagraph.Spec} splitParagraphSpec
+     * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
+     */
+    function transformAddListSplitParagraph(addListSpec, splitParagraphSpec) {
+        // split op source paragraph is before the list range so adjust the start and the end
+        if (splitParagraphSpec.sourceParagraphPosition < addListSpec.startParagraphPosition) {
+            addListSpec.startParagraphPosition += 1;
+            addListSpec.endParagraphPosition += 1;
+        } else if (isWithinRange(splitParagraphSpec.sourceParagraphPosition, addListSpec, EXCLUSIVE)) {
+            // split op is fully contained in list range so just shift the end of the list range
+            addListSpec.endParagraphPosition += 1;
+        } else if (splitParagraphSpec.sourceParagraphPosition === addListSpec.endParagraphPosition) {
+            // split op source paragraph is the same as the end of the list range so shift the range
+            // down to the split position which is the new end paragraph
+            addListSpec.endParagraphPosition = splitParagraphSpec.position + 1;
+        }
+
+        return {
+            opSpecsA: [addListSpec],
+            opSpecsB: [splitParagraphSpec]
+        };
+    }
+
+    /**
+     * @param {!ops.OpAddListStyle.Spec} addListStyleSpecA
+     * @param {!ops.OpAddListStyle.Spec} addListStyleSpecB
+     */
+    function transformAddListStyleAddListStyle(addListStyleSpecA, addListStyleSpecB) {
+        //TODO: handle list style conflicts
+        if(addListStyleSpecA.styleName === addListStyleSpecB.styleName) {
+            return null;
+        }
+
+        return {
+            opSpecsA: [addListStyleSpecA],
+            opSpecsB: [addListStyleSpecB]
+        };
+    }
 
     /**
      * @param {!ops.OpAddStyle.Spec} addStyleSpec
@@ -605,6 +789,23 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
 
     /**
      * @param {!ops.OpInsertText.Spec} insertTextSpec
+     * @param {!ops.OpRemoveList.Spec} removeListSpec
+     * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
+     */
+    function transformInsertTextRemoveList(insertTextSpec, removeListSpec) {
+        // adjust list start position only if text is inserted before the list start position
+        if (insertTextSpec.position < removeListSpec.firstParagraphPosition) {
+            removeListSpec.firstParagraphPosition += insertTextSpec.text.length;
+        }
+
+        return {
+            opSpecsA: [insertTextSpec],
+            opSpecsB: [removeListSpec]
+        };
+    }
+
+    /**
+     * @param {!ops.OpInsertText.Spec} insertTextSpec
      * @param {!ops.OpRemoveText.Spec} removeTextSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
@@ -797,6 +998,28 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
 
     /**
      * @param {!ops.OpMergeParagraph.Spec} mergeParagraphSpec
+     * @param {!ops.OpRemoveList.Spec} removeListSpec
+     * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
+     */
+    function transformMergeParagraphRemoveList(mergeParagraphSpec, removeListSpec) {
+        // adjust list start position only if the paragraph being merged is before the list start position
+        if (mergeParagraphSpec.sourceStartPosition < removeListSpec.firstParagraphPosition) {
+            removeListSpec.firstParagraphPosition -= 1;
+        } else if (mergeParagraphSpec.sourceStartPosition === removeListSpec.firstParagraphPosition) {
+            // TODO: unable to handle this currently as merge paragraph pulls paragraphs out of the list
+            // One possible solution would be to add paragraph lengths to the merge paragraph spec
+            // to allow this transform to know how many steps to move the anchor of the remove list op
+            return null;
+        }
+
+        return {
+            opSpecsA: [mergeParagraphSpec],
+            opSpecsB: [removeListSpec]
+        };
+    }
+
+    /**
+     * @param {!ops.OpMergeParagraph.Spec} mergeParagraphSpec
      * @param {!ops.OpRemoveText.Spec} removeTextSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
@@ -907,6 +1130,60 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
         return {
             opSpecsA:  opSpecsA,
             opSpecsB:  opSpecsB
+        };
+    }
+
+    /**
+     * @param {!ops.OpRemoveList.Spec} removeListSpecA
+     * @param {!ops.OpRemoveList.Spec} removeListSpecB
+     * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
+     */
+    function transformRemoveListRemoveList(removeListSpecA, removeListSpecB) {
+        var opSpecsA = [removeListSpecA],
+            opSpecsB = [removeListSpecB];
+
+        if (removeListSpecA.firstParagraphPosition === removeListSpecB.firstParagraphPosition) {
+            opSpecsA = [];
+            opSpecsB = [];
+        }
+
+        return {
+            opSpecsA: opSpecsA,
+            opSpecsB: opSpecsB
+        };
+    }
+
+    /**
+     * @param {!ops.OpRemoveList.Spec} removeListSpec
+     * @param {!ops.OpRemoveText.Spec} removeTextSpec
+     * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
+     */
+    function transformRemoveListRemoveText(removeListSpec, removeTextSpec) {
+        // adjust list start position only if text is removed before the list start position
+        if (removeTextSpec.position < removeListSpec.firstParagraphPosition) {
+            removeListSpec.firstParagraphPosition -= removeTextSpec.length;
+        }
+
+        return {
+            opSpecsA: [removeListSpec],
+            opSpecsB: [removeTextSpec]
+        };
+    }
+
+    /**
+     * @param {!ops.OpRemoveList.Spec} removeListSpec
+     * @param {!ops.OpSplitParagraph.Spec} splitParagraphSpec
+     * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
+     */
+    function transformRemoveListSplitParagraph(removeListSpec, splitParagraphSpec) {
+        // adjust list start position only if the paragraph being split is before the list start position
+        if (splitParagraphSpec.sourceParagraphPosition < removeListSpec.firstParagraphPosition) {
+            removeListSpec.firstParagraphPosition += 1;
+        }
+
+        return {
+            opSpecsA: [removeListSpec],
+            opSpecsB: [splitParagraphSpec]
         };
     }
 
@@ -1451,45 +1728,43 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
         };
     }
 
-
-    var /**
-         * This is the lower-left half of the sparse NxN matrix with all the
-         * transformation methods on the possible pairs of ops. As the matrix
-         * is symmetric, only that half is used. So the user of this matrix has
-         * to ensure the proper order of opspecs on lookup and on calling the
-         * picked transformation method.
-         *
-         * Each transformation method takes the two opspecs (and optionally
-         * a flag if the first has a higher priority, in case of tie breaking
-         * having to be done). The method returns a record with the two
-         * resulting arrays of ops, with key names "opSpecsA" and "opSpecsB".
-         * Those arrays could have more than the initial respective opspec
-         * inside, in case some additional helper opspecs are needed, or be
-         * empty if the opspec turned into a no-op in the transformation.
-         * If a transformation is not doable, the method returns "null".
-         *
-         * Some operations are added onto the stack only by the master session,
-         * for example AddMember, RemoveMember, and UpdateMember. These therefore need
-         * not be transformed against each other, since the master session is the
-         * only originator of these ops. Therefore, their pairing entries in the
-         * matrix are missing. They do however require a passUnchanged entry
-         * with the other ops.
-         *
-         * Here the CC signature of each transformation method:
-         * param {!Object} opspecA
-         * param {!Object} opspecB
-         * (param {!boolean} hasAPriorityOverB)  can be left out
-         * return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
-         *
-         * Empty cells in this matrix mean there is no such transformation
-         * possible, and should be handled as if the method returns "null".
-         *
-         * @type {!Object.<string,!Object.<string,function(!Object,!Object,boolean=):?{opSpecsA:!Array.<!{optype:string}>, opSpecsB:!Array.<!{optype:string}>}>>}
-         */
-        transformations;
+    /**
+     * This is the lower-left half of the sparse NxN matrix with all the
+     * transformation methods on the possible pairs of ops. As the matrix
+     * is symmetric, only that half is used. So the user of this matrix has
+     * to ensure the proper order of opspecs on lookup and on calling the
+     * picked transformation method.
+     *
+     * Each transformation method takes the two opspecs (and optionally
+     * a flag if the first has a higher priority, in case of tie breaking
+     * having to be done). The method returns a record with the two
+     * resulting arrays of ops, with key names "opSpecsA" and "opSpecsB".
+     * Those arrays could have more than the initial respective opspec
+     * inside, in case some additional helper opspecs are needed, or be
+     * empty if the opspec turned into a no-op in the transformation.
+     * If a transformation is not doable, the method returns "null".
+     *
+     * Some operations are added onto the stack only by the master session,
+     * for example AddMember, RemoveMember, and UpdateMember. These therefore need
+     * not be transformed against each other, since the master session is the
+     * only originator of these ops. Therefore, their pairing entries in the
+     * matrix are missing. They do however require a passUnchanged entry
+     * with the other ops.
+     *
+     * Here the CC signature of each transformation method:
+     * param {!Object} opspecA
+     * param {!Object} opspecB
+     * (param {!boolean} hasAPriorityOverB)  can be left out
+     * return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
+     *
+     * Empty cells in this matrix mean there is no such transformation
+     * possible, and should be handled as if the method returns "null".
+     */
     transformations = {
         "AddCursor": {
             "AddCursor":            passUnchanged,
+            "AddList":              passUnchanged,
+            "AddListStyle":         passUnchanged,
             "AddMember":            passUnchanged,
             "AddStyle":             passUnchanged,
             "ApplyDirectStyling":   passUnchanged,
@@ -1497,6 +1772,46 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
             "MergeParagraph":       passUnchanged,
             "MoveCursor":           passUnchanged,
             "RemoveCursor":         passUnchanged,
+            "RemoveList":           passUnchanged,
+            "RemoveMember":         passUnchanged,
+            "RemoveStyle":          passUnchanged,
+            "RemoveText":           passUnchanged,
+            "SetParagraphStyle":    passUnchanged,
+            "SplitParagraph":       passUnchanged,
+            "UpdateMember":         passUnchanged,
+            "UpdateMetadata":       passUnchanged,
+            "UpdateParagraphStyle": passUnchanged
+        },
+        "AddList": {
+            "AddList":              transformAddListAddList,
+            "AddListStyle":         passUnchanged,
+            "AddMember":            passUnchanged,
+            "AddStyle":             passUnchanged,
+            "ApplyDirectStyling":   passUnchanged,
+            "InsertText":           transformAddListInsertText,
+            "MergeParagraph":       transformAddListMergeParagraph,
+            "MoveCursor":           passUnchanged,
+            "RemoveCursor":         passUnchanged,
+            "RemoveList":           transformAddListRemoveList,
+            "RemoveMember":         passUnchanged,
+            "RemoveStyle":          passUnchanged,
+            "RemoveText":           transformAddListRemoveText,
+            "SetParagraphStyle":    passUnchanged,
+            "SplitParagraph":       transformAddListSplitParagraph,
+            "UpdateMember":         passUnchanged,
+            "UpdateMetadata":       passUnchanged,
+            "UpdateParagraphStyle": passUnchanged
+        },
+        "AddListStyle": {
+            "AddListStyle":         transformAddListStyleAddListStyle,
+            "AddMember":            passUnchanged,
+            "AddStyle":             passUnchanged,
+            "ApplyDirectStyling":   passUnchanged,
+            "InsertText":           passUnchanged,
+            "MergeParagraph":       passUnchanged,
+            "MoveCursor":           passUnchanged,
+            "RemoveCursor":         passUnchanged,
+            "RemoveList":           passUnchanged,
             "RemoveMember":         passUnchanged,
             "RemoveStyle":          passUnchanged,
             "RemoveText":           passUnchanged,
@@ -1513,6 +1828,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
             "MergeParagraph":       passUnchanged,
             "MoveCursor":           passUnchanged,
             "RemoveCursor":         passUnchanged,
+            "RemoveList":           passUnchanged,
             "RemoveStyle":          passUnchanged,
             "RemoveText":           passUnchanged,
             "SetParagraphStyle":    passUnchanged,
@@ -1527,6 +1843,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
             "MergeParagraph":       passUnchanged,
             "MoveCursor":           passUnchanged,
             "RemoveCursor":         passUnchanged,
+            "RemoveList":           passUnchanged,
             "RemoveMember":         passUnchanged,
             "RemoveStyle":          transformAddStyleRemoveStyle,
             "RemoveText":           passUnchanged,
@@ -1542,6 +1859,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
             "MergeParagraph":       transformApplyDirectStylingMergeParagraph,
             "MoveCursor":           passUnchanged,
             "RemoveCursor":         passUnchanged,
+            "RemoveList":           passUnchanged,
             "RemoveMember":         passUnchanged,
             "RemoveStyle":          passUnchanged,
             "RemoveText":           transformApplyDirectStylingRemoveText,
@@ -1556,6 +1874,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
             "MergeParagraph":       transformInsertTextMergeParagraph,
             "MoveCursor":           transformInsertTextMoveCursor,
             "RemoveCursor":         passUnchanged,
+            "RemoveList":           transformInsertTextRemoveList,
             "RemoveMember":         passUnchanged,
             "RemoveStyle":          passUnchanged,
             "RemoveText":           transformInsertTextRemoveText,
@@ -1569,6 +1888,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
             "MergeParagraph":       transformMergeParagraphMergeParagraph,
             "MoveCursor":           transformMergeParagraphMoveCursor,
             "RemoveCursor":         passUnchanged,
+            "RemoveList":           transformMergeParagraphRemoveList,
             "RemoveMember":         passUnchanged,
             "RemoveStyle":          passUnchanged,
             "RemoveText":           transformMergeParagraphRemoveText,
@@ -1581,6 +1901,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
         "MoveCursor": {
             "MoveCursor":           passUnchanged,
             "RemoveCursor":         transformMoveCursorRemoveCursor,
+            "RemoveList":           passUnchanged,
             "RemoveMember":         passUnchanged,
             "RemoveStyle":          passUnchanged,
             "RemoveText":           transformMoveCursorRemoveText,
@@ -1593,10 +1914,22 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
         "RemoveCursor": {
             "RemoveCursor":         transformRemoveCursorRemoveCursor,
             "RemoveMember":         passUnchanged,
+            "RemoveList":           passUnchanged,
             "RemoveStyle":          passUnchanged,
             "RemoveText":           passUnchanged,
             "SetParagraphStyle":    passUnchanged,
             "SplitParagraph":       passUnchanged,
+            "UpdateMember":         passUnchanged,
+            "UpdateMetadata":       passUnchanged,
+            "UpdateParagraphStyle": passUnchanged
+        },
+        "RemoveList": {
+            "RemoveList":           transformRemoveListRemoveList,
+            "RemoveMember":         passUnchanged,
+            "RemoveStyle":          passUnchanged,
+            "RemoveText":           transformRemoveListRemoveText,
+            "SetParagraphStyle":    passUnchanged,
+            "SplitParagraph":       transformRemoveListSplitParagraph,
             "UpdateMember":         passUnchanged,
             "UpdateMetadata":       passUnchanged,
             "UpdateParagraphStyle": passUnchanged
