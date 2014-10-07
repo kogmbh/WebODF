@@ -79,7 +79,10 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         /**@const*/ SHOW_ALL = NodeFilter.SHOW_ALL,
         blacklistedNodes = new gui.BlacklistNamespaceNodeFilter(["urn:webodf:names:cursor", "urn:webodf:names:editinfo"]),
         odfTextBodyFilter = new gui.OdfTextBodyNodeFilter(),
-        defaultNodeFilter = new core.NodeFilterChain([blacklistedNodes, odfTextBodyFilter]);
+        defaultNodeFilter = new core.NodeFilterChain([blacklistedNodes, odfTextBodyFilter]),
+        /**@type{!Array.<!function():undefined>}*/
+        pendingSignals = [],
+        isExecutingOp = false;
 
     /**
      *
@@ -884,12 +887,30 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     };
 
     /**
+     * Emit a signal to interested subscribers. Note, if signal emitting has been paused
+     * then subscribers will not be notified until resumeSignalEmitting is called. The order
+     * of signal calls will still be preserved however.
+     *
      * @param {!string} eventid
      * @param {*} args
      * @return {undefined}
      */
     this.emit = function (eventid, args) {
-        eventNotifier.emit(eventid, args);
+        if (isExecutingOp) {
+            pendingSignals.push(function() {
+                try {
+                    eventNotifier.emit(eventid, args);
+                } catch(/**@type{!Error}*/err) {
+                    // Don't let queued signals throw an error. Throwing during playback can have adverse effects on
+                    // further processing of pending signals.
+                    runtime.log("ERROR",
+                            "Unhandled exception when processing signal '" + eventid + "' - " + String(err) + "\n" +
+                            err.stack);
+                }
+            });
+        } else {
+            eventNotifier.emit(eventid, args);
+        }
     };
 
     /**
@@ -936,14 +957,57 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     };
 
     /**
+     * Process steps being inserted into the document. Will emit a steps inserted signal on
+     * behalf of the caller
+     * @param {!{position: !number}} args
+     * @return {undefined}
+     */
+    this.handleStepsInserted = function(args) {
+        stepsTranslator.handleStepsInserted(args);
+        self.emit(ops.OdtDocument.signalStepsInserted, args);
+    };
+
+    /**
+     * Process steps being removed from the document. Will emit a steps removed signal on
+     * behalf of the caller
+     * @param {!{position: !number}} args
+     * @return {undefined}
+     */
+    this.handleStepsRemoved = function(args) {
+        stepsTranslator.handleStepsRemoved(args);
+        self.emit(ops.OdtDocument.signalStepsRemoved, args);
+    };
+
+    /**
+     * Causes emitted signals to be queued up until resumeSignalEmitting is called.
+     * @return {undefined}
+     */
+    this.pauseSignalEmitting = function() {
+        runtime.assert(pendingSignals.length === 0, "pauseSignalEmitting called with uncleared pending signals");
+        isExecutingOp = true;
+    };
+
+    /**
+     * Process all queued signals and resume immediate signalling.
+     * @return {undefined}
+     */
+    this.resumeSignalEmitting = function() {
+        var signal;
+        isExecutingOp = false;
+        signal = pendingSignals.shift();
+        while (signal) {
+            signal();
+            signal = pendingSignals.shift();
+        }
+    };
+
+    /**
      * @return {undefined}
      */
     function init() {
         filter = new ops.TextPositionFilter();
         stepUtils = new odf.StepUtils();
         stepsTranslator = new ops.OdtStepsTranslator(getRootNode, createPositionIterator, filter, 500);
-        eventNotifier.subscribe(ops.OdtDocument.signalStepsInserted, stepsTranslator.handleStepsInserted);
-        eventNotifier.subscribe(ops.OdtDocument.signalStepsRemoved, stepsTranslator.handleStepsRemoved);
         eventNotifier.subscribe(ops.OdtDocument.signalOperationEnd, handleOperationExecuted);
         eventNotifier.subscribe(ops.OdtDocument.signalProcessingBatchEnd, core.Task.processTasks);
     }

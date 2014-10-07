@@ -81,12 +81,23 @@ ops.Session = function Session(odfCanvas) {
         operationRouter.subscribe(ops.OperationRouter.signalProcessingBatchStart, forwardBatchStart);
         operationRouter.subscribe(ops.OperationRouter.signalProcessingBatchEnd, forwardBatchEnd);
         opRouter.setPlaybackFunction(function (op) {
+            var result = false;
             odtDocument.emit(ops.OdtDocument.signalOperationStart, op);
-            if (op.execute(odtDocument)) {
-                odtDocument.emit(ops.OdtDocument.signalOperationEnd, op);
-                return true;
+            odtDocument.pauseSignalEmitting();
+            try {
+                if (op.execute(odtDocument)) {
+                    odtDocument.emit(ops.OdtDocument.signalOperationEnd, op);
+                    result = true;
+                }
+            } catch(/**@type{!Error}*/e) {
+                // Failure to resume will cause OdtDocument to never inform subscribers of emitted
+                // signals, so it's important to always resume signal emitting, even if an exception is
+                // thrown.
+                odtDocument.resumeSignalEmitting();
+                throw e;
             }
-            return false;
+            odtDocument.resumeSignalEmitting();
+            return result;
         });
         opRouter.setOperationFactory(operationFactory);
     };

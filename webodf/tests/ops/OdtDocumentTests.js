@@ -556,6 +556,70 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         r.shouldBe(t, "t.domPosition.textNode.previousSibling.localName", "'cursor'");
     }
 
+    function emitSignals_AggregatedDuringOpExecution_MaintainsOrder() {
+        createOdtDocument("<text:p/>");
+        t.emitCalls = [];
+        t.odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, function(args) {t.emitCalls.push(args); });
+
+        t.odtDocument.pauseSignalEmitting();
+        t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "call1");
+        t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "call2");
+
+        r.shouldBe(t, "t.emitCalls.length", "0");
+
+        t.odtDocument.resumeSignalEmitting();
+        r.shouldBe(t, "t.emitCalls", "['call1', 'call2']");
+    }
+
+    function emitSignals_NewEmitDuringEndOp_EmitsImmediately() {
+        createOdtDocument("<text:p/>");
+        t.emitCalls = [];
+        t.odtDocument.subscribe(ops.OdtDocument.signalTableAdded, function(args) {
+            t.emitCalls.push(args);
+            t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "callImmediate");
+        });
+        t.odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, function(args) { t.emitCalls.push(args); });
+
+        t.odtDocument.pauseSignalEmitting();
+        t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "call1");
+        t.odtDocument.emit(ops.OdtDocument.signalTableAdded, "call2");
+        t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "call3");
+
+        r.shouldBe(t, "t.emitCalls.length", "0");
+
+        t.odtDocument.resumeSignalEmitting();
+        r.shouldBe(t, "t.emitCalls", "['call1', 'call2', 'callImmediate', 'call3']");
+    }
+
+    function emitSignals_WhenNotExecutingOp_EmitsImmediately() {
+        createOdtDocument("<text:p/>");
+        t.emitCalls = [];
+        t.odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, function(args) {t.emitCalls.push(args); });
+
+        t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "call1");
+        t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "call2");
+
+        r.shouldBe(t, "t.emitCalls", "['call1', 'call2']");
+    }
+
+    function emitSignals_ExceptionsThrownDuringDelayedEmit_DontPreventFurtherSignals() {
+        createOdtDocument("<text:p/>");
+        t.emitCalls = [];
+        t.odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, function(args) { t.emitCalls.push(args); });
+        t.odtDocument.subscribe(ops.OdtDocument.signalTableAdded, function(args) {
+            t.emitCalls.push(args);
+            throw new Error("intentional error");
+        });
+
+        t.odtDocument.pauseSignalEmitting();
+        t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "call1");
+        t.odtDocument.emit(ops.OdtDocument.signalTableAdded, "call2");
+        t.odtDocument.emit(ops.OdtDocument.signalParagraphChanged, "call3");
+        t.odtDocument.resumeSignalEmitting();
+
+        r.shouldBe(t, "t.emitCalls", "['call1', 'call2', 'call3']");
+    }
+
     function cursorPositionTests() {
         // Examples from README_cursorpositions.txt
         
@@ -687,7 +751,12 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             getTextNodeAtStep_At1_PutsTargetMemberCursor_BeforeTextNode,
             getTextNodeAtStep_At4_PutsTargetMemberCursor_BeforeTextNode,
             getTextNodeAtStep_AfterNonText_PutsTargetMemberCursor_BeforeTextNode,
-            getTextNodeAtStep_EmptyP_MovesAllCursors_BeforeTextNode
+            getTextNodeAtStep_EmptyP_MovesAllCursors_BeforeTextNode,
+
+            emitSignals_AggregatedDuringOpExecution_MaintainsOrder,
+            emitSignals_NewEmitDuringEndOp_EmitsImmediately,
+            emitSignals_WhenNotExecutingOp_EmitsImmediately,
+            emitSignals_ExceptionsThrownDuringDelayedEmit_DontPreventFurtherSignals
         ]).concat(cursorPositionTests());
     };
     this.asyncTests = function () {

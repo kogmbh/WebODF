@@ -90,7 +90,7 @@ ops.OpRemoveAnnotation = function OpRemoveAnnotation() {
             annotationEnd.parentNode.removeChild(annotationEnd);
         }
         // The specified position is the first walkable step in the annotation. The position is always just before the first point of change
-        odtDocument.emit(ops.OdtDocument.signalStepsRemoved, {position: position > 0 ? position - 1 : position});
+        odtDocument.handleStepsRemoved({position: position > 0 ? position - 1 : position});
 
         odtDocument.fixCursorPositions();
         odtDocument.getOdfCanvas().refreshAnnotations();

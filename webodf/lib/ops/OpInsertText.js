@@ -186,7 +186,7 @@ ops.OpInsertText = function OpInsertText() {
                 previousNode.parentNode.removeChild(previousNode);
             }
 
-            odtDocument.emit(ops.OdtDocument.signalStepsInserted, {position: position});
+            odtDocument.handleStepsInserted({position: position});
 
             if (cursor && moveCursor) {
                 // Explicitly place the cursor in the desired position after insertion

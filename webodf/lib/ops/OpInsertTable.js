@@ -157,7 +157,7 @@ ops.OpInsertTable = function OpInsertTable() {
             previousSibling = odfUtils.getParagraphElement(domPosition.textNode);
             rootNode.insertBefore(tableNode, previousSibling.nextSibling);
             // The parent table counts for 1 position, and 1 paragraph is added per cell
-            odtDocument.emit(ops.OdtDocument.signalStepsInserted, {position: position});
+            odtDocument.handleStepsInserted({position: position});
 
             odtDocument.getOdfCanvas().refreshSize();
             odtDocument.emit(ops.OdtDocument.signalTableAdded, {
