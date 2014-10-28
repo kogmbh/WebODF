@@ -623,13 +623,23 @@ function BrowserRuntime(logoutput) {
      * Read the contents of a file. Returns the result via a callback. If the
      * encoding is 'binary', the result is returned as a Uint8Array,
      * otherwise, it is returned as a string.
+     *
+     * Path can be a Web Resource which is Ajax Loaded from URL or DataURL
+     *
      * @param {!string} path
      * @param {!string} encoding text encoding or 'binary'
      * @param {!function(?string,?(string|Uint8Array)):undefined} callback
      * @return {undefined}
      */
     function readFile(path, encoding, callback) {
-        var xhr = createXHR(path, encoding, true);
+	var  /**@type{!XMLHttpRequest}*/xhr, /**@type{!Uint8Array}*/zipData, /**@type{!string}*/decoded,/**@type{!function(!string):!string}*/atob = window.atob;
+	if(path.split(',')[0].length > 1 && path.split(',')[0].indexOf('base64') >= 0){
+		decoded = atob(path.split(',')[1]);
+		zipData = byteArrayFromString(decoded);
+		return callback(null, zipData);
+	}
+
+        xhr = createXHR(path, encoding, true);
         function handleResult() {
             var r;
             if (xhr.readyState === 4) {
