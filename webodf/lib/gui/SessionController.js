@@ -116,6 +116,13 @@ gui.SessionControllerOptions = function () {
             "Expected to be run in an environment which has a global window, like a browser.");
 
         /**
+         * @return {!gui.SessionControllerOptions}
+         */
+        this.getConfiguration = function() {
+            return args;
+        };
+
+        /**
          * @param {!Event} e
          * @return {Node}
          */
