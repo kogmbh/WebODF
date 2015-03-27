@@ -119,6 +119,8 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         }
         initialDoc = rootElement.cloneNode(true);
         odfCanvas.refreshAnnotations();
+        // Forgetting and then refreshing the annotations may cause the cursor to end up in a non-step position
+        self.fixCursorPositions();
         return initialDoc;
     };
 
