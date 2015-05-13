@@ -78,3 +78,8 @@ Qt5 can be installed via homebrew, but will not be linked by default. CMake must
 specifying the Qt5 location in CMAKE_PATH_PREFIX environment variable:
 
     cmake -DCMAKE_PREFIX_PATH=/usr/local/Cellar/qt5/5.4.1 ../webodf
+    
+If the build process returns an error `(libuv) Failed to create kqueue (24)`, 
+this can be resolved by increasing the limit on the number of open file descriptors:
+
+    ulimit -n 8192
