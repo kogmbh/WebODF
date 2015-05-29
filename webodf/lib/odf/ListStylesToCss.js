@@ -497,10 +497,6 @@
          * @return {!Object.<!string, !string>}
          */
         function getAllContentRules(listStyleNode) {
-            // To prevent undefined error occurring with documents comming from bullitlist from the wym-editor:
-            if(listStyleNode === undefined) {
-              return {};
-            }
             var childNode = listStyleNode.firstElementChild,
                 level,
                 rules = {};
@@ -700,10 +696,6 @@
                     if (xmlId) {
                         listsWithXmlId[xmlId] = list;
                     }
-
-                    // To prevent error when stylename is undefined:
-                    if(listStyles[styleName] === undefined)
-                        listStyles[styleName] = {};
 
                     contentRules = getAllContentRules(listStyles[styleName].element);
 
