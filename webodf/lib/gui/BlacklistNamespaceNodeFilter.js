@@ -26,7 +26,7 @@
 
 /**
  * @constructor
- * @extends NodeFilter
+ * @implements NodeFilter
  * @param {!Array.<!string>} excludedNamespaces
  */
 gui.BlacklistNamespaceNodeFilter = function (excludedNamespaces) {

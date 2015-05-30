@@ -24,6 +24,44 @@
 
 /*global Node, runtime, core, gui, ops, odf, NodeFilter*/
 
+    /**
+     * A filter that allows a position if it has the same closest
+     * whitelisted root as the specified 'anchor', which can be the cursor
+     * of the given memberid, or a given node
+     * @constructor
+     * @implements {core.PositionFilter}
+     * @param {!string|!Node} anchor 
+     * @param {Object.<!ops.OdtCursor>} cursors
+     * @param {function(!Node):!Node} getRoot
+     */
+    function RootFilter(anchor, cursors, getRoot) {
+        "use strict";
+        var /**@const*/
+        FILTER_ACCEPT = core.PositionFilter.FilterResult.FILTER_ACCEPT,
+        /**@const*/
+        FILTER_REJECT = core.PositionFilter.FilterResult.FILTER_REJECT;
+
+        /**
+         * @param {!core.PositionIterator} iterator
+         * @return {!core.PositionFilter.FilterResult}
+         */
+        this.acceptPosition = function (iterator) {
+            var node = iterator.container(),
+                anchorNode;
+
+            if (typeof anchor === "string") {
+                anchorNode = cursors[anchor].getNode();
+            } else {
+                anchorNode = anchor;
+            }
+
+            if (getRoot(node) === getRoot(anchorNode)) {
+                return FILTER_ACCEPT;
+            }
+            return FILTER_REJECT;
+        };
+    }
+
 /**
  * A document that keeps all data related to the mapped document.
  * @constructor
@@ -65,10 +103,6 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
             ops.OdtDocument.signalMetadataUpdated,
             ops.OdtDocument.signalAnnotationAdded
         ]),
-        /**@const*/
-        FILTER_ACCEPT = core.PositionFilter.FilterResult.FILTER_ACCEPT,
-        /**@const*/
-        FILTER_REJECT = core.PositionFilter.FilterResult.FILTER_REJECT,
         /**@const*/
         NEXT = core.StepDirection.NEXT,
         filter,
@@ -178,37 +212,6 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         return node;
     }
     this.getRootElement = getRoot;
-
-    /**
-     * A filter that allows a position if it has the same closest
-     * whitelisted root as the specified 'anchor', which can be the cursor
-     * of the given memberid, or a given node
-     * @constructor
-     * @implements {core.PositionFilter}
-     * @param {!string|!Node} anchor 
-     */
-    function RootFilter(anchor) {
-
-        /**
-         * @param {!core.PositionIterator} iterator
-         * @return {!core.PositionFilter.FilterResult}
-         */
-        this.acceptPosition = function (iterator) {
-            var node = iterator.container(),
-                anchorNode;
-
-            if (typeof anchor === "string") {
-                anchorNode = cursors[anchor].getNode();
-            } else {
-                anchorNode = anchor;
-            }
-
-            if (getRoot(node) === getRoot(anchorNode)) {
-                return FILTER_ACCEPT;
-            }
-            return FILTER_REJECT;
-        };
-    }
 
     /**
      * Create a new StepIterator instance set to the defined position
@@ -919,7 +922,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      * @return {!RootFilter}
      */
     this.createRootFilter = function (inputMemberId) {
-        return new RootFilter(inputMemberId);
+        return new RootFilter(inputMemberId, cursors, getRoot);
     };
 
     /**

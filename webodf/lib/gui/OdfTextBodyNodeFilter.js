@@ -30,7 +30,7 @@
  * - Any node within a text:tracked-changes block
  *
  * @constructor
- * @extends NodeFilter
+ * @implements NodeFilter
  */
 gui.OdfTextBodyNodeFilter = function () {
     "use strict";

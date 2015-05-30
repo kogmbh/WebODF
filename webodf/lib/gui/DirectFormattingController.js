@@ -856,6 +856,13 @@ gui.DirectFormattingController = function DirectFormattingController(
     /**
      * @return {!boolean}
      */
+    this.emptyBoolFunction = function () {
+        return false;
+    };
+
+    /**
+     * @return {!boolean}
+     */
     function emptyFalseReturningFunction() {
         return false;
     }
@@ -897,13 +904,13 @@ gui.DirectFormattingController = function DirectFormattingController(
         }
 
         if (!directParagraphStylingEnabled) {
-            self.alignParagraphCenter = emptyFunction;
-            self.alignParagraphJustified = emptyFunction;
-            self.alignParagraphLeft = emptyFunction;
-            self.alignParagraphRight = emptyFunction;
+            self.alignParagraphCenter = self.emptyBoolFunction;
+            self.alignParagraphJustified = self.emptyBoolFunction;
+            self.alignParagraphLeft = self.emptyBoolFunction;
+            self.alignParagraphRight = self.emptyBoolFunction;
             self.createParagraphStyleOps = function () { return []; };
-            self.indent = emptyFunction;
-            self.outdent = emptyFunction;
+            self.indent = self.emptyBoolFunction;
+            self.outdent = self.emptyBoolFunction;
         }
     }
 
