@@ -13,6 +13,33 @@ include(${CMAKE_BINARY_DIR}/jsfileslist.txt)
 
 configure_file(webodfversion.js.in ${CMAKE_CURRENT_BINARY_DIR}/webodfversion.js)
 
+set(EXTERNS_LIST
+    "--use_only_custom_externs"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/es3.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/es5.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/es6.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/w3c_dom1.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/w3c_dom2.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/w3c_dom3.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/w3c_elementtraversal.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/w3c_anim_timing.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/w3c_range.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/w3c_xml.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/w3c_css.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/w3c_event.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/window.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/gecko_xml.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/gecko_dom.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/ie_dom.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/gecko_event.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/ie_event.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/html5.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/iphone.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs/fileapi.js"
+    "--externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs.js"
+)
+string(REPLACE ";" " " EXTERNS "${EXTERNS_LIST}")
+
 set(TESTJSFILES
     tests/core/UnitTester.js
     tests/core/ZipTests.js
@@ -73,7 +100,47 @@ add_custom_target(webodf.css.js-target DEPENDS webodf.css.js)
 
 # Windows has a command-line limit of around 8,000 chars, so files to be compiled are supplied to CC using the --flagfile
 # option to help keep the length of the compilation command as small as possible.
-file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/cc-noTestFiles.txt "--warning_level VERBOSE --jscomp_error accessControls --jscomp_error ambiguousFunctionDecl --jscomp_error checkEventfulObjectDisposal --jscomp_error checkRegExp --jscomp_error checkStructDictInheritance --jscomp_error checkTypes --jscomp_error checkVars --jscomp_error const --jscomp_error constantProperty --jscomp_error deprecated --jscomp_error duplicateMessage --jscomp_error es3 --jscomp_error es5Strict --jscomp_error externsValidation --jscomp_error fileoverviewTags --jscomp_error globalThis --jscomp_error invalidCasts --jscomp_error misplacedTypeAnnotation --jscomp_error missingProperties --jscomp_error missingProvide --jscomp_error missingRequire --jscomp_error missingReturn --jscomp_off nonStandardJsDocs --jscomp_error suspiciousCode --jscomp_error strictModuleDepCheck --jscomp_error typeInvalidation --jscomp_error undefinedNames --jscomp_error undefinedVars --jscomp_error unknownDefines --jscomp_error uselessCode --jscomp_error visibility --summary_detail_level 3")
+SET(CLOSURE_ERROR_OPTION_LIST
+    "--jscomp_error accessControls"
+    "--jscomp_error ambiguousFunctionDecl"
+    "--jscomp_error checkEventfulObjectDisposal"
+    "--jscomp_error checkRegExp"
+    "--jscomp_error checkStructDictInheritance"
+    "--jscomp_error checkTypes"
+    "--jscomp_error checkVars"
+#    "--jscomp error conformanceViolations"
+    "--jscomp_error const"
+    "--jscomp_error constantProperty"
+    "--jscomp_error deprecated"
+    "--jscomp_error deprecatedAnnotations"
+    "--jscomp_error duplicateMessage"
+    "--jscomp_error es3"
+    "--jscomp_error es5Strict"
+    "--jscomp_error externsValidation"
+    "--jscomp_error fileoverviewTags"
+    "--jscomp_error globalThis"
+    "--jscomp_error inferredConstCheck"
+    "--jscomp_error invalidCasts"
+    "--jscomp_error misplacedTypeAnnotation"
+    "--jscomp_error missingGetCssName"
+    "--jscomp_error missingProperties"
+    "--jscomp_error missingProvide"
+    "--jscomp_off missingRequire"
+    "--jscomp_error missingReturn"
+#    "--jscomp_error newCheckTypes"
+    "--jscomp_off nonStandardJsDocs"
+    "--jscomp_error suspiciousCode"
+    "--jscomp_error strictModuleDepCheck"
+    "--jscomp_error typeInvalidation"
+    "--jscomp_error undefinedNames"
+    "--jscomp_error undefinedVars"
+    "--jscomp_error unknownDefines"
+    "--jscomp_error uselessCode"
+    "--jscomp_error useOfGoogBase"
+    "--jscomp_error visibility")
+string(REPLACE ";" " " CLOSURE_ERROR_OPTIONS "${CLOSURE_ERROR_OPTION_LIST}")
+
+file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/cc-noTestFiles.txt "--warning_level VERBOSE ${CLOSURE_ERROR_OPTIONS} --summary_detail_level 3 ${EXTERNS}")
 
 file (APPEND ${CMAKE_CURRENT_BINARY_DIR}/cc-noTestFiles.txt " --js ${HEADERCOMPILED_FILE}")
 
@@ -133,7 +200,6 @@ add_custom_command(
         --define IS_COMPILED_CODE=true
         --compilation_level ADVANCED_OPTIMIZATIONS
         --formatting PRETTY_PRINT
-        --externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs.js
         --js_output_file compiled.js-
     COMMAND ${CMAKE_COMMAND} ARGS -E rename compiled.js- compiled.js
     DEPENDS ClosureCompiler ${LIBJSFILES} ${TESTJSFILES} tools/externs.js
@@ -149,7 +215,6 @@ add_custom_command(
         --jscomp_error reportUnknownTypes
         --define IS_COMPILED_CODE=true
         --compilation_level SIMPLE_OPTIMIZATIONS
-        --externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs.js
         --js_output_file webodf.js-
     COMMAND ${CMAKE_COMMAND} ARGS -E rename webodf.js- webodf.js
     DEPENDS ClosureCompiler ${LIBJSFILES} tools/externs.js
@@ -166,7 +231,6 @@ add_custom_command(
         --define IS_COMPILED_CODE=true
         --compilation_level WHITESPACE_ONLY
         --formatting PRETTY_PRINT
-        --externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs.js
         --js_output_file webodf-debug.js-
     # in WHITESPACE_ONLY mode, it is not possible to define IS_COMPILED_CODE
     # so the value for IS_COMPILED_CODE is set by find and replace in the code

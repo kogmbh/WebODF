@@ -96,8 +96,8 @@ MESSAGE ( STATUS "external downloads will be stored/expected in: ${EXTERNALS_DOW
 ExternalProject_Add(
     ClosureCompiler
     DOWNLOAD_DIR ${EXTERNALS_DOWNLOAD_DIR}
-    URL "http://dl.google.com/closure-compiler/compiler-20130823.tar.gz"
-    URL_MD5 105db24c4676e23f2495adfdea3159bc
+    URL "http://dl.google.com/closure-compiler/compiler-20150505.tar.gz"
+    URL_MD5 dea8e282c316316daeb39fcd5708d369
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND ""

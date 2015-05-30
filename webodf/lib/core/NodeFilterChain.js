@@ -26,7 +26,7 @@
 
 /**
  * @constructor
- * @extends NodeFilter
+ * @implements NodeFilter
  * @param {!Array.<!NodeFilter>} filters
  */
 core.NodeFilterChain = function (filters) {

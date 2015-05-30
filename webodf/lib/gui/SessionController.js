@@ -436,7 +436,7 @@ gui.SessionControllerOptions = function () {
 
         /**
          * Return the number of mouse clicks if the mouse event is for the primary button. Otherwise return 0.
-         * @param {!Event} event
+         * @param {!UIEvent} event
          * @return {!number}
          */
         function computeClickCount(event) {
@@ -450,7 +450,7 @@ gui.SessionControllerOptions = function () {
          * This is necessary because the mouse-up binding needs to be global in order to handle mouse-up
          * events that occur when the user releases the mouse button outside the canvas.
          * This filter limits selection changes to mouse down events that start inside the canvas
-         * @param {!Event} e
+         * @param {!UIEvent} e
          */
         function handleMouseDown(e) {
             var target = getTarget(e),
@@ -515,7 +515,7 @@ gui.SessionControllerOptions = function () {
         /**
          * Causes a cursor movement to the position hinted by a mouse click
          * event.
-         * @param {!Event} event
+         * @param {!UIEvent} event
          * @return {undefined}
          */
         function moveByMouseClickEvent(event) {
@@ -617,7 +617,7 @@ gui.SessionControllerOptions = function () {
         }
 
         /**
-         * @param {!Event} event
+         * @param {!UIEvent} event
          * @return {undefined}
          */
         function handleMouseClickEvent(event) {
@@ -678,7 +678,7 @@ gui.SessionControllerOptions = function () {
                         // TODO: IE10 on a test machine does not have the "detail" property set on "mouseup" events here,
                         // even if the docs claim it should exist, cmp. http://msdn.microsoft.com/en-au/library/ie/ff974344(v=vs.85).aspx
                         // So doubleclicks will not be detected on (some?) IE currently.
-                        clickEvent = domUtils.cloneEvent(event);
+                        clickEvent = /**@type{!UIEvent}*/(domUtils.cloneEvent(event));
                         handleMouseClickTimeoutId = runtime.setTimeout(function () {
                             moveByMouseClickEvent(clickEvent);
                         }, 0);
@@ -718,7 +718,7 @@ gui.SessionControllerOptions = function () {
         }
 
         /**
-         * @param {!Event} e
+         * @param {!UIEvent} e
          */
         function handleContextMenu(e) {
             // TODO Various browsers have different default behaviours on right click
@@ -731,7 +731,7 @@ gui.SessionControllerOptions = function () {
         }
 
         /**
-         * @param {!Event} event
+         * @param {!UIEvent} event
          */
         function handleMouseUp(event) {
             var target = /**@type{!Element}*/(getTarget(event)),
@@ -790,15 +790,16 @@ gui.SessionControllerOptions = function () {
         function rangeSelectionOnly(fn) {
             /**
              * @param {*} e
-             * return {function(*):(boolean|undefined)
+             * @return {!boolean|undefined}
              */
-            return function (e) {
+            function f(e) {
                 var selectionType = odtDocument.getCursor(inputMemberId).getSelectionType();
                 if (selectionType === ops.OdtCursor.RangeSelection) {
                     return fn(e);
                 }
                 return true;
-            };
+            }
+            return f;
         }
 
         /**

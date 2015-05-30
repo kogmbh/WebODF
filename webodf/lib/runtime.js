@@ -1748,7 +1748,7 @@ var webodf = {};
      * @param {string} classname
      * @param {function():undefined=} callback
      * @return {undefined}
-     * @expose
+     * @export
      */
     runtime.loadClass = function (classname, callback) {
         "use strict";

@@ -145,6 +145,7 @@ odf.TextStyleApplicator = function TextStyleApplicator(objectNameGenerator, form
     function moveToNewSpan(startNode, range) {
         var document = startNode.ownerDocument,
             originalContainer = /**@type{!Element}*/(startNode.parentNode),
+            /**@type{!Element}*/
             styledContainer,
             trailingContainer,
             moveTrailing,
