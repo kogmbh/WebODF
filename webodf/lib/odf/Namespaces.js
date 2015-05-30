@@ -60,10 +60,18 @@ odf.Namespaces = {
     dr3dns: "urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0",
     drawns: "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0",
     chartns: "urn:oasis:names:tc:opendocument:xmlns:chart:1.0",
+    /**
+     * @const
+     * @type{string}
+     */
     fons: "urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0",
     formns: "urn:oasis:names:tc:opendocument:xmlns:form:1.0",
     mathns: "http://www.w3.org/1998/Math/MathML",
     metans: "urn:oasis:names:tc:opendocument:xmlns:meta:1.0",
+    /**
+     * @const
+     * @type{string}
+     */
     numberns: "urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0",
     /**
      * @const
@@ -71,9 +79,21 @@ odf.Namespaces = {
      */
     officens: "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
     presentationns: "urn:oasis:names:tc:opendocument:xmlns:presentation:1.0",
+    /**
+     * @const
+     * @type{string}
+     */
     stylens: "urn:oasis:names:tc:opendocument:xmlns:style:1.0",
+    /**
+     * @const
+     * @type{string}
+     */
     svgns: "urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0",
     tablens: "urn:oasis:names:tc:opendocument:xmlns:table:1.0",
+    /**
+     * @const
+     * @type{string}
+     */
     textns: "urn:oasis:names:tc:opendocument:xmlns:text:1.0",
     xformsns: "http://www.w3.org/2002/xforms",
     xlinkns: 'http://www.w3.org/1999/xlink',
