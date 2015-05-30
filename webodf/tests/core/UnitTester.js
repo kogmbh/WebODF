@@ -320,21 +320,24 @@ core.UnitTestRunner = function UnitTestRunner(resourcePrefix, logger) {
                        +  "' should be '" + /**@type{!Text}*/(b).data + "'");
             return false;
         }
-        runtime.assert(atype === Node.ELEMENT_NODE,
-            "Only textnodes and elements supported.");
-        if (a.namespaceURI !== b.namespaceURI) {
-            testFailed("namespace '" + a.namespaceURI + "' should be '"
-                    + b.namespaceURI + "'");
-            return false;
-        }
-        if (a.localName !== b.localName) {
-            testFailed("localName '" + a.localName + "' should be '"
-                    + b.localName + "'");
-            return false;
-        }
-        if (!areAttributesEqual(/**@type{!Element}*/(a),
-                                /**@type{!Element}*/(b), false)) {
-            return false;
+        if (atype === Node.ELEMENT_NODE) {
+            if (a.namespaceURI !== b.namespaceURI) {
+                testFailed("namespace '" + a.namespaceURI + "' should be '"
+                        + b.namespaceURI + "'");
+                return false;
+            }
+            if (a.localName !== b.localName) {
+                testFailed("localName '" + a.localName + "' should be '"
+                        + b.localName + "'");
+                return false;
+            }
+            if (!areAttributesEqual(/**@type{!Element}*/(a),
+                                    /**@type{!Element}*/(b), false)) {
+                return false;
+            }
+        } else {
+            runtime.assert(atype === Node.DOCUMENT_FRAGMENT_NODE,
+                "Only textnodes, elements and document-fragments are supported.");
         }
         an = a.firstChild;
         bn = b.firstChild;
