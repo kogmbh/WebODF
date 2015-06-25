@@ -62,8 +62,7 @@ ops.OpCreateBulletlist = function OpCreateBulletlist() {
             /**@type{!Array.<!Element>}*/
             modifiedParagraphs = [],
             textNodes = odfUtils.getTextNodes(range, true);
-        console.log("textNodes");
-        console.log(textNodes.length);
+        
         if (textNodes.length === 0) {
             return false;
         }

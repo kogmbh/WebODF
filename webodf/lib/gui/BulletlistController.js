@@ -178,12 +178,10 @@ gui.BulletlistController.setDefaultStyle = function (odtDocument, memberId, posi
     var styleSheet = /**@type{!CSSStyleSheet}*/(odtDocument.getOdfCanvas().getStyleSheet().sheet);
     styleSheet.insertRule(rule, styleSheet.cssRules.length);
     
-    /*
+    
     // added, and not the way to go: 
-    /home/barry/WebODF-master/WebODF/webodf/lib/odf/OdfCanvas.js:
-    /*
-     * @return {!HTMLStyleElement}
-     */
+    // /home/barry/WebODF-master/WebODF/webodf/lib/odf/OdfCanvas.js:
+    // @return {!HTMLStyleElement}
     //this.getStyleSheet = function () {
     //    return webodfcss;
     //}
