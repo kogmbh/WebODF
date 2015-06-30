@@ -93,7 +93,20 @@ ops.OpCreateBulletlist = function OpCreateBulletlist() {
             });
         });
         
-        gui.BulletlistController.setDefaultStyle(odtDocument, memberid, position);
+        gui.BulletlistController.setDefaultStyle(odtDocument, memberid);
+
+        var iterator = odtDocument.getIteratorAtPosition(position);
+        var paragraphNode = odf.OdfUtils.getParagraphElement(iterator.container());
+        if (paragraphNode) {
+            odtDocument.getOdfCanvas().refreshSize();
+            odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
+                paragraphElement: paragraphNode,
+                timeStamp: undefined,
+                memberId: memberid
+            });
+            odtDocument.getOdfCanvas().rerenderAnnotations();
+        }
+
         return true;
     };
 

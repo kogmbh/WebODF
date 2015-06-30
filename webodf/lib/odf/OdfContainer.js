@@ -736,6 +736,14 @@
             }
             automaticStyles = domUtils.getDirectChild(node, officens, 'automatic-styles');
             setAutomaticStylesScope(automaticStyles, documentContentScope);
+
+            // some of the first bulletChars are not renderable by the browser, so we change them in the normal one:
+            for(var i = 0; i < automaticStyles.childNodes.length; i++) {
+                if(/**@type{Node}*/(automaticStyles.childNodes[i]).nodeName == 'text:list-style') {
+                    /**@type{Node}*/(/**@type{Node}*/(automaticStyles.childNodes[i]).firstChild)["setAttributeNS"](odf.Namespaces.textns, "text:bullet-char", "•");
+                }
+            }
+
             if (fontFaceNameChangeMap) {
                 styleInfo.changeFontFaceNames(automaticStyles, fontFaceNameChangeMap);
             }

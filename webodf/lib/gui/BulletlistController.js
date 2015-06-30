@@ -48,6 +48,7 @@ gui.BulletlistController = function BulletlistController(
         isEnabled = false;
 
     gui.BulletlistController.session = session;
+    gui.BulletlistController.memberid = inputMemberId;
 
     /**
      * @return {undefined}
@@ -155,18 +156,40 @@ gui.BulletlistController = function BulletlistController(
 }
 
 /**@const*/gui.BulletlistController.enabledChanged = "enabled/changed";
-/**@var*/gui.BulletlistController.session = null;
+/**@var*/gui.BulletlistController.memberid = null;
 
 /**
- * @param {!ops.OdtDocument} odtDocument
- * @param {string} memberId
- * @param {number} position
+ * @param {Element|undefined} node
+ * @return {Element}
  */
-gui.BulletlistController.setDefaultStyle = function (odtDocument, memberId, position) {
+gui.BulletlistController.checkListStyles = function (node) {
+    console.log("gui.BulletlistController.checkListStyles");
+    //console.log(node);
+    var mainTextElement = /**@type{Element}*/(node.children[0]);
+    var children = /**@type{!NodeList}*/(mainTextElement.children);
+    //console.log(children);
+    //var node = core.DomUtils.getDirectChild(node, odf.Namespaces.officens, 'body');
+    for(var i = 0; i < children.length; i++){
+        if(/**@type{Element}*/(children[i]).nodeName === 'text:list') {
+            console.log(children[i]);
+            /**@type{Element}*/(children[i]).attributes[0].nodeValue = 'L1';
+            /**@type{Element}*/(children[i]).attributes[0].textContent = 'L1';
+            /**@type{Element}*/(children[i]).outerHTML = /**@type{Element}*/(children[i]).outerHTML.split('style-name="Standard"').join('style-name="L1"');
+        }
+    }
+    return node;
+}
+/**
+ * @param {!ops.OdtDocument} odtDocument
+ * @param {string|undefined} memberId
+ */
+gui.BulletlistController.setDefaultStyle = function (odtDocument, memberId) {
+    
     var ownerDocument = odtDocument.getDOMDocument();
     var op;
-
-    var rule = 'text|list[webodfhelper|counter-id="X1-level1-1"] > text|list-item > :not(text|list):first-child::before';
+    var styleSheet = /**@type{!CSSStyleSheet}*/(odtDocument.getOdfCanvas().getStyleSheet().sheet);
+    
+    var rule = 'text|list > text|list-item > :not(text|list):first-child::before';
     rule += '{'; 
     rule += '   content: "•";';
     rule += '   counter-increment: X1-level1-1 1;'; 
@@ -175,9 +198,12 @@ gui.BulletlistController.setDefaultStyle = function (odtDocument, memberId, posi
     rule += '   margin-left: 0.635cm;';
     rule += '   padding-right: 0.2cm;';
     rule += '}'; 
-    var styleSheet = /**@type{!CSSStyleSheet}*/(odtDocument.getOdfCanvas().getStyleSheet().sheet);
+    
     styleSheet.insertRule(rule, styleSheet.cssRules.length);
     
+    if(memberId === undefined) {
+        memberId = 'localuser';
+    }
     
     // added, and not the way to go: 
     // /home/barry/WebODF-master/WebODF/webodf/lib/odf/OdfCanvas.js:
@@ -185,6 +211,11 @@ gui.BulletlistController.setDefaultStyle = function (odtDocument, memberId, posi
     //this.getStyleSheet = function () {
     //    return webodfcss;
     //}
+
+    // also: OdfContainer.js > function handleContentXml(xmldoc) {
+    // change the bulletChars to bulletChars that the browser can render
+    // row: 740 till 745
+
 
     if(!/**@type{ops.OdtDocument}*/(odtDocument).getOdfCanvas().getFormatting().getStyleElement("L1", "list-style")) {
 
@@ -208,32 +239,23 @@ gui.BulletlistController.setDefaultStyle = function (odtDocument, memberId, posi
 
         odtDocument.getOdfCanvas().odfContainer().rootElement.automaticStyles.appendChild(listStyle);
 
-        var newStyleName = "L1",
-            setProperties = {};
+        if(gui.BulletlistController.session) {
+            var newStyleName = "L1",
+                setProperties = {};
 
-        setProperties["style:list-style-name"] = "L1";
-        setProperties["style:list-parent-name"] = "Standard";
+            setProperties["style:list-style-name"] = "L1";
+            setProperties["style:list-parent-name"] = "Standard";
 
-        op = new ops.OpAddStyle();
-        op.init({
-            memberid: memberId,
-            styleName: 'P1',
-            styleFamily: 'paragraph',
-            isAutomaticStyle: true,
-            setProperties: setProperties
-        });
-        gui.BulletlistController.session.enqueue([op]);
+            op = new ops.OpAddStyle();
+            op.init({
+                memberid: memberId,
+                styleName: 'P1',
+                styleFamily: 'paragraph',
+                isAutomaticStyle: true,
+                setProperties: setProperties
+            });
+            gui.BulletlistController.session.enqueue([op]);
+        }
     }
 
-    var iterator = odtDocument.getIteratorAtPosition(position);
-    var paragraphNode = odf.OdfUtils.getParagraphElement(iterator.container());
-    if (paragraphNode) {
-        odtDocument.getOdfCanvas().refreshSize();
-        odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
-            paragraphElement: paragraphNode,
-            timeStamp: undefined,
-            memberId: memberId
-        });
-        odtDocument.getOdfCanvas().rerenderAnnotations();
-    }
 };
