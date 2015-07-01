@@ -58,28 +58,28 @@ ops.OpCreateBulletlist = function OpCreateBulletlist() {
         var paragraph;
         var odtDocument = /**@type{ops.OdtDocument}*/(document),
             ownerDocument = odtDocument.getDOMDocument(),
-            range = odtDocument.convertCursorToDomRange(position, 1),
+            range = odtDocument.convertCursorToDomRange(position, 0),
             /**@type{!Array.<!Element>}*/
             modifiedParagraphs = [],
             textNodes = odfUtils.getTextNodes(range, true);
-        
-        if (textNodes.length === 0) {
-            return false;
-        }
-        
-        paragraph = odfUtils.getParagraphElement(textNodes[0]);
 
         var list = ownerDocument.createElementNS(odf.Namespaces.textns, 'text:list');
         var listItem = ownerDocument.createElementNS(odf.Namespaces.textns, 'text:list-item');
         list.setAttributeNS(odf.Namespaces.textns, 'text:style-name', 'L1');
         list.setAttributeNS('urn:webodf:names:helper', 'counter-id', 'X1-level1-1');
-
         list.appendChild(listItem);
         
-        paragraph.parentNode.insertBefore(list, paragraph);
-        listItem.appendChild(paragraph);
-        if (modifiedParagraphs.indexOf(paragraph) === -1) {
-            modifiedParagraphs.push(paragraph);
+        if (textNodes.length > 0) { // make bulletpoint from paragraph:
+            paragraph = odfUtils.getParagraphElement(textNodes[0]);
+            paragraph.parentNode.insertBefore(list, paragraph);
+            listItem.appendChild(paragraph);
+            if (modifiedParagraphs.indexOf(paragraph) === -1) {
+                modifiedParagraphs.push(paragraph);
+            }
+        } else { // create a empty bulletpoint:
+            range.startContainer.parentNode.insertBefore(list, range.startContainer);
+            range.startOffset = 0;
+            listItem.appendChild(range.startContainer);
         }
 
         odtDocument.fixCursorPositions();

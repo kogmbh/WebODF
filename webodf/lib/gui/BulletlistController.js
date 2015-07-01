@@ -29,12 +29,14 @@
  * @implements {core.Destroyable}
  * @implements {core.EventSource}
  * @param {!ops.Session} session
+ * @param {!gui.EventManager} eventManager
  * @param {!gui.SessionConstraints} sessionConstraints
  * @param {!gui.SessionContext} sessionContext
  * @param {!string} inputMemberId
  */
 gui.BulletlistController = function BulletlistController(
     session,
+    eventManager,
     sessionConstraints,
     sessionContext,
     inputMemberId
@@ -123,6 +125,8 @@ gui.BulletlistController = function BulletlistController(
         });
         operations.push(op);
         session.enqueue(operations);
+        
+        eventManager["focus"]();
 
     }
     this.addBulletlist = addBulletlist;
@@ -159,32 +163,11 @@ gui.BulletlistController = function BulletlistController(
 /**@var*/gui.BulletlistController.memberid = null;
 
 /**
- * @param {Element|undefined} node
- * @return {Element}
- */
-gui.BulletlistController.checkListStyles = function (node) {
-    console.log("gui.BulletlistController.checkListStyles");
-    //console.log(node);
-    var mainTextElement = /**@type{Element}*/(node.children[0]);
-    var children = /**@type{!NodeList}*/(mainTextElement.children);
-    //console.log(children);
-    //var node = core.DomUtils.getDirectChild(node, odf.Namespaces.officens, 'body');
-    for(var i = 0; i < children.length; i++){
-        if(/**@type{Element}*/(children[i]).nodeName === 'text:list') {
-            console.log(children[i]);
-            /**@type{Element}*/(children[i]).attributes[0].nodeValue = 'L1';
-            /**@type{Element}*/(children[i]).attributes[0].textContent = 'L1';
-            /**@type{Element}*/(children[i]).outerHTML = /**@type{Element}*/(children[i]).outerHTML.split('style-name="Standard"').join('style-name="L1"');
-        }
-    }
-    return node;
-}
-/**
  * @param {!ops.OdtDocument} odtDocument
  * @param {string|undefined} memberId
  */
 gui.BulletlistController.setDefaultStyle = function (odtDocument, memberId) {
-    
+
     var ownerDocument = odtDocument.getDOMDocument();
     var op;
     var styleSheet = /**@type{!CSSStyleSheet}*/(odtDocument.getOdfCanvas().getStyleSheet().sheet);

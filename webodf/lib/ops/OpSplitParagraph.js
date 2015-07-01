@@ -90,6 +90,7 @@ ops.OpSplitParagraph = function OpSplitParagraph() {
         }
 
         if (odfUtils.isListItem(paragraphNode.parentNode)) {
+            console.log("on create new bullet item!!");
             targetNode = paragraphNode.parentNode;
         } else {
             targetNode = paragraphNode;
