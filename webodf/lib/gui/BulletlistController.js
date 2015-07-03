@@ -119,8 +119,8 @@ gui.BulletlistController = function BulletlistController(
         var operations = [];
         var op = new ops.OpCreateBulletlist()
         op.init({
-            memberid:inputMemberId, 
-            length:selection.length, 
+            memberid:inputMemberId,
+            length:selection.length,
             position:selection.position
         });
         operations.push(op);
@@ -171,34 +171,22 @@ gui.BulletlistController.setDefaultStyle = function (odtDocument, memberId) {
     var ownerDocument = odtDocument.getDOMDocument();
     var op;
     var styleSheet = /**@type{!CSSStyleSheet}*/(odtDocument.getOdfCanvas().getStyleSheet().sheet);
-    
+
     var rule = 'text|list > text|list-item > :not(text|list):first-child::before';
-    rule += '{'; 
+    rule += '{';
     rule += '   content: "•";';
-    rule += '   counter-increment: X1-level1-1 1;'; 
+    rule += '   counter-increment: X1-level1-1 1;';
     rule += '   text-align: left;';
     rule += '   display: inline-block;';
     rule += '   margin-left: 0.635cm;';
     rule += '   padding-right: 0.2cm;';
-    rule += '}'; 
-    
+    rule += '}';
+
     styleSheet.insertRule(rule, styleSheet.cssRules.length);
-    
+
     if(memberId === undefined) {
         memberId = 'localuser';
     }
-    
-    // added, and not the way to go: 
-    // /home/barry/WebODF-master/WebODF/webodf/lib/odf/OdfCanvas.js:
-    // @return {!HTMLStyleElement}
-    //this.getStyleSheet = function () {
-    //    return webodfcss;
-    //}
-
-    // also: OdfContainer.js > function handleContentXml(xmldoc) {
-    // change the bulletChars to bulletChars that the browser can render
-    // row: 740 till 745
-
 
     if(!/**@type{ops.OdtDocument}*/(odtDocument).getOdfCanvas().getFormatting().getStyleElement("L1", "list-style")) {
 

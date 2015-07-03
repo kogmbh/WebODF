@@ -31,10 +31,9 @@
 ops.OpCreateBulletlist = function OpCreateBulletlist() {
     "use strict";
 
-    var memberid, 
-        timestamp, 
+    var memberid,
+        timestamp,
         position,
-        //paragraph, 
         length,
         domUtils = core.DomUtils,
         odfUtils = odf.OdfUtils;
@@ -50,7 +49,7 @@ ops.OpCreateBulletlist = function OpCreateBulletlist() {
 
     this.isEdit = true;
     this.group = undefined;
-    
+
     /**
      * @param {!ops.Document} document
      */
@@ -68,7 +67,7 @@ ops.OpCreateBulletlist = function OpCreateBulletlist() {
         list.setAttributeNS(odf.Namespaces.textns, 'text:style-name', 'L1');
         list.setAttributeNS('urn:webodf:names:helper', 'counter-id', 'X1-level1-1');
         list.appendChild(listItem);
-        
+
         if (textNodes.length > 0) { // make bulletpoint from paragraph:
             paragraph = odfUtils.getParagraphElement(textNodes[0]);
             paragraph.parentNode.insertBefore(list, paragraph);
@@ -92,7 +91,7 @@ ops.OpCreateBulletlist = function OpCreateBulletlist() {
                 timeStamp: timestamp
             });
         });
-        
+
         gui.BulletlistController.setDefaultStyle(odtDocument, memberid);
 
         var iterator = odtDocument.getIteratorAtPosition(position);
