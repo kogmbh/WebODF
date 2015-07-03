@@ -90,8 +90,15 @@ ops.OpSplitParagraph = function OpSplitParagraph() {
         }
 
         if (odfUtils.isListItem(paragraphNode.parentNode)) {
-            console.log("on create new bullet item!!");
-            targetNode = paragraphNode.parentNode;
+            if(paragraphNode.childNodes.length <= 3) { // list-item is empty check.
+                // enter is pressed on a empty list-item. So we close the list by removing the last list-item, and place the empty paragraph after the list. 
+                var listItem = paragraphNode.parentNode;
+                listItem.parentNode.parentNode.insertBefore(paragraphNode, listItem.parentNode.nextSibling);
+                listItem.parentNode.removeChild(listItem);
+                return false;
+            } else { // create a new list-item.
+                targetNode = paragraphNode.parentNode;
+            }
         } else {
             targetNode = paragraphNode;
         }
