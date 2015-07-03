@@ -158,6 +158,8 @@ ops.Session = function Session(odfCanvas) {
      */
     function init() {
         self.setOperationRouter(new ops.TrivialOperationRouter());
+        
+        gui.BulletlistController.setDefaultStyle(self.getOdtDocument(), undefined);
     }
     init();
 };

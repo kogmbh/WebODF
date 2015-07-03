@@ -304,7 +304,9 @@ gui.ImageController = function ImageController(
             imageSize = scaleToAvailableContentSize(imageSize, pageContentSize);
         }
 
-        insertImageInternal(mimetype, content, imageSize.width + "px", imageSize.height + "px");
+        // convert size to cm, so when doc is opend in openoffice the size will be retained:
+        var pixelToCmDivider = 37.8;
+        insertImageInternal(mimetype, content, (imageSize.width / pixelToCmDivider) + "cm", (imageSize.height / pixelToCmDivider) + "cm");
     };
 
     /**

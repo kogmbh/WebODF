@@ -697,8 +697,13 @@
                         listsWithXmlId[xmlId] = list;
                     }
 
-                    contentRules = getAllContentRules(listStyles[styleName].element);
-
+                    // To prevent undefined error occurring with documents comming from bulletlist from the wym-editor:
+                    if(listStyles[styleName] === undefined) {
+                      contentRules = {};
+                    } else {
+                      contentRules = getAllContentRules(listStyles[styleName].element);
+                    }
+            
                     // lists with different styles cannot be continued
                     // https://tools.oasis-open.org/issues/browse/OFFICE-3558
                     if (continueNumbering && !continueListXmlId && isMatchingListStyle(previousList, styleName)) {

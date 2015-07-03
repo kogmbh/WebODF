@@ -138,6 +138,18 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
     this.isHyperlink = isHyperlink;
 
     /**
+     * Determine if the node is a text:list element.
+     * //@param {?Node} node
+     * //@return {!boolean}
+     */
+    /*
+    function isBulletlist(node) {
+        var name = node && node.localName;
+        return name === "list" && node.namespaceURI === textns;
+    }
+    this.isBulletlist = isBulletlist;
+    */
+    /**
      * Gets the href attribute of text:a element
      * @param {!Element} element
      * @return {!string}

@@ -1411,6 +1411,13 @@
         };
 
         /**
+         * @return {!HTMLStyleElement}
+         */
+        this.getStyleSheet = function () {
+            return webodfcss;
+        }
+
+        /**
          * Add additional css rules for newly inserted draw:frame and draw:image. eg. position, dimensions and background image
          * @param {!Element} frame
          */
@@ -1425,6 +1432,7 @@
                    /**@type{!CSSStyleSheet}*/( positioncss.sheet));
             }
         };
+
         /**
          * @param {!function(!Error=)} callback, passing an error object in case of error
          * @return {undefined}
