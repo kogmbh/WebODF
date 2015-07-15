@@ -27,9 +27,6 @@
 define("webodf/editor/backend/jsglobal/Server", [], function () {
     "use strict";
 
-    runtime.loadClass("core.Base64");
-    runtime.loadClass("core.ByteArrayWriter");
-
     /**
      * @constructor
      * @implements ops.Server

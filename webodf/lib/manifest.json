@@ -3,10 +3,6 @@
     ],
     "core.Base64": [
     ],
-    "core.ByteArray": [
-    ],
-    "core.ByteArrayWriter": [
-    ],
     "core.CSSUnits": [
     ],
     "core.Cursor": [
@@ -40,8 +36,6 @@
     ],
     "core.PositionIterator": [
     ],
-    "core.RawInflate": [
-    ],
     "core.ScheduledTask": [
         "core.Destroyable"
     ],
@@ -56,13 +50,13 @@
     ],
     "core.Zip": [
         "core.Base64",
-        "core.ByteArray",
-        "core.ByteArrayWriter",
-        "core.RawInflate"
+        "externs.JSZip"
     ],
     "core.enums": [
     ],
     "core.typedefs": [
+    ],
+    "externs.JSZip": [
     ],
     "gui.AnnotationController": [
         "gui.CommonConstraints",

@@ -28,7 +28,6 @@ define("webodf/editor/backend/pullbox/Server", [], function () {
     "use strict";
 
     runtime.loadClass("core.Base64");
-    runtime.loadClass("core.ByteArrayWriter");
 
     /**
      * @constructor

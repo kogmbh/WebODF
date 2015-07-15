@@ -33,6 +33,7 @@ function Main(cmakeListPath) {
         buildDir = pathModule.dirname(cmakeListPath),
         // these files are not compiled into webodf.js
         ignoredFiles = [
+            "externs/JSZip.js",
             "odf/CommandLineTools.js",
             "xmldom/RelaxNG.js",
             "xmldom/RelaxNG2.js",
@@ -244,15 +245,22 @@ function Main(cmakeListPath) {
         return path.replace(pathModule.sep, "/");
     }
 
+    /**
+     * Returns true if the supplied path is compiled into webodf.js
+     * @param {!string} path
+     * @return {!boolean}
+     */
+    function isCompiledJs(path) {
+        return ignoredFiles.indexOf(deNormalizePath(path)) === -1;
+    }
+
     function updateCMakeLists(deps) {
         var lib = deps.lib,
             sortedTyped,
             compiledFiles;
-        compiledFiles = Object.keys(lib).filter(function (path) {
-            return ignoredFiles.indexOf(deNormalizePath(path)) === -1;
-        }).sort();
+        compiledFiles = Object.keys(lib).sort();
         sortedTyped = createOrderedList(compiledFiles, lib, {});
-        createCMakeLists(sortedTyped.map(deNormalizePath));
+        createCMakeLists(sortedTyped.filter(isCompiledJs).map(deNormalizePath));
     }
 
     function updateKarmaConfig(deps) {
@@ -577,13 +585,14 @@ function Main(cmakeListPath) {
             license,
             licenses = {},
             // files for which jslint is not run
-            jslintExceptions = ["lib/core/RawInflate.js",
+            jslintExceptions = [
+                "lib/externs/JSZip.js",
                 "../programs/editor/plugins/bella/seedrandom.js"].map(pathModule.normalize),
             // files for which the license is not checked
             licenseExceptions = [
                 "lib/HeaderCompiled.js",
                 "lib/core/JSLint.js",
-                "lib/core/RawInflate.js",
+                "lib/externs/JSZip.js",
                 "../programs/editor/plugins/bella/seedrandom.js"].map(pathModule.normalize),
             commonLicense;
         // load JSLint

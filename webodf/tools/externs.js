@@ -616,3 +616,27 @@ Document.prototype.activeElement;
  * @return {Range}
  */
 Document.prototype.caretRangeFromPoint = function (x, y) {"use strict"; };
+
+/**
+ * namespace
+ * @const
+ */
+var externs = {};
+
+/**
+ * Make externs a globally accessible package in a browser
+ * @const
+ */
+window.externs;
+
+/**
+ * NodeJS global object
+ * @const
+ */
+var global = {};
+
+/**
+ * Make externs a globally accessible package in NodeJS
+ * @const
+ */
+global.externs;

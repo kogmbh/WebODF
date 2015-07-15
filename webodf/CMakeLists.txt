@@ -143,8 +143,6 @@ string(REPLACE ";" " " CLOSURE_ERROR_OPTIONS "${CLOSURE_ERROR_OPTION_LIST}")
 
 file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/cc-noTestFiles.txt "--warning_level VERBOSE ${CLOSURE_ERROR_OPTIONS} --summary_detail_level 3 ${EXTERNS}")
 
-file (APPEND ${CMAKE_CURRENT_BINARY_DIR}/cc-noTestFiles.txt " --js ${HEADERCOMPILED_FILE}")
-
 foreach(JSFILE ${LIBJSFILES})
     if (IS_ABSOLUTE ${JSFILE})
         file (APPEND ${CMAKE_CURRENT_BINARY_DIR}/cc-noTestFiles.txt " --js ${JSFILE}")
@@ -175,14 +173,17 @@ set(SHARED_CLOSURE_ARGS -XX:+TieredCompilation -jar ${CLOSURE_JAR})
 add_custom_command(
     OUTPUT simplecompiled.js
     COMMAND ${Java_JAVA_EXECUTABLE}
-    ARGS ${SHARED_CLOSURE_ARGS} --flagfile ${CMAKE_CURRENT_BINARY_DIR}/cc-withTestFiles.txt
+    ARGS ${SHARED_CLOSURE_ARGS}
+        --js ${HEADERCOMPILED_FILE}
+        --flagfile ${CMAKE_CURRENT_BINARY_DIR}/cc-withTestFiles.txt
+        --js ${CMAKE_CURRENT_SOURCE_DIR}/lib/externs/*.js
         --compilation_level WHITESPACE_ONLY
         --formatting PRETTY_PRINT
         --js_output_file simplecompiled.js-
     # in WHITESPACE_ONLY mode, it is not possible to define IS_COMPILED_CODE
     # so the value for IS_COMPILED_CODE is set by find and replace in the code
     COMMAND ${CMAKE_COMMAND} -DFILENAME:STRING="${CMAKE_CURRENT_BINARY_DIR}/simplecompiled.js" -P ${CMAKE_CURRENT_SOURCE_DIR}/tools/set_IS_COMPILED_CODE.cmake
-    DEPENDS ClosureCompiler ${LIBJSFILES} ${TESTJSFILES}
+    DEPENDS ClosureCompiler ${LIBJSFILES} ${TESTJSFILES} ${HEADERCOMPILED_FILE}
     ${CMAKE_CURRENT_BINARY_DIR}/webodf.css.js
 )
 add_custom_target(simplecompiled.js-target DEPENDS simplecompiled.js)
@@ -197,47 +198,79 @@ add_custom_target(simplecompiled.js-target DEPENDS simplecompiled.js)
 add_custom_command(
     OUTPUT compiled.js
     COMMAND ${Java_JAVA_EXECUTABLE}
-    ARGS ${SHARED_CLOSURE_ARGS} --flagfile ${CMAKE_CURRENT_BINARY_DIR}/cc-withTestFiles.txt
+    ARGS ${SHARED_CLOSURE_ARGS}
+        --js ${HEADERCOMPILED_FILE}
+        --flagfile ${CMAKE_CURRENT_BINARY_DIR}/cc-withTestFiles.txt
         --define IS_COMPILED_CODE=true
         --compilation_level ADVANCED_OPTIMIZATIONS
         --formatting PRETTY_PRINT
+        --externs ${CMAKE_CURRENT_SOURCE_DIR}/externs/*.js
         --js_output_file compiled.js-
     COMMAND ${CMAKE_COMMAND} ARGS -E rename compiled.js- compiled.js
     DEPENDS ClosureCompiler ${LIBJSFILES} ${TESTJSFILES} tools/externs.js
-        webodf.css.js-target
+        webodf.css.js-target ${HEADERCOMPILED_FILE}
 )
 add_custom_target(compiled.js-target DEPENDS compiled.js)
 
 # Compile the optimized production version of WebODF.
 add_custom_command(
-    OUTPUT webodf.js
+    OUTPUT webodf-compiled.js
     COMMAND ${Java_JAVA_EXECUTABLE}
     ARGS ${SHARED_CLOSURE_ARGS} --flagfile ${CMAKE_CURRENT_BINARY_DIR}/cc-noTestFiles.txt
         --jscomp_error reportUnknownTypes
         --define IS_COMPILED_CODE=true
         --compilation_level SIMPLE_OPTIMIZATIONS
+        --externs ${CMAKE_CURRENT_SOURCE_DIR}/externs/*.js
+        --js_output_file webodf-compiled.js-
+    COMMAND ${CMAKE_COMMAND} ARGS -E rename webodf-compiled.js- webodf-compiled.js
+    DEPENDS ClosureCompiler ${LIBJSFILES} tools/externs.js
+        webodf.css.js-target
+)
+# Include non-Closure Compiler compatible libraries with no further recompilation
+add_custom_command(
+    OUTPUT webodf.js
+    COMMAND ${Java_JAVA_EXECUTABLE}
+    ARGS ${SHARED_CLOSURE_ARGS}
+        --js ${HEADERCOMPILED_FILE}
+        --js webodf-compiled.js
+        --js ${CMAKE_CURRENT_SOURCE_DIR}/lib/externs/*.js
+        --compilation_level WHITESPACE_ONLY
         --js_output_file webodf.js-
     COMMAND ${CMAKE_COMMAND} ARGS -E rename webodf.js- webodf.js
-    DEPENDS ClosureCompiler ${LIBJSFILES} tools/externs.js
-        webodf.css.js-target ${HEADERCOMPILED_FILE}
+    DEPENDS ClosureCompiler webodf-compiled.js ${HEADERCOMPILED_FILE}
 )
 add_custom_target(webodf.js-target DEPENDS webodf.js)
 
 # Compile the debug version of WebODF. This is also published as a product.
 add_custom_command(
-    OUTPUT webodf-debug.js
+    OUTPUT webodf-debug-compiled.js
     COMMAND ${Java_JAVA_EXECUTABLE}
     ARGS ${SHARED_CLOSURE_ARGS} --flagfile ${CMAKE_CURRENT_BINARY_DIR}/cc-noTestFiles.txt
         --jscomp_error reportUnknownTypes
         --define IS_COMPILED_CODE=true
         --compilation_level WHITESPACE_ONLY
         --formatting PRETTY_PRINT
-        --js_output_file webodf-debug.js-
+        --externs ${CMAKE_CURRENT_SOURCE_DIR}/externs/*.js
+        --js_output_file webodf-debug-compiled.js-
     # in WHITESPACE_ONLY mode, it is not possible to define IS_COMPILED_CODE
     # so the value for IS_COMPILED_CODE is set by find and replace in the code
-    COMMAND ${CMAKE_COMMAND} -DFILENAME:STRING="${CMAKE_CURRENT_BINARY_DIR}/webodf-debug.js" -P ${CMAKE_CURRENT_SOURCE_DIR}/tools/set_IS_COMPILED_CODE.cmake
+    COMMAND ${CMAKE_COMMAND} -DFILENAME:STRING="${CMAKE_CURRENT_BINARY_DIR}/webodf-debug-compiled.js" -P ${CMAKE_CURRENT_SOURCE_DIR}/tools/set_IS_COMPILED_CODE.cmake
     DEPENDS ClosureCompiler ${LIBJSFILES} tools/externs.js
-        webodf.css.js-target ${HEADERCOMPILED_FILE}
+        webodf.css.js-target
+)
+# Include non-Closure Compiler compatible libraries with no further recompilation
+add_custom_command(
+    OUTPUT webodf-debug.js
+    COMMAND ${Java_JAVA_EXECUTABLE}
+    ARGS ${SHARED_CLOSURE_ARGS}
+        --js ${HEADERCOMPILED_FILE}
+        --js webodf-debug-compiled.js
+        --js ${CMAKE_CURRENT_SOURCE_DIR}/lib/externs/*.js
+        --compilation_level WHITESPACE_ONLY
+        --formatting PRETTY_PRINT
+        --js_output_file webodf-debug.js-
+    COMMAND ${CMAKE_COMMAND} ARGS -E rename webodf-debug.js- webodf-debug.js
+    DEPENDS ClosureCompiler webodf-debug-compiled.js ${HEADERCOMPILED_FILE}
 )
 add_custom_target(webodf-debug.js-target DEPENDS webodf-debug.js)
 

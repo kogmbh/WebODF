@@ -52,21 +52,20 @@ core.RuntimeTests = function RuntimeTests(runner) {
      * Test writing a binary file, reading it back and deleting it.
      */
     function testWrite(callback) {
-        var i, max = 1024, filename, clean,
+        var i, max = 1024, filename,
             pre = r.resourcePrefix(),
-            content = new core.ByteArrayWriter("utf8");
+            content = [],
+            clean = [];
         for (i = 0; i < max; i += 1) {
-            content.appendArray([i]);
+            content.push([i]);
         }
-        content = content.getByteArray();
+        for (i = 0; i < max; i += 1) {
+            clean.push(content[i] & 0xff);
+        }
+
         filename = pre + "tmp" + Math.random();
-        clean = new core.ByteArrayWriter("utf8");
-        for (i = 0; i < max; i += 1) {
-            clean.appendArray([content[i] & 0xff]);
-        }
-        clean = clean.getByteArray();
         // now content has content different from what is on the server
-        runtime.writeFile(filename, content, function (err) {
+        runtime.writeFile(filename, new Uint8Array(content), function (err) {
             t.err = err;
             r.shouldBeNull(t, "t.err");
             runtime.readFile(filename, "binary", function (err, data) {

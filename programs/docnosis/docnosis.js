@@ -170,19 +170,19 @@ function UnpackJob() {
         file: { entries: [], dom: null },
         errors: { unpackErrors: [] }
     };
-    function loadZipEntries(input, position, callback) {
+    function loadZipEntries(input, zip, position, callback) {
         if (position >= input.file.entries.length) {
             return callback();
         }
         var e = input.file.entries[position];
-        e.load(function (err, data) {
+        zip.load(e.filename, function (err, data) {
             if (err) {
                 input.errors.unpackErrors.push(err);
             }
             e.error = err;
             e.data = data;
             window.setTimeout(function () {
-                loadZipEntries(input, position + 1, callback);
+                loadZipEntries(input, zip, position + 1, callback);
             }, 0);
         });
     }
@@ -193,7 +193,7 @@ function UnpackJob() {
                 callback();
             } else {
                 input.file.entries = zip.getEntries();
-                loadZipEntries(input, 0, callback);
+                loadZipEntries(input, zip, 0, callback);
             }
         });
         // only done to make jslint see the var used

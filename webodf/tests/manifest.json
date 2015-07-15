@@ -22,7 +22,6 @@
         "core.UnitTester"
     ],
     "core.RuntimeTests": [
-        "core.ByteArrayWriter",
         "core.UnitTester"
     ],
     "core.StepIteratorTests": [
