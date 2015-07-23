@@ -1,0 +1,32 @@
+<html>
+ <head>
+  <script src="$WEBODFJSPATH" type="text/javascript" charset="utf-8"></script>
+  <script type="text/javascript" charset="utf-8">
+    var canvas = null;
+
+    function exportToODF() {
+       console.log("exportToODF() top, canvas:" + canvas );
+       var container = canvas.odfContainer();
+       container.createByteArray(
+           function( zip ) { console.log("ok");
+               zip = runtime.byteArrayToString(zip, 'binary');
+               nativeio.writeFile("$THEODFOPUTPUTPATH", zip );
+           },
+           function( err ) { console.log("err"); }
+       );
+    }
+    
+    function init() {
+        var odfcanvas  = new odf.OdfCanvas(document.getElementById("odf"));
+        odfcanvas.load("$THEODFFILEPATH");
+	canvas = odfcanvas;
+	if( $EXPORTODF ) {
+            setTimeout( exportToODF, 100 );
+        }	
+    }
+  </script>
+ </head>
+ <body onLoad="init()">
+  <div id="odf"></div>
+ </body>
+</html>
