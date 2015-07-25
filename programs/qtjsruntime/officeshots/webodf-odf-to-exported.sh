@@ -29,4 +29,4 @@ cat "$SCRIPTDIR/index.html.in" | envsubst >| /tmp/thepage.html
 
 echo $QTJSRUNTIME --export-$format $outpath /tmp/thepage.html
 $QTJSRUNTIME --export-$format $outpath /tmp/thepage.html
-
+exit 0
