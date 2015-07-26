@@ -1,4 +1,16 @@
 #!/bin/bash
+#
+# webodf-odf-to-exported.sh a script to convert from ODF files to
+# various output formats for OfficeShots.org
+#
+# Usage:
+#   webodf-odf-to-exported.sh input.odt output.pdf
+#
+# The output format is detected from the output filename
+#
+# Note that --help and --version are used by the OfficeShots code
+# to detect this script so these options should exist.
+#
 
 if [ y"$1" == "y--help" -o y"$1" == "y--version" ]; then
     echo "WebODF conversion tool webodf-odf-to-exported.sh"
@@ -17,6 +29,8 @@ export THEODFOPUTPUTPATH="$outpath"
 
 [[ $outpath == *.pdf ]] && format=pdf
 if [[ $outpath == *.odt ]]; then
+    # writing back to an odt file still produces
+    # a pdf output as a side effect.
     format=pdf
     EXPORTODF=1
     outpath="$outpath.pdf"
