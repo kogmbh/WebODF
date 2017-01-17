@@ -7,3 +7,5 @@ target_link_libraries(qtjsruntime
   Qt5::Network
   Qt5::PrintSupport
 )
+
+add_subdirectory(officeshots)
