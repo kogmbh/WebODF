@@ -115,6 +115,10 @@ Runtime.prototype.writeFile = function (path, data, callback) {"use strict"; };
  */
 Runtime.prototype.deleteFile = function (path, callback) {"use strict"; };
 /**
+ * @return {undefined}
+ */
+Runtime.prototype.clearCache = function () {"use strict"; };
+/**
  * @param {!string} msgOrCategory
  * @param {!string=} msg
  * @return {undefined}
@@ -742,6 +746,12 @@ function BrowserRuntime() {
         xhr.send(null);
     }
     /**
+     * @return {undefined}
+     */
+    this.clearCache = function () {
+        cache = {};
+    };
+    /**
      * @param {!string} path
      * @param {!function(?string,?Document):undefined} callback
      * @return {undefined}
@@ -1021,6 +1031,10 @@ function NodeJSRuntime() {
         path = pathmod.resolve(currentDirectory, path);
         fs.unlink(path, callback);
     };
+    /**
+     * @return {undefined}
+     */
+    this.clearCache = function () {};
     /**
      * @param {!string} path
      * @param {!number} offset
@@ -1337,6 +1351,10 @@ function RhinoRuntime() {
             callback("Could not delete " + path);
         }
     };
+    /**
+     * @return {undefined}
+     */
+    this.clearCache = function () {};
     /**
      * @param {!string} path
      * @param {!number} offset
