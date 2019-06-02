@@ -458,13 +458,13 @@ ops.TransformationTests = function TransformationTests(runner) {
             // runtime.log("Going to apply:"+runtime.toJson(opspecs[i]));
             op = t.operationFactory.create(opspecs[i]);
             t.opResult = op.execute(odtDocument);
-            r.shouldBe(t, "t.opResult", "true");
+            r.shouldBeNonNull(t, "t.opResult");
         }
         // execute transformedOps
         for (i = 0; i < transformedOps.length; i += 1) {
             // runtime.log("Going to apply:"+runtime.toJson(transformedOps[i].spec()));
             t.opResult = transformedOps[i].execute(odtDocument);
-            r.shouldBe(t, "t.opResult", "true");
+            r.shouldBeNonNull(t, "t.opResult");
         }
 
         // check result

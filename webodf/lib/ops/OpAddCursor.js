@@ -46,6 +46,7 @@ ops.OpAddCursor = function OpAddCursor() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document),
@@ -53,13 +54,13 @@ ops.OpAddCursor = function OpAddCursor() {
 
         // there should be none
         if (cursor) {
-            return false;
+            return null;
         }
 
         cursor = new ops.OdtCursor(memberid, odtDocument);
         odtDocument.addCursor(cursor);
-        odtDocument.emit(ops.Document.signalCursorAdded, cursor);
-        return true;
+
+        return [{eventid: ops.Document.signalCursorAdded, args: cursor}];
     };
 
     /**

@@ -46,14 +46,15 @@ ops.OpRemoveCursor = function OpRemoveCursor() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document);
         if (!odtDocument.removeCursor(memberid)) {
-            return false;
+            return null;
         }
 
-        return true;
+        return [{eventid:ops.Document.signalCursorRemoved, args: memberid}];
     };
 
     /**

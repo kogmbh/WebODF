@@ -140,7 +140,7 @@ gui.DirectFormattingControllerTests = function DirectFormattingControllerTests(r
             domUtils.getElementsByTagNameNS(node, testns, '*').forEach(function(node) {
                 node.parentNode.removeChild(node);
             });
-            t.odtDocument.emit(ops.Document.signalCursorMoved, t.cursor);
+            t.odtDocument.DONOTUSE_emitSignalCursorMoved(t.cursor);
         }
         return node;
     }

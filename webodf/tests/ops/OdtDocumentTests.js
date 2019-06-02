@@ -216,7 +216,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         setCursorPosition(1, 2);
         wrapInDiv(t.cursor.getAnchorNode());
 
-        t.odtDocument.fixCursorPositions();
+        t.odtDocument.fixCursorPositions(false);
 
         t.isWalkable = isCursorSelectionInWalkablePositions();
         t.anchorInDiv = t.cursor.getAnchorNode().parentNode.localName === "div";
@@ -234,7 +234,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         setCursorPosition(1, 2);
         wrapInDiv(t.cursor.getNode());
 
-        t.odtDocument.fixCursorPositions();
+        t.odtDocument.fixCursorPositions(false);
 
         t.isWalkable = isCursorSelectionInWalkablePositions();
         t.anchorInDiv = t.cursor.getAnchorNode().parentNode.localName === "div";
@@ -253,7 +253,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         wrapInDiv(t.cursor.getNode());
         wrapInDiv(t.cursor.getAnchorNode());
 
-        t.odtDocument.fixCursorPositions();
+        t.odtDocument.fixCursorPositions(false);
 
         t.isWalkable = isCursorSelectionInWalkablePositions();
         t.anchorInDiv = t.cursor.getAnchorNode().parentNode.localName === "div";
@@ -272,7 +272,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         wrapInDiv(t.cursor.getNode());
         wrapInDiv(t.cursor.getAnchorNode());
 
-        t.odtDocument.fixCursorPositions();
+        t.odtDocument.fixCursorPositions(false);
 
         t.isWalkable = isCursorSelectionInWalkablePositions();
         t.anchorInDiv = t.cursor.getAnchorNode().parentNode.localName === "div";
@@ -291,7 +291,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         wrapInDiv(t.cursor.getNode());
         wrapInDiv(t.cursor.getAnchorNode());
 
-        t.odtDocument.fixCursorPositions();
+        t.odtDocument.fixCursorPositions(false);
 
         t.isWalkable = isCursorSelectionInWalkablePositions();
         t.anchorInDiv = t.cursor.getAnchorNode().parentNode.localName === "div";
@@ -312,7 +312,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         wrapInDiv(t.cursor.getNode());
         wrapInDiv(t.cursor.getAnchorNode());
 
-        t.odtDocument.fixCursorPositions();
+        t.odtDocument.fixCursorPositions(false);
 
         t.isWalkable = isCursorSelectionInWalkablePositions();
         t.anchorInDiv = t.cursor.getAnchorNode().parentNode.localName === "div";
@@ -333,7 +333,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         wrapInDiv(t.cursor.getNode());
         wrapInDiv(t.cursor.getAnchorNode());
 
-        t.odtDocument.fixCursorPositions();
+        t.odtDocument.fixCursorPositions(false);
 
         t.isWalkable = isCursorSelectionInWalkablePositions();
         t.anchorInDiv = t.cursor.getAnchorNode().parentNode.localName === "div";
@@ -353,7 +353,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         setCursorPosition(1);
         wrapInDiv(t.cursor.getNode());
 
-        t.odtDocument.fixCursorPositions();
+        t.odtDocument.fixCursorPositions(false);
 
         t.isWalkable = isCursorSelectionInWalkablePositions();
         t.anchorInDiv = t.cursor.getAnchorNode().parentNode.localName === "div";

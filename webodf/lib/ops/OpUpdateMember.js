@@ -77,12 +77,13 @@ ops.OpUpdateMember = function OpUpdateMember() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document),
             member = odtDocument.getMember(memberid);
         if (!member) {
-            return false;
+            return null;
         }
 
         if (removedProperties) {
@@ -95,8 +96,7 @@ ops.OpUpdateMember = function OpUpdateMember() {
             }
         }
 
-        odtDocument.emit(ops.Document.signalMemberUpdated, member);
-        return true;
+        return [{eventid: ops.Document.signalMemberUpdated, args: member}];
     };
 
     /**

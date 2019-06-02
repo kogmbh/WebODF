@@ -142,13 +142,15 @@ ops.OpInsertTable = function OpInsertTable() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document),
             domPosition = odtDocument.getTextNodeAtStep(position),
             rootNode = odtDocument.getRootNode(),
             previousSibling,
-            tableNode;
+            tableNode,
+            events = [];
 
         if (domPosition) {
             tableNode = createTableNode(odtDocument.getDOMDocument());
@@ -157,19 +159,22 @@ ops.OpInsertTable = function OpInsertTable() {
             previousSibling = odfUtils.getParagraphElement(domPosition.textNode);
             rootNode.insertBefore(tableNode, previousSibling.nextSibling);
             // The parent table counts for 1 position, and 1 paragraph is added per cell
-            odtDocument.emit(ops.OdtDocument.signalStepsInserted, {position: position});
+            odtDocument.handleStepsInserted({position: position}, events);
 
             odtDocument.getOdfCanvas().refreshSize();
-            odtDocument.emit(ops.OdtDocument.signalTableAdded, {
-                tableElement: tableNode,
-                memberId: memberid,
-                timeStamp: timestamp
+            odtDocument.getOdfCanvas().rerenderAnnotations();
+            events.push({
+                eventid: ops.OdtDocument.signalTableAdded,
+                args: {
+                    tableElement: tableNode,
+                    memberId: memberid,
+                    timeStamp: timestamp
+                }
             });
 
-            odtDocument.getOdfCanvas().rerenderAnnotations();
-            return true;
+            return events;
         }
-        return false;
+        return null;
     };
 
     /**

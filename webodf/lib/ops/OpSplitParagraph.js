@@ -71,22 +71,24 @@ ops.OpSplitParagraph = function OpSplitParagraph() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{!ops.OdtDocument}*/(document),
             domPosition, paragraphNode, targetNode,
             node, splitNode, splitChildNode, keptChildNode,
-            cursor = odtDocument.getCursor(memberid);
+            cursor = odtDocument.getCursor(memberid),
+            events = [];
 
         odtDocument.upgradeWhitespacesAtPosition(position);
         domPosition = odtDocument.getTextNodeAtStep(position);
         if (!domPosition) {
-            return false;
+            return null;
         }
 
         paragraphNode = odfUtils.getParagraphElement(domPosition.textNode);
         if (!paragraphNode) {
-            return false;
+            return null;
         }
 
         if (odfUtils.isListItem(paragraphNode.parentNode)) {
@@ -168,29 +170,35 @@ ops.OpSplitParagraph = function OpSplitParagraph() {
         if (domPosition.textNode.length === 0) {
             domPosition.textNode.parentNode.removeChild(domPosition.textNode);
         }
-        odtDocument.emit(ops.OdtDocument.signalStepsInserted, {position: position});
+        odtDocument.handleStepsInserted({position: position}, events);
 
         if (cursor && moveCursor) {
             odtDocument.moveCursor(memberid, position + 1, 0);
-            odtDocument.emit(ops.Document.signalCursorMoved, cursor);
+            events.push({eventid: ops.Document.signalCursorMoved, args: cursor});
         }
 
-        odtDocument.fixCursorPositions();
+        odtDocument.fixCursorPositions(events);
         odtDocument.getOdfCanvas().refreshSize();
         // mark both paragraphs as edited
-        odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
-            paragraphElement: paragraphNode,
-            memberId: memberid,
-            timeStamp: timestamp
+        events.push({
+            eventid: ops.OdtDocument.signalParagraphChanged,
+            args: {
+                paragraphElement: paragraphNode,
+                memberId: memberid,
+                timeStamp: timestamp
+            }
         });
-        odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
-            paragraphElement: splitChildNode,
-            memberId: memberid,
-            timeStamp: timestamp
+        events.push({
+            eventid: ops.OdtDocument.signalParagraphChanged,
+            args: {
+                paragraphElement: splitChildNode,
+                memberId: memberid,
+                timeStamp: timestamp
+            }
         });
 
         odtDocument.getOdfCanvas().rerenderAnnotations();
-        return true;
+        return events;
     };
 
     /**

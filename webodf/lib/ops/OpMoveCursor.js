@@ -49,6 +49,7 @@ ops.OpMoveCursor = function OpMoveCursor() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document),
@@ -56,14 +57,14 @@ ops.OpMoveCursor = function OpMoveCursor() {
             selectedRange;
 
         if (!cursor) {
-            return false;
+            return null;
         }
 
         selectedRange = odtDocument.convertCursorToDomRange(position, length);
         cursor.setSelectedRange(selectedRange, length >= 0);
         cursor.setSelectionType(selectionType);
-        odtDocument.emit(ops.Document.signalCursorMoved, cursor);
-        return true;
+
+        return [{eventid: ops.Document.signalCursorMoved, args: cursor}];
     };
 
     /**

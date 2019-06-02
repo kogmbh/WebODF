@@ -56,6 +56,7 @@ ops.OpUpdateMetadata = function OpUpdateMetadata() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document),
@@ -68,12 +69,13 @@ ops.OpUpdateMetadata = function OpUpdateMetadata() {
 
         odfContainer.setMetadata(setProperties, removedPropertiesArray);
 
-        odtDocument.emit(ops.OdtDocument.signalMetadataUpdated, {
-            setProperties: setProperties !== null ? setProperties : {},
-            removedProperties: removedPropertiesArray !== null ? removedPropertiesArray : []
-        });
-
-        return true;
+        return [{
+            eventid: ops.OdtDocument.signalMetadataUpdated,
+            args: {
+                setProperties: setProperties !== null ? setProperties : {},
+                removedProperties: removedPropertiesArray !== null ? removedPropertiesArray : []
+            }
+        }];
     };
 
     /**

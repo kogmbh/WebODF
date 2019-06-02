@@ -52,19 +52,19 @@ ops.OpAddMember = function OpAddMember() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document),
             member;
         if (odtDocument.getMember(memberid)) {
-            return false;
+            return null;
         }
 
         member = new ops.Member(memberid, setProperties);
         odtDocument.addMember(member);
-        odtDocument.emit(ops.Document.signalMemberAdded, member);
 
-        return true;
+        return [{eventid: ops.Document.signalMemberAdded, args: member}];
     };
 
     /**

@@ -55,6 +55,7 @@ ops.OpRemoveText = function OpRemoveText() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document),
@@ -62,7 +63,8 @@ ops.OpRemoveText = function OpRemoveText() {
             textNodes,
             paragraph,
             cursor = odtDocument.getCursor(memberid),
-            collapseRules = new odf.CollapsingRules(odtDocument.getRootNode());
+            collapseRules = new odf.CollapsingRules(odtDocument.getRootNode()),
+            events = [];
 
         odtDocument.upgradeWhitespacesAtPosition(position);
         odtDocument.upgradeWhitespacesAtPosition(position + length);
@@ -91,23 +93,26 @@ ops.OpRemoveText = function OpRemoveText() {
             }
         });
 
-        odtDocument.emit(ops.OdtDocument.signalStepsRemoved, {position: position});
+        odtDocument.handleStepsRemoved({position: position}, events);
         odtDocument.downgradeWhitespacesAtPosition(position);
-        odtDocument.fixCursorPositions();
+        odtDocument.fixCursorPositions(events);
         odtDocument.getOdfCanvas().refreshSize();
-        odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
-            paragraphElement: paragraph,
-            memberId: memberid,
-            timeStamp: timestamp
+        events.push({
+            eventid: ops.OdtDocument.signalParagraphChanged,
+            args: {
+                paragraphElement: paragraph,
+                memberId: memberid,
+                timeStamp: timestamp
+            }
         });
 
         if (cursor) {
             cursor.resetSelectionType();
-            odtDocument.emit(ops.Document.signalCursorMoved, cursor);
+            events.push({eventid: ops.Document.signalCursorMoved, args: cursor});
         }
 
         odtDocument.getOdfCanvas().rerenderAnnotations();
-        return true;
+        return events;
     };
 
     /**

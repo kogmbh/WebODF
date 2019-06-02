@@ -46,17 +46,16 @@ ops.OpRemoveMember = function OpRemoveMember() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document);
         if (!odtDocument.getMember(memberid)) {
-            return false;
+            return null;
         }
 
         odtDocument.removeMember(memberid);
-        odtDocument.emit(ops.Document.signalMemberRemoved, memberid);
-
-        return true;
+        return [{ eventid: ops.Document.signalMemberRemoved, args: memberid}];
     };
 
     /**

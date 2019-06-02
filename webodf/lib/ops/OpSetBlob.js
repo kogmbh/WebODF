@@ -49,11 +49,12 @@ ops.OpSetBlob = function OpSetBlob() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document);
         odtDocument.getOdfCanvas().odfContainer().setBlob(filename, mimetype, content);
-        return true;
+        return [];
     };
 
     /**

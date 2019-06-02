@@ -154,7 +154,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         initialDoc = rootElement.cloneNode(true);
         odfCanvas.refreshAnnotations();
         // workaround AnnotationViewManager not fixing up cursor positions after creating the highlighting
-        self.fixCursorPositions();
+        self.fixCursorPositions(false);
         return initialDoc;
     };
 
@@ -165,9 +165,6 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         var odfContainer = odfCanvas.odfContainer(),
             rootNode;
 
-        eventNotifier.unsubscribe(ops.OdtDocument.signalStepsInserted, stepsTranslator.handleStepsInserted);
-        eventNotifier.unsubscribe(ops.OdtDocument.signalStepsRemoved, stepsTranslator.handleStepsRemoved);
-
         // TODO Replace with a neater hack for reloading the Odt tree
         // Once this is fixed, SelectionView.addOverlays can be removed
         odfContainer.setRootElement(documentElement);
@@ -175,8 +172,6 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         odfCanvas.refreshCSS();
         rootNode = getRootNode();
         stepsTranslator = new ops.OdtStepsTranslator(rootNode, createPositionIterator(rootNode), filter, 500);
-        eventNotifier.subscribe(ops.OdtDocument.signalStepsInserted, stepsTranslator.handleStepsInserted);
-        eventNotifier.subscribe(ops.OdtDocument.signalStepsRemoved, stepsTranslator.handleStepsRemoved);
     };
 
     /**
@@ -449,15 +444,20 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      * document's metadata, such as dc:creator,
      * meta:editing-cycles, and dc:creator.
      * @param {!ops.Operation} op
+     * @param {!Array.<!ops.Operation.Event>} events
+     * @return {undefined}
      */
-    function handleOperationExecuted(op) {
+    function finishOperationExecution(op, events) {
         var opspec = op.spec(),
             memberId = opspec.memberid,
             date = new Date(opspec.timestamp).toISOString(),
             odfContainer = odfCanvas.odfContainer(),
-            /**@type{!{setProperties: !Object, removedProperties: ?Array.<!string>}}*/
+            /**@type{!ops.Operation.Event}*/
+            changedMetadataEvent,
+            /**@type{!{setProperties: !Object, removedProperties: !Array.<!string>}}*/
             changedMetadata,
-            fullName;
+            fullName,
+            i;
 
         // If the operation is an edit (that changes the
         // ODF that will be saved), then update metadata.
@@ -468,13 +468,25 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
                 "dc:date": date
             }, null);
 
-            changedMetadata = {
-                setProperties: {
-                    "dc:creator": fullName,
-                    "dc:date": date
-                },
-                removedProperties: []
-            };
+            // find any existing metadataupdated event or create one
+            for (i = 0; i < events.length; i += 1) {
+                if (events[i].eventid === ops.OdtDocument.signalMetadataUpdated) {
+                    changedMetadataEvent = events[i];
+                    changedMetadata = /**@type{!{setProperties: !Object, removedProperties: !Array.<!string>}}*/(changedMetadataEvent.args);
+                    break;
+                }
+            }
+            if (!changedMetadataEvent) {
+                changedMetadata = { setProperties: {}, removedProperties: [] };
+                changedMetadataEvent = {
+                    eventid: ops.OdtDocument.signalMetadataUpdated,
+                    args: changedMetadata
+                };
+                events.push(changedMetadataEvent);
+            }
+
+            changedMetadata.setProperties["dc:creator"] = fullName;
+            changedMetadata.setProperties["dc:date"] = date;
 
             // If no previous op was found in this session,
             // then increment meta:editing-cycles by 1.
@@ -492,9 +504,48 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
             }
 
             lastEditingOp = op;
-            self.emit(ops.OdtDocument.signalMetadataUpdated, changedMetadata);
         }
+
+        eventNotifier.emit(ops.OdtDocument.signalOperationEnd, op);
+
+        events.forEach(function(event) {
+            eventNotifier.emit(event.eventid, event.args);
+        });
     }
+
+    /**
+     * @param {!ops.Operation} op
+     * @return {!boolean}
+     */
+    this.executeOperation = function(op) {
+        var events;
+
+        eventNotifier.emit(ops.OdtDocument.signalOperationStart, op);
+
+        events = op.execute(self);
+        if (events === null) {
+            return false;
+        }
+
+        finishOperationExecution(op, events);
+        return true;
+    };
+
+    /**
+     * @param {*} args
+     * @return {undefined}
+     */
+    this.prepareBatchProcessing = function(args) {
+        eventNotifier.emit(ops.OdtDocument.signalProcessingBatchStart, args);
+    };
+
+    /**
+     * @param {*} args
+     * @return {undefined}
+     */
+    this.finishBatchProcessing = function (args) {
+        eventNotifier.emit(ops.OdtDocument.signalProcessingBatchEnd, args);
+    };
 
     /**
      * Upgrades literal whitespaces (' ') to <text:s> </text:s>,
@@ -673,8 +724,14 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      * walkable positions; if not, move the cursor 1 filtered step backward
      * which guarantees walkable state for all cursors,
      * while keeping them inside the same root. An event will be raised for this cursor if it is moved
+     * @param {!Array.<!ops.Operation.Event>|!boolean} events  array to add events for moved cursors, needs to be otherwise explicitely set to false
+     * @return {undefined}
      */
-    this.fixCursorPositions = function () {
+    this.fixCursorPositions = function (events) {
+        var /** @type{!Array.<!ops.OdtCursor>}*/ movedCursors = [];
+
+        runtime.assert(Array.isArray(events) || (typeof events === "boolean" && events === false), "second parameter to fixCursorPositions needs to be set to false or an event");
+
         Object.keys(cursors).forEach(function (memberId) {
             var cursor = cursors[memberId],
                 root = getRoot(cursor.getNode()),
@@ -717,9 +774,19 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
 
             if (cursorMoved) {
                 cursor.setSelectedRange(selectedRange, cursor.hasForwardSelection());
-                self.emit(ops.Document.signalCursorMoved, cursor);
+                movedCursors.push(cursor);
             }
         });
+
+        if (events) {
+            movedCursors.forEach(function(cursor) {
+                events.push({ eventid: ops.Document.signalCursorMoved, args: cursor });
+            });
+        } else {
+            movedCursors.forEach(function(cursor) {
+                eventNotifier.emit(ops.Document.signalCursorMoved, cursor);
+            });
+        }
     };
 
     /**
@@ -855,7 +922,6 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         if (cursor) {
             cursor.removeFromDocument();
             delete cursors[memberid];
-            self.emit(ops.Document.signalCursorRemoved, memberid);
             return true;
         }
         return false;
@@ -887,15 +953,6 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      */
     this.getFormatting = function () {
         return odfCanvas.getFormatting();
-    };
-
-    /**
-     * @param {!string} eventid
-     * @param {*} args
-     * @return {undefined}
-     */
-    this.emit = function (eventid, args) {
-        eventNotifier.emit(eventid, args);
     };
 
     /**
@@ -942,6 +999,60 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     };
 
     /**
+     * Process steps being inserted into the document. Will add a steps inserted signal
+     * to the passed events list
+     * @param {!{position: !number}} args
+     * @param {!Array.<!ops.Operation.Event>} events
+     * @return {undefined}
+     */
+    this.handleStepsInserted = function(args, events) {
+        stepsTranslator.handleStepsInserted(args);
+        // signal not used in webodf, but 3rd-party (NVivo)
+        events.push({
+            eventid: ops.OdtDocument.signalStepsInserted,
+            args: args
+        });
+    };
+
+    /**
+     * Process steps being removed from the document. Will emit a steps removed signal on
+     * behalf of the caller
+     * @param {!{position: !number}} args
+     * @param {!Array.<!ops.Operation.Event>} events
+     * @return {undefined}
+     */
+    this.handleStepsRemoved = function(args, events) {
+        stepsTranslator.handleStepsRemoved(args);
+        // signal not used in webodf, but 3rd-party (NVivo)
+        events.push({
+            eventid: ops.OdtDocument.signalStepsRemoved,
+            args: args
+        });
+    };
+
+    /**
+     * Emit the signal that the passed cursor moved.
+     * TODO: get rid of this method, noone should be able to emit signals by direct calls, only by op execution
+     * @internal
+     * @param {!ops.OdtCursor} cursor
+     * @return {undefined}
+     */
+    this.DONOTUSE_emitSignalCursorMoved = function(cursor) {
+        eventNotifier.emit(ops.Document.signalCursorMoved, cursor);
+    };
+
+    /**
+     * Emit the signal that the passed cursor moved.
+     * TODO: get rid of this method, noone should be able to emit signals by direct calls, only by op execution
+     * @internal
+     * @param {?Event} e
+     * @return {undefined}
+     */
+    this.DONOTUSE_emitSignalUndoStackChanged = function(e) {
+        eventNotifier.emit(ops.OdtDocument.signalUndoStackChanged, e);
+    };
+
+    /**
      * @return {undefined}
      */
     function init() {
@@ -950,9 +1061,6 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         filter = new ops.TextPositionFilter();
         stepUtils = new odf.StepUtils();
         stepsTranslator = new ops.OdtStepsTranslator(rootNode, createPositionIterator(rootNode), filter, 500);
-        eventNotifier.subscribe(ops.OdtDocument.signalStepsInserted, stepsTranslator.handleStepsInserted);
-        eventNotifier.subscribe(ops.OdtDocument.signalStepsRemoved, stepsTranslator.handleStepsRemoved);
-        eventNotifier.subscribe(ops.OdtDocument.signalOperationEnd, handleOperationExecuted);
         eventNotifier.subscribe(ops.OdtDocument.signalProcessingBatchEnd, core.Task.processTasks);
     }
     init();

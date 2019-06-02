@@ -47,11 +47,12 @@ ops.OpRemoveBlob = function OpRemoveBlob() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document);
         odtDocument.getOdfCanvas().odfContainer().removeBlob(filename);
-        return true;
+        return [];
     };
 
     /**

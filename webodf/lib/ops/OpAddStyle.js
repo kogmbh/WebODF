@@ -56,6 +56,7 @@ ops.OpAddStyle = function OpAddStyle() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document),
@@ -65,7 +66,7 @@ ops.OpAddStyle = function OpAddStyle() {
             styleNode = dom.createElementNS(stylens, 'style:style');
 
         if (!styleNode) {
-            return false;
+            return null;
         }
 
         if (setProperties) {
@@ -83,9 +84,9 @@ ops.OpAddStyle = function OpAddStyle() {
 
         odtDocument.getOdfCanvas().refreshCSS();
         if (!isAutomaticStyle) {
-            odtDocument.emit(ops.OdtDocument.signalCommonStyleCreated, {name: styleName, family: styleFamily});
+            return [{eventid: ops.OdtDocument.signalCommonStyleCreated, args: {name: styleName, family: styleFamily}}];
         }
-        return true;
+        return [];
     };
 
     /**

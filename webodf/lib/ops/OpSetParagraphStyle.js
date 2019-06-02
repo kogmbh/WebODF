@@ -71,6 +71,7 @@ ops.OpSetParagraphStyle = function OpSetParagraphStyle() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document),
@@ -89,16 +90,18 @@ ops.OpSetParagraphStyle = function OpSetParagraphStyle() {
             }
 
             odtDocument.getOdfCanvas().refreshSize();
-            odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
-                paragraphElement: paragraphNode,
-                timeStamp: timestamp,
-                memberId: memberid
-            });
-
             odtDocument.getOdfCanvas().rerenderAnnotations();
-            return true;
+
+            return [{
+                eventid: ops.OdtDocument.signalParagraphChanged,
+                args: {
+                    paragraphElement: paragraphNode,
+                    timeStamp: timestamp,
+                    memberId: memberid
+                }
+            }];
         }
-        return false;
+        return null;
     };
 
     /**

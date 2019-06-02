@@ -48,20 +48,21 @@ ops.OpRemoveStyle = function OpRemoveStyle() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document),
             styleNode = odtDocument.getFormatting().getStyleElement(styleName, styleFamily);
 
         if (!styleNode) {
-            return false;
+            return null;
         }
 
         styleNode.parentNode.removeChild(styleNode);
 
         odtDocument.getOdfCanvas().refreshCSS();
-        odtDocument.emit(ops.OdtDocument.signalCommonStyleDeleted, {name: styleName, family: styleFamily});
-        return true;
+
+        return [{eventid: ops.OdtDocument.signalCommonStyleDeleted, args: {name: styleName, family: styleFamily}}];
     };
 
     /**

@@ -80,15 +80,17 @@ ops.OpInsertImage = function OpInsertImage() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document),
             odfCanvas = odtDocument.getOdfCanvas(),
             domPosition = odtDocument.getTextNodeAtStep(position, memberid),
-            textNode, refNode, paragraphElement, frameElement;
+            textNode, refNode, paragraphElement, frameElement,
+            events = [];
 
         if (!domPosition) {
-            return false;
+            return null;
         }
 
         textNode = domPosition.textNode;
@@ -97,7 +99,7 @@ ops.OpInsertImage = function OpInsertImage() {
             textNode.splitText(domPosition.offset) : textNode.nextSibling;
         frameElement = createFrameElement(odtDocument.getDOMDocument());
         textNode.parentNode.insertBefore(frameElement, refNode);
-        odtDocument.emit(ops.OdtDocument.signalStepsInserted, {position: position});
+        odtDocument.handleStepsInserted({position: position}, events);
 
         // clean up any empty text node which was created by odtDocument.getTextNodeAtStep
         if (textNode.length === 0) {
@@ -106,13 +108,18 @@ ops.OpInsertImage = function OpInsertImage() {
 
         odfCanvas.addCssForFrameWithImage(frameElement);
         odfCanvas.refreshCSS();
-        odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
-            paragraphElement: paragraphElement,
-            memberId: memberid,
-            timeStamp: timestamp
-        });
         odfCanvas.rerenderAnnotations();
-        return true;
+
+        events.push({
+            eventid: ops.OdtDocument.signalParagraphChanged,
+            args: {
+                paragraphElement: paragraphElement,
+                memberId: memberid,
+                timeStamp: timestamp
+            }
+        });
+
+        return events;
     };
 
     /**

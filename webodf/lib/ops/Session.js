@@ -46,7 +46,7 @@ ops.Session = function Session(odfCanvas) {
      * @return {undefined}
      */
     function forwardBatchStart(args) {
-        odtDocument.emit(ops.OdtDocument.signalProcessingBatchStart, args);
+        odtDocument.prepareBatchProcessing(args);
     }
 
     /**
@@ -55,7 +55,7 @@ ops.Session = function Session(odfCanvas) {
      * @return {undefined}
      */
     function forwardBatchEnd(args) {
-        odtDocument.emit(ops.OdtDocument.signalProcessingBatchEnd, args);
+        odtDocument.finishBatchProcessing(args);
     }
 
     /**
@@ -81,12 +81,7 @@ ops.Session = function Session(odfCanvas) {
         operationRouter.subscribe(ops.OperationRouter.signalProcessingBatchStart, forwardBatchStart);
         operationRouter.subscribe(ops.OperationRouter.signalProcessingBatchEnd, forwardBatchEnd);
         opRouter.setPlaybackFunction(function (op) {
-            odtDocument.emit(ops.OdtDocument.signalOperationStart, op);
-            if (op.execute(odtDocument)) {
-                odtDocument.emit(ops.OdtDocument.signalOperationEnd, op);
-                return true;
-            }
-            return false;
+            return odtDocument.executeOperation(op);
         });
         opRouter.setOperationFactory(operationFactory);
     };

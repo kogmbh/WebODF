@@ -84,10 +84,8 @@ gui.MetadataControllerTests = function MetadataControllerTests(runner) {
 
                 // need to set the timestamp, otherwise things fail in odtDocument
                 opspec.timestamp = Date.now();
-                timedOp = operationFactory.create(opspec);
-                if (timedOp.execute(odtDocument)) {
-                    odtDocument.emit(ops.OdtDocument.signalOperationEnd, timedOp);
-                }
+                timedOp = /**@type {!ops.Operation}*/(operationFactory.create(opspec));
+                odtDocument.executeOperation(timedOp);
             });
         };
 
@@ -123,7 +121,7 @@ gui.MetadataControllerTests = function MetadataControllerTests(runner) {
                 });
                 changes.removedProperties.forEach(function (key) {
                     delete changedMetadata.setProperties[key];
-                    if (changedMetadata.removedProperties.indexOf(key) !== -1) {
+                    if (changedMetadata.removedProperties.indexOf(key) === -1) {
                         changedMetadata.removedProperties.push(key);
                     }
                 });

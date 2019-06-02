@@ -48,7 +48,6 @@
         "odf.ObjectNameGenerator",
         "odf.OdfCanvas",
         "odf.OdfContainer",
-        "ops.Document",
         "ops.OdtCursor",
         "ops.OdtDocument",
         "ops.Session"
@@ -245,6 +244,7 @@
         "ops.Document",
         "ops.Member",
         "ops.OdtDocument",
+        "ops.Operation",
         "ops.OperationFactory",
         "ops.OperationTestHelper",
         "xmldom.LSSerializer"

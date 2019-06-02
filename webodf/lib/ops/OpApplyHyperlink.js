@@ -78,6 +78,7 @@ ops.OpApplyHyperlink = function OpApplyHyperlink() {
     /**
      * TODO: support adding image link
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document),
@@ -86,10 +87,11 @@ ops.OpApplyHyperlink = function OpApplyHyperlink() {
             boundaryNodes = domUtils.splitBoundaries(range),
             /**@type{!Array.<!Element>}*/
             modifiedParagraphs = [],
-            textNodes = odfUtils.getTextNodes(range, false);
+            textNodes = odfUtils.getTextNodes(range, false),
+            events = [];
 
         if (textNodes.length === 0) {
-            return false;
+            return null;
         }
 
         textNodes.forEach(function (node) {
@@ -111,18 +113,21 @@ ops.OpApplyHyperlink = function OpApplyHyperlink() {
         boundaryNodes.forEach(domUtils.normalizeTextNodes);
         range.detach();
 
-        odtDocument.fixCursorPositions();
+        odtDocument.fixCursorPositions(events);
         odtDocument.getOdfCanvas().refreshSize();
         odtDocument.getOdfCanvas().rerenderAnnotations();
         modifiedParagraphs.forEach(function (paragraph) {
-            odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
-                paragraphElement: paragraph,
-                memberId: memberid,
-                timeStamp: timestamp
+            events.push({
+                eventid: ops.OdtDocument.signalParagraphChanged,
+                args: {
+                    paragraphElement: paragraph,
+                    memberId: memberid,
+                    timeStamp: timestamp
+                }
             });
         });
 
-        return true;
+        return events;
     };
 
     /**

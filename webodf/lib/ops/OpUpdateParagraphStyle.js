@@ -76,6 +76,7 @@ ops.OpUpdateParagraphStyle = function OpUpdateParagraphStyle() {
 
     /**
      * @param {!ops.Document} document
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{ops.OdtDocument}*/(document),
@@ -122,11 +123,10 @@ ops.OpUpdateParagraphStyle = function OpUpdateParagraphStyle() {
             }
 
             odtDocument.getOdfCanvas().refreshCSS();
-            odtDocument.emit(ops.OdtDocument.signalParagraphStyleModified, styleName);
             odtDocument.getOdfCanvas().rerenderAnnotations();
-            return true;
+            return [{eventid:ops.OdtDocument.signalParagraphStyleModified, args: styleName}];
         }
-        return false;
+        return null;
     };
 
     /**

@@ -206,7 +206,7 @@ ops.OpMergeParagraph = function OpMergeParagraph() {
 
     /**
      * @param {!ops.Document} document
-     * @return {!boolean}
+     * @return {?Array.<!ops.Operation.Event>}
      */
     this.execute = function (document) {
         var odtDocument = /**@type{!ops.OdtDocument}*/(document),
@@ -216,7 +216,8 @@ ops.OpMergeParagraph = function OpMergeParagraph() {
             rootNode = odtDocument.getRootNode(),
             collapseRules = new odf.CollapsingRules(rootNode),
             stepIterator = odtDocument.createStepIterator(rootNode, 0, [odtDocument.getPositionFilter()], rootNode),
-            downgradeOffset;
+            downgradeOffset,
+            events = [];
 
         // Asserting a specific order for destination + source makes it easier to decide which ends to upgrade
         runtime.assert(destinationStartPosition < sourceStartPosition,
@@ -244,7 +245,7 @@ ops.OpMergeParagraph = function OpMergeParagraph() {
         collapseRules.mergeChildrenIntoParent(sourceParagraph);
 
         // Merging removes a single step between the boundary of the two paragraphs
-        odtDocument.emit(ops.OdtDocument.signalStepsRemoved, {position: sourceStartPosition - 1});
+        odtDocument.handleStepsRemoved({position: sourceStartPosition - 1}, events);
 
         // Downgrade trailing spaces at the end of the destination paragraph, and the beginning of the source paragraph.
         // These are the only two places that might need downgrading as a result of the merge.
@@ -267,20 +268,23 @@ ops.OpMergeParagraph = function OpMergeParagraph() {
 
         if (cursor && moveCursor) {
             odtDocument.moveCursor(memberid, sourceStartPosition - 1, 0);
-            odtDocument.emit(ops.Document.signalCursorMoved, cursor);
+            events.push({eventid: ops.Document.signalCursorMoved, args:cursor});
         }
 
-        odtDocument.fixCursorPositions();
+        odtDocument.fixCursorPositions(events);
         odtDocument.getOdfCanvas().refreshSize();
         // TODO: signal also the deleted paragraphs, so e.g. SessionView can clean up the EditInfo
-        odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
-            paragraphElement: destinationParagraph,
-            memberId: memberid,
-            timeStamp: timestamp
+        events.push({
+            eventid: ops.OdtDocument.signalParagraphChanged,
+            args: {
+                paragraphElement: destinationParagraph,
+                memberId: memberid,
+                timeStamp: timestamp
+            }
         });
 
         odtDocument.getOdfCanvas().rerenderAnnotations();
-        return true;
+        return events;
     };
 
     /**

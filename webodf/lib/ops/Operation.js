@@ -33,6 +33,12 @@ ops.Operation = function Operation() {
     "use strict";
 };
 
+/**@typedef{{
+    eventid:!string,
+    args:*
+}}*/
+ops.Operation.Event;
+
 /**
  * @param {?} data
  * @return {undefined}
@@ -55,7 +61,7 @@ ops.Operation.prototype.group;
 
 /**
  * @param {!ops.Document} document
- * @return {!boolean} true if the operation was executed
+ * @return {?Array.<!ops.Operation.Event>} a list of events if the operation was executed, otherwise null
  */
 ops.Operation.prototype.execute = function (document) {"use strict"; };
 
