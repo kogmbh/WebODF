@@ -7,7 +7,7 @@ It makes it easy to add Open Document Format (ODF) support to your website and t
 * Visit the project homepage at: [WebODF](https://webodf.org)
 * Want some live demos? Visit: [WebODF Demos](https://webodf.org/demos/)
 * Get in contact:
-  * Slack: webodf.slack.com, use the [self-invite](https://join.slack.com/t/webodf/shared_invite/enQtNTQ1NDAyNDU1NjY2LWQwZTI4NTRhYzRmNDBiOTI4MDlhZjI5NTU1NDQ4M2Y4MDY2YzcxNjljZGE0MDdlNzM1NmJjM2I1MmYyNGI1NDY)
+  * Slack: webodf.slack.com, use the [self-invite](https://join.slack.com/t/webodf/shared_invite/enQtNTQ1NDAyNDU1NjY2LWFlZDg1NzBjY2IzY2RmMzhhMTcwZjM1YjJjOTRmMjM4Yzg1MzhjODY5N2MwOWQwMWNiNzhlZTVlYjI3MDY5YTc)
   * [mailing list](https://lists.opendocsociety.org/mailman/listinfo/webodf) or
   * IRC (#webodf auf freenode, [Web access](http://webchat.freenode.net/?nick=webodfcurious_gh&channels=webodf))
 
