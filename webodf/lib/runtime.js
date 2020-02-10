@@ -569,7 +569,7 @@ function BrowserRuntime() {
                     data = String(xhr.response);
                 }
             } else if (encoding === "binary") {
-                if (xhr.responseBody !== null
+                if (xhr.responseBody !== null && typeof xhr.responseBody !== 'unknown'
                         && String(typeof VBArray) !== "undefined") {
                     // fallback for IE <= 10
                     a = (new VBArray(xhr.responseBody)).toArray();
