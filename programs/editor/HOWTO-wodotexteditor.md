@@ -16,7 +16,7 @@ The file which needs to be included to create a Wodo.TextEditor is `wodotextedit
     <!-- ... -->
     </head>
 
-In the body of the HTML there needs to be set a div element which should hold the editor, with a unique id value and a size as wanted.
+In the body of the HTML there needs to be set a <div> element which should hold the editor, with a unique id value and a size as wanted.
 
     <body>
     <!-- ... -->
@@ -147,3 +147,22 @@ So it will be listed in `fonts.css` as
 1.  Why is a document which is hosted on another server not loading?
 
  Web pages with the Wodo.TextEditor must be served with the flag to allow its code to access code from servers in other domains. See https://en.wikipedia.org/wiki/Cross-origin_resource_sharing
+
+2.  Why is there just a blank screen?
+
+ Wodo.TextEditor does not enforce a size on the <div> element which is containing it. So make sure you have set a size on it.
+
+ If that <div> element is the only element in the webpage and you are setting the size relatively (in "%"), make sure that at least one of the <html> element and the <body> element
+ have an absolute size set, or both a relative size.
+
+ If you want the editor to be full-window, you would set the size on all the <html> element, the <body> element and
+ the <div> element to be "width: 100%" and "height: 100%", e.g. like this:
+
+    ```html
+    <html style="width:100%; height:100%; margin:0px; padding:0px">
+        <!-- ... -->
+        <body style="width:100%; height:100%; margin:0px; padding:0px">
+            <div id="editorContainer" style="width:100%; height:100%; margin:0px; padding:0px"></div>
+        </body>
+    </html>
+    ```
